@@ -1,0 +1,115 @@
+{
+  "radio_model": "Motorola XTS 2500 / PRC-153",
+  "bandsplit": "UHF Range 1 (380-470 MHz)",
+  "serial_number": "SURPLUS_PRC153",
+  "flashcode": "500008-000488-4",
+  "zones": [
+    {
+      "zone_number": 1,
+      "name": "HAM 70CM",
+      "channels": [
+        {
+          "channel_number": 1,
+          "name": "CALL 446.0",
+          "rx_frequency": 446.0,
+          "tx_frequency": 446.0,
+          "channel_spacing_khz": 12.5,
+          "voice_type": "Analog",
+          "rx_pl_tone": null,
+          "tx_pl_tone": null,
+          "rx_dpl_code": null,
+          "tx_dpl_code": null,
+          "rx_nac": "$293",
+          "tx_nac": "$293",
+          "talkgroup_id": 1,
+          "rx_only": false,
+          "power_level": "High",
+          "scan_list": "Scan1",
+          "secure_strapping": "Clear"
+        },
+        {
+          "channel_number": 2,
+          "name": "RPT 444.1",
+          "rx_frequency": 449.1,
+          "tx_frequency": 444.1,
+          "channel_spacing_khz": 12.5,
+          "voice_type": "Analog",
+          "rx_pl_tone": 107.2,
+          "tx_pl_tone": 107.2,
+          "rx_dpl_code": null,
+          "tx_dpl_code": null,
+          "rx_nac": "$293",
+          "tx_nac": "$293",
+          "talkgroup_id": 1,
+          "rx_only": false,
+          "power_level": "High",
+          "scan_list": "Scan1",
+          "secure_strapping": "Clear"
+        },
+        {
+          "channel_number": 3,
+          "name": "P25 SIMPLEX",
+          "rx_frequency": 441.0,
+          "tx_frequency": 441.0,
+          "channel_spacing_khz": 12.5,
+          "voice_type": "ASTRO P25",
+          "rx_pl_tone": null,
+          "tx_pl_tone": null,
+          "rx_dpl_code": null,
+          "tx_dpl_code": null,
+          "rx_nac": "$293",
+          "tx_nac": "$293",
+          "talkgroup_id": 1,
+          "rx_only": false,
+          "power_level": "High",
+          "scan_list": "Scan1",
+          "secure_strapping": "Clear"
+        }
+      ]
+    },
+    {
+      "zone_number": 2,
+      "name": "GMRS CHANS",
+      "channels": [
+        {
+          "channel_number": 1,
+          "name": "GMRS 15",
+          "rx_frequency": 462.55,
+          "tx_frequency": 462.55,
+          "channel_spacing_khz": 12.5,
+          "voice_type": "Analog",
+          "rx_pl_tone": 67.0,
+          "tx_pl_tone": 67.0,
+          "rx_dpl_code": null,
+          "tx_dpl_code": null,
+          "rx_nac": "$293",
+          "tx_nac": "$293",
+          "talkgroup_id": 1,
+          "rx_only": false,
+          "power_level": "High",
+          "scan_list": null,
+          "secure_strapping": "Clear"
+        },
+        {
+          "channel_number": 2,
+          "name": "GMRS RPT 15",
+          "rx_frequency": 462.55,
+          "tx_frequency": 467.55,
+          "channel_spacing_khz": 12.5,
+          "voice_type": "Analog",
+          "rx_pl_tone": 141.3,
+          "tx_pl_tone": 141.3,
+          "rx_dpl_code": null,
+          "tx_dpl_code": null,
+          "rx_nac": "$293",
+          "tx_nac": "$293",
+          "talkgroup_id": 1,
+          "rx_only": false,
+          "power_level": "High",
+          "scan_list": null,
+          "secure_strapping": "Clear"
+        }
+      ]
+    }
+  ]
+}

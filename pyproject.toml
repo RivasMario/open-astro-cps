@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "open-astro-cps"
+version = "0.1.0"
+description = "Open-source codeplug management and serial programming tools for Motorola ASTRO 25 radios (XTS 2500, PRC-153, XTS 5000, XTL 5000)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "Mario Rivas" }
+]
+keywords = ["motorola", "astro25", "xts2500", "prc153", "xts5000", "radio", "p25", "hamradio", "codeplug"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Telecommunications Industry",
+    "Topic :: Communications :: Ham Radio",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "pydantic>=2.0.0",
+    "pyserial>=3.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+open-astro = "open_astro.cli:main"
