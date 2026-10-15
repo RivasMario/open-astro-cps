@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motorola ASTRO 25 CPS vs OpenAstro Modern GUI</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-dark: #1e293b;
+      --border-dark: #334155;
+      --accent-blue: #38bdf8;
+      --accent-green: #10b981;
+      --accent-orange: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #020617;
+      color: var(--text-main);
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(to right, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    header p { color: var(--text-muted); font-size: 15px; }
+
+    /* Switcher Controls */
+    .view-toggle {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .toggle-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #94a3b8;
+      transition: all 0.2s ease;
+    }
+    .toggle-btn.active {
+      background: #0284c7;
+      color: white;
+      border-color: #38bdf8;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+    }
+
+    .mockup-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* =========================================
+       1. VINTAGE MOTOROLA CPS WINDOW (WINDOWS XP)
+       ========================================= */
+    .vintage-window {
+      background: #ece9d8;
+      color: #000;
+      font-family: Tahoma, "Segoe UI", sans-serif;
+      font-size: 11px;
+      border: 3px solid #0055ea;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+    .vintage-titlebar {
+      background: linear-gradient(to right, #0058e6 0%, #3a93ff 10%, #0054e3 100%);
+      color: white;
+      padding: 4px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    .vintage-controls span {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      background: #d63c29;
+      color: white;
+      text-align: center;
+      line-height: 14px;
+      border-radius: 2px;
+      border: 1px solid white;
+      margin-left: 2px;
+      cursor: pointer;
+    }
+    .vintage-menubar {
+      background: #ece9d8;
+      border-bottom: 1px solid #999;
+      padding: 3px 6px;
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
+    }
+    .vintage-body {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      height: 480px;
+      background: #fff;
+    }
+    .vintage-tree {
+      background: #fff;
+      border-right: 2px inset #ddd;
+      padding: 8px;
+      overflow-y: auto;
+      font-size: 11px;
+    }
+    .tree-node { padding: 2px 4px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .tree-node.selected { background: #316ac5; color: white; }
+    .tree-node.indent { margin-left: 16px; }
+    .tree-node.indent-2 { margin-left: 32px; }
+
+    .vintage-dialog {
+      background: #ece9d8;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .vintage-tabs {
+      display: flex;
+      gap: 2px;
+      border-bottom: 1px solid #919b9c;
+      margin-bottom: -1px;
+    }
+    .vintage-tab {
+      background: #e3dfce;
+      border: 1px solid #919b9c;
+      border-bottom: none;
+      padding: 4px 10px;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+      cursor: pointer;
+    }
+    .vintage-tab.active {
+      background: #ece9d8;
+      font-weight: bold;
+      border-bottom: 1px solid #ece9d8;
+      margin-bottom: -1px;
+    }
+    .vintage-form {
+      border: 1px solid #919b9c;
+      background: #ece9d8;
+      padding: 16px;
+      flex-grow: 1;
+      border-radius: 0 0 4px 4px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .v-field { display: flex; flex-direction: column; gap: 4px; }
+    .v-field label { font-weight: bold; color: #333; }
+    .v-field input, .v-field select {
+      border: 2px inset #fff;
+      padding: 3px 6px;
+      font-size: 11px;
+      background: #fff;
+    }
+    .v-error-box {
+      grid-column: span 2;
+      background: #fff8e8;
+      border: 1px solid #d4a017;
+      padding: 8px;
+      border-radius: 4px;
+      color: #8a6d3b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: bold;
+    }
+    .vintage-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .vintage-btn {
+      padding: 4px 16px;
+      border: 2px outset #fff;
+      background: #ece9d8;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* =========================================
+       2. MODERN OPENASTRO CPS (2026 WEB/DESKTOP)
+       ========================================= */
+    .modern-window {
+      background: var(--bg-dark);
+      border: 1px solid var(--border-dark);
+      border-radius: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+    }
+    .modern-titlebar {
+      background: #090d16;
+      border-bottom: 1px solid var(--border-dark);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modern-device-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+    .actions-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .m-btn {
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .m-btn-primary { background: #0284c7; color: white; }
+    .m-btn-primary:hover { background: #0369a1; }
+    .m-btn-success { background: #059669; color: white; }
+    .m-btn-success:hover { background: #047857; }
+    .m-btn-outline { background: transparent; border-color: var(--border-dark); color: var(--text-muted); }
+    .m-btn-outline:hover { background: #1e293b; color: white; }
+
+    /* Zone Tabs */
+    .zone-strip {
+      background: #0f172a;
+      border-bottom: 1px solid var(--border-dark);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .zone-pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #1e293b;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .zone-pill.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-blue);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    /* Grid Table */
+    .grid-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .grid-table th {
+      background: #090d16;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: left;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border-dark);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .grid-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #1e293b;
+      vertical-align: middle;
+    }
+    .grid-table tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+    .ch-name { font-weight: 700; color: #fff; letter-spacing: 0.05em; }
+    .freq-box {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #38bdf8;
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.08);
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .mode-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .mode-p25 { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4); }
+    .mode-fm { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+
+    .lock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .crypto-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .modern-statusbar {
+      background: #090d16;
+      border-top: 1px solid var(--border-dark);
+      padding: 8px 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Radio Programming GUI: Before & After</h1>
+    <p>Comparing the legacy 1999 Windows XP Motorola CPS software with the modern 2026 OpenAstro interface.</p>
+  </header>
+
+  <div class="view-toggle">
+    <button class="toggle-btn active" onclick="showView('both')">Side-by-Side Comparison</button>
+    <button class="toggle-btn" onclick="showView('modern')">OpenAstro Modern GUI Only</button>
+    <button class="toggle-btn" onclick="showView('vintage')">Original Motorola CPS Only</button>
+  </div>
+
+  <div class="mockup-container">
+
+    <!-- 1. VINTAGE MOTOROLA CPS WINDOW -->
+    <div class="vintage-window" id="vintage-card">
+      <div class="vintage-titlebar">
+        <span>ASTRO 25 Portable CPS - [Zone 1 Channel 1: scifunc.cpg]</span>
+        <div class="vintage-controls">
+          <span>_</span>
+          <span>□</span>
+          <span>✕</span>
+        </div>
+      </div>
+      <div class="vintage-menubar">
+        <span><u>F</u>ile</span>
+        <span><u>E</u>dit</span>
+        <span><u>V</u>iew</span>
+        <span><u>R</u>adio</span>
+        <span><u>T</u>ools</span>
+        <span><u>W</u>indow</span>
+        <span><u>H</u>elp</span>
+      </div>
+      <div class="vintage-body">
+        <div class="vintage-tree">
+          <div class="tree-node">📁 Radio Wide</div>
+          <div class="tree-node indent">📄 General Information</div>
+          <div class="tree-node indent">📄 Features & Hardware</div>
+          <div class="tree-node">📁 Trunking System</div>
+          <div class="tree-node indent">📁 Trunking Personality</div>
+          <div class="tree-node">📁 Conventional</div>
+          <div class="tree-node indent">📁 Conventional Personality</div>
+          <div class="tree-node indent-2">📄 Personality 1 (Analog)</div>
+          <div class="tree-node indent-2">📄 Personality 2 (P25)</div>
+          <div class="tree-node">📁 Zone Channel Assignment</div>
+          <div class="tree-node indent">📁 Zone 1 (TEAM SECURE)</div>
+          <div class="tree-node indent-2 selected">📄 Channel 1 (Click to Edit)</div>
+          <div class="tree-node indent-2">📄 Channel 2</div>
+          <div class="tree-node indent-2">📄 Channel 3</div>
+          <div class="tree-node indent">📁 Zone 2 (800 INTEROP)</div>
+          <div class="tree-node">📁 Scan List</div>
+          <div class="tree-node">📁 Secure Multikey (ADP/AES)</div>
+        </div>
+        <div class="vintage-dialog">
+          <div class="vintage-tabs">
+            <div class="vintage-tab active">General</div>
+            <div class="vintage-tab">Rx Options</div>
+            <div class="vintage-tab">Tx Options</div>
+            <div class="vintage-tab">P25 Digital</div>
+            <div class="vintage-tab">Signaling</div>
+          </div>
+          <div class="vintage-form">
+            <div class="v-field">
+              <label>Channel Name (Max 14 Chars):</label>
+              <input type="text" value="TEAM CLEAR">
+            </div>
+            <div class="v-field">
+              <label>Personality Assignment:</label>
+              <select><option>Personality #2 (ASTRO P25)</option></select>
+            </div>
+            <div class="v-field">
+              <label>Rx Frequency (MHz):</label>
+              <input type="text" value="851.51250">
+            </div>
+            <div class="v-field">
+              <label>Tx Frequency (MHz):</label>
+              <input type="text" value="851.51250">
+            </div>
+            <div class="v-field">
+              <label>Rx Network Access Code (NAC):</label>
+              <input type="text" value="$293">
+            </div>
+            <div class="v-field">
+              <label>Talkgroup ID:</label>
+              <input type="text" value="1">
+            </div>
+            <div class="v-error-box">
+              ⚠️ Warning: Advanced System Key (ASK) is missing for King County. Trunked records are read-only.
+            </div>
+          </div>
+          <div class="vintage-footer">
+            <button class="vintage-btn">OK</button>
+            <button class="vintage-btn">Cancel</button>
+            <button class="vintage-btn">Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. MODERN OPENASTRO GUI -->
+    <div class="modern-window" id="modern-card">
+      <div class="modern-titlebar">
+        <div class="modern-device-badge">
+          <div class="status-dot"></div>
+          <span>KENTPD_XTS2500 (Model II)</span>
+          <span style="color: var(--text-muted); font-size: 11px;">/dev/ttyUSB0 (19200 baud)</span>
+        </div>
+        <div class="actions-bar">
+          <button class="m-btn m-btn-outline">⚡ Read Radio</button>
+          <button class="m-btn m-btn-outline">💾 Export CSV</button>
+          <button class="m-btn m-btn-outline">📥 Import Spreadsheet</button>
+          <button class="m-btn m-btn-success">🚀 Flash Radio</button>
+        </div>
+      </div>
+
+      <!-- Zone Navigation -->
+      <div class="zone-strip">
+        <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Zones:</span>
+        <div class="zone-pill active">Zone 1: TEAM SECURE (3)</div>
+        <div class="zone-pill">Zone 2: 800 INTEROP (3)</div>
+        <div class="zone-pill">Zone 3: PS MONITOR [RX-ONLY] (3)</div>
+        <button class="m-btn m-btn-outline" style="padding: 4px 10px; font-size: 11px;">+ New Zone</button>
+      </div>
+
+      <!-- Channels Grid -->
+      <table class="grid-table">
+        <thead>
+          <tr>
+            <th>CH</th>
+            <th>Name</th>
+            <th>Rx Freq (MHz)</th>
+            <th>Tx Freq (MHz)</th>
+            <th>Mode</th>
+            <th>Tone / NAC</th>
+            <th>Privacy / Key</th>
+            <th>Power</th>
+            <th>Safety Lock</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>01</td>
+            <td class="ch-name">TEAM CLEAR</td>
+            <td><span class="freq-box">851.51250</span></td>
+            <td><span class="freq-box">851.51250</span></td>
+            <td><span class="mode-pill mode-p25">P25 Digital</span></td>
+            <td>NAC $293 · TG 1</td>
+            <td><span style="color: var(--text-muted);">Clear</span></td>
+            <td>High (3W)</td>
+            <td><span style="color: var(--text-muted); font-size: 11px;">Normal TX</span></td>
+          </tr>
+          <tr>
+            <td>02</td>
+            <td class="ch-name">TEAM ENCRYPT</td>
+            <td><span class="freq-box">852.01250</span></td>
+            <td><span class="freq-box">852.01250</span></td>
+            <td><span class="mode-pill mode-p25">P25 Digital</span></td>
+            <td>NAC $293 · TG 1</td>
+            <td><span class="crypto-badge">🔒 ADP: TEAM_KEY_1</span></td>
+            <td>High (3W)</td>
+            <td><span style="color: var(--text-muted); font-size: 11px;">Normal TX</span></td>
+          </tr>
+          <tr>
+            <td>03</td>
+            <td class="ch-name">TEAM ANALOG</td>
+            <td><span class="freq-box">853.01250</span></td>
+            <td><span class="freq-box">853.01250</span></td>
+            <td><span class="mode-pill mode-fm">Analog FM</span></td>
+            <td>PL 156.7 Hz</td>
+            <td><span style="color: var(--text-muted);">Clear</span></td>
+            <td>High (3W)</td>
+            <td><span style="color: var(--text-muted); font-size: 11px;">Normal TX</span></td>
+          </tr>
+          <tr>
+            <td>04</td>
+            <td class="ch-name">8CALL90</td>
+            <td><span class="freq-box">851.01250</span></td>
+            <td><span class="freq-box">806.01250</span></td>
+            <td><span class="mode-pill mode-fm">Analog FM</span></td>
+            <td>PL 156.7 Hz</td>
+            <td><span style="color: var(--text-muted);">Clear</span></td>
+            <td>High (3W)</td>
+            <td><span style="color: var(--text-muted); font-size: 11px;">Repeater (-45M)</span></td>
+          </tr>
+          <tr>
+            <td>05</td>
+            <td class="ch-name">PSERN CTRL 1</td>
+            <td><span class="freq-box">851.88750</span></td>
+            <td><span style="color: #64748b; font-family: monospace;">---.-----</span></td>
+            <td><span class="mode-pill mode-p25">P25 Digital</span></td>
+            <td>NAC $293 · King County</td>
+            <td><span style="color: var(--text-muted);">Passive</span></td>
+            <td>---</td>
+            <td><span class="lock-badge">🔒 RX-ONLY LOCK</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Footer Bar -->
+      <div class="modern-statusbar">
+        <div>Model: <strong>XTS 2500 II (764-870 MHz)</strong> · Flashcode: <strong>500008-000488-4 (Digital + FPP)</strong></div>
+        <div>Firmware: <strong>R20.50.00</strong> · DSP: <strong>R19.50.00</strong> · Battery: <span style="color: var(--accent-green);">7.4V (Good)</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showView(view) {
+      const vintage = document.getElementById('vintage-card');
+      const modern = document.getElementById('modern-card');
+      const btns = document.querySelectorAll('.toggle-btn');
+      btns.forEach(b => b.classList.remove('active'));
+
+      if (view === 'both') {
+        vintage.style.display = 'block';
+        modern.style.display = 'block';
+        btns[0].classList.add('active');
+      } else if (view === 'modern') {
+        vintage.style.display = 'none';
+        modern.style.display = 'block';
+        btns[1].classList.add('active');
+      } else if (view === 'vintage') {
+        vintage.style.display = 'block';
+        modern.style.display = 'none';
+        btns[2].classList.add('active');
+      }
+    }
+  </script>
+</body>
+</html>
