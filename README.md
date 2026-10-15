@@ -128,12 +128,64 @@ open-astro to-csv examples/king_county_800mhz_fleet.json channels.csv
 open-astro from-csv channels.csv updated_fleet.json
 ```
 
-### 3. Detect Connected Programming Cables
+### 3. Safety Compliance & Rule Validation
+Ensure all public safety monitoring channels have the mandatory hardware `rx_only: true` transmitter lockout enabled, frequency limits match the bandsplit, and encryption key IDs exist:
+```bash
+open-astro validate examples/king_county_800mhz_fleet.json
+```
+
+### 4. Decode ASTRO 25 Flashcode
+Decode proprietary 12-digit Motorola flashcodes into all active firmware features (FPP, ADP, AES-256, TDMA Phase 2, etc.):
+```bash
+open-astro flashcode 500008-000488-4
+# Or decode directly from any codeplug JSON:
+open-astro flashcode examples/king_county_800mhz_fleet.json
+```
+
+### 5. Detect Connected Hardware (Programming Cables & KVL)
 ```bash
 open-astro ports
 ```
-* **On Windows:** `COM3 (USB Serial Port - FTDI)`
-* **On Fedora Linux:** `/dev/ttyUSB0 (FT232R USB UART - FTDI)`
+Output:
+```
+[+] Detected Connected Hardware Interfaces:
+  -> COM3   : USB-SERIAL CH340 (COM3) [Motorola ASTRO / Radio Programming Cable]
+  -> COM4   : USB Serial Device (COM4) [P25 Key Variable Loader (KFDtool KVL)]
+```
+
+### 6. Key Variable Loader (KVL) Hardware Keyloading
+Communicate directly with your **KFDtool / KVL Mini** hardware keyloader to provision encryption keys (ADP / AES-256) into ASTRO 25 radios over the 3-wire accessory interface:
+
+```bash
+# Query KFDtool adapter hardware, firmware version & self-test
+open-astro kvl info
+
+# Probe target radio on the 3-wire keyload line (wake-up key signature + READY_REQ)
+open-astro kvl probe
+
+# Load encryption key directly from codeplug JSON
+open-astro kvl load examples/king_county_800mhz_fleet.json --key-id 1
+
+# Or load an ad-hoc key from the command line
+open-astro kvl load --key-id 1 --alg ADP --key A1B2C3D4E5 --name TEAM_SECURE
+
+# Emergency wipe / zeroize all cryptographic keys on target radio
+open-astro kvl zeroize --force
+```
+
+### 7. Read, Write & Flash Connected Radios
+Communicate directly with Motorola ASTRO 25 radios over USB programming cables:
+
+```bash
+# Probe radio connection on serial port (COM3 or /dev/ttyUSB0)
+open-astro probe
+
+# Read codeplug directly from connected radio
+open-astro read -o my_radio_backup.json
+
+# Flash verified codeplug to radio (with automatic pre-flight safety checks)
+open-astro write examples/king_county_800mhz_fleet.json
+```
 
 ---
 

@@ -4,7 +4,7 @@ Cross-platform support for Windows, Linux (Fedora/Ubuntu/Arch), and macOS.
 """
 import platform
 import time
-from typing import List, Optional
+from typing import List, Optional, Dict
 try:
     import serial
     import serial.tools.list_ports
@@ -24,32 +24,62 @@ def get_default_port() -> str:
 
 class RadioSerialLink:
     def __init__(self, port: Optional[str] = None, baudrate: int = 19200, timeout: float = 2.0):
-        self.port = port or self.auto_detect_port() or get_default_port()
+        self.port = port or self.auto_detect_radio_port() or get_default_port()
         self.baudrate = baudrate
         self.timeout = timeout
         self.connection = None
 
     @staticmethod
-    def list_ports() -> List[str]:
+    def list_ports() -> List[Dict[str, str]]:
         if not SERIAL_AVAILABLE:
             return []
         ports = serial.tools.list_ports.comports()
-        return [f"{p.device} ({p.description})" for p in ports]
+        results = []
+        for p in ports:
+            hwid = (p.hwid or "").lower()
+            desc = (p.description or "").lower()
+            device_type = "Unknown Serial Device"
+
+            if "2047:0a7c" in hwid or "vid_2047&pid_0a7c" in hwid or "kfdtool" in desc:
+                device_type = "P25 Key Variable Loader (KFDtool KVL)"
+            elif any(k in hwid or k in desc for k in ["1a86:7523", "ch340", "ftdi", "0403:6001", "prolific", "cp210"]):
+                device_type = "Motorola ASTRO / Radio Programming Cable"
+
+            results.append({
+                "port": p.device,
+                "description": p.description,
+                "type": device_type,
+                "hwid": p.hwid or ""
+            })
+        return results
 
     @staticmethod
-    def auto_detect_port() -> Optional[str]:
-        """Automatically find the first available USB-to-serial programming cable."""
+    def auto_detect_radio_port() -> Optional[str]:
+        """Automatically find the first available radio programming cable, excluding KVL devices."""
         if not SERIAL_AVAILABLE:
             return None
         ports = serial.tools.list_ports.comports()
-        # Look for FTDI, Prolific, CH340, or generic USB Serial
         for p in ports:
-            desc = (p.description or "").lower()
             hwid = (p.hwid or "").lower()
-            if any(k in desc or k in hwid for k in ["ftdi", "prolific", "ch340", "cp210", "usb serial"]):
+            desc = (p.description or "").lower()
+            # Skip KVL devices
+            if "2047:0a7c" in hwid or "vid_2047&pid_0a7c" in hwid or "kfdtool" in desc:
+                continue
+            if any(k in hwid or k in desc for k in ["1a86:7523", "ch340", "ftdi", "0403:6001", "prolific", "cp210", "usb serial"]):
                 return p.device
-        if ports:
-            return ports[0].device
+        return ports[0].device if ports else None
+
+    @staticmethod
+    def auto_detect_kvl_port() -> Optional[str]:
+        """Find the connected KFDtool Key Variable Loader (KVL)."""
+        if not SERIAL_AVAILABLE:
+            return None
+        ports = serial.tools.list_ports.comports()
+        for p in ports:
+            hwid = (p.hwid or "").lower()
+            desc = (p.description or "").lower()
+            if "2047:0a7c" in hwid or "vid_2047&pid_0a7c" in hwid or "kfdtool" in desc:
+                return p.device
         return None
 
     def connect(self) -> bool:
