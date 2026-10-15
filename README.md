@@ -2,28 +2,31 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Fedora%20%2F%20Linux%20%7C%20macOS-lightgrey.svg)]()
 
 **OpenAstro CPS** is an open-source codeplug engine, format converter, and serial programming toolkit for **Motorola ASTRO 25** radios:
-* **Motorola XTS 2500 / PRC-153 IISR** (Integrated Intra-Squad Radio)
+* **Motorola XTS 2500** (Model I, Model II, Model III)
+* **Motorola PRC-153 IISR** (Integrated Intra-Squad Radio)
 * **Motorola XTS 5000**
 * **Motorola XTS 1500 / MT1500 / PR1500**
-* **Motorola XTL 5000 / XTL 2500**
+* **Motorola XTL 5000 / XTL 2500 Mobile Radios**
 
 ---
 
 ## 🎯 Motivation
 
 Proprietary radio programming software (CPS) has historically been:
-* Locked to archaic 32-bit Windows XP/7 operating systems.
+* Locked to legacy 32-bit Windows XP/7 operating systems (Motorola CPS **never** ran on Linux).
 * Gated behind expired commercial licenses, Advanced System Keys (ASK), and region locks.
 * Storing configurations in opaque, proprietary binary archives (`.cpg`).
 
 **OpenAstro** liberates these radios by providing:
-1. **Human-Readable Configurations**: Full codeplugs stored in structured **JSON**, **YAML**, or **CSV spreadsheets**.
-2. **Spreadsheet Workflow**: Edit channels in Excel, Numbers, or Google Sheets and import directly into your radio.
-3. **RepeaterBook Compatibility**: Easily pull local ham and GMRS repeater frequencies into clean zones.
-4. **Direct Serial Flashing**: Talk to the radio over standard USB programming cables (FTDI UART) using open-source packet framing.
-5. **Cross-Platform**: Runs natively on modern Windows 11, macOS, and Linux without VMs.
+1. **100% Cross-Platform**: Runs natively on **Fedora Linux**, Ubuntu, Arch, Windows 11, and macOS without virtual machines or Wine.
+2. **Human-Readable Configurations**: Full codeplugs stored in structured **JSON**, **YAML**, or **CSV spreadsheets**.
+3. **Spreadsheet Workflow**: Edit channels in Excel, LibreOffice Calc, or Google Sheets and import directly into your radio.
+4. **Software Encryption (Motorola ADP)**: Native support for configuring 40-bit RC4 digital privacy keys without external hardware.
+5. **Safety First (`rx_only: true`)**: Hardware transmitter power amplifier lockout to guarantee zero accidental interference on public safety channels.
+6. **Direct Serial Flashing**: Talk to the radio over standard USB programming cables (FTDI / `/dev/ttyUSB0`) using open-source packet framing.
 
 ---
 
@@ -31,7 +34,7 @@ Proprietary radio programming software (CPS) has historically been:
 
 ```
                  +-----------------------------------+
-                 | Modern Web UI / CLI / Excel Sheets|
+                 | LibreOffice Calc / Excel / Web UI |
                  +-----------------+-----------------+
                                    |
                                    v
@@ -46,7 +49,7 @@ Proprietary radio programming software (CPS) has historically been:
                                    |
                                    v
                  +-----------------------------------+
-                 | USB Programming Cable (FTDI UART) |
+                 | COM Port / /dev/ttyUSB0 (FTDI)    |
                  +-----------------+-----------------+
                                    |
                                    v
@@ -61,94 +64,83 @@ Proprietary radio programming software (CPS) has historically been:
 
 ### Installation
 
-```bash
-# Clone the repository
+#### On Windows:
+```powershell
 git clone https://github.com/RivasMario/open-astro-cps.git
 cd open-astro-cps
-
-# Install in editable mode
 pip install -e .
 ```
 
-### 1. Generate a Fresh Codeplug Template
-Generate a sample 2-zone template for a UHF PRC-153 / XTS 2500 (covers 70cm Ham Radio & GMRS):
+#### On Fedora Linux:
 ```bash
-open-astro new -o my_radio.json --model "Motorola XTS 2500 / PRC-153" --bandsplit "UHF 380-470 MHz"
+# See docs/linux_fedora_setup.md for full instructions & udev rules
+sudo dnf install -y python3 python3-pip git
+sudo usermod -aG dialout $USER
+git clone https://github.com/RivasMario/open-astro-cps.git
+cd open-astro-cps
+pip install -e .
 ```
 
-### 2. View Channel Plan Summary
+---
+
+## 📋 Usage Examples
+
+### 1. View 800 MHz King County Fleet Plan
 ```bash
-open-astro info my_radio.json
+open-astro info examples/king_county_800mhz_fleet.json
 ```
 Output:
 ```
 ==========================================
- Radio Model  : Motorola XTS 2500 / PRC-153
- Bandsplit    : UHF Range 1 (380-470 MHz)
- Serial Number: SURPLUS_PRC153
- Flashcode    : 500008-000488-4
- Total Zones  : 2
- Total Chans  : 5
+ Radio Model  : Motorola XTS 2500 Model II
+ Bandsplit    : 700/800 MHz (764-870 MHz)
+ Serial Number: OPENASTRO_SURPLUS
+ Total Zones  : 3
+ Total Chans  : 9
+ Crypto Keys  : 1 defined
+   -> Key 1 (TEAM_ADP_1): ADP [Hash: A1B2****]
 ==========================================
 
-[Zone 1: HAM 70CM] (3 channels)
-  Ch  1: CALL 446.0     | Rx: 446.00000 | Tx: 446.00000 | Analog
-  Ch  2: RPT 444.1      | Rx: 449.10000 | Tx: 444.10000 | Analog PL:107.2/107.2Hz
-  Ch  3: P25 SIMPLEX    | Rx: 441.00000 | Tx: 441.00000 | ASTRO P25 NAC:$293 TG:1
+[Zone 1: TEAM SECURE] (3 channels) - Transmit Enabled
+  Ch  1: TEAM CLEAR     | Rx: 851.51250 | Tx: 851.51250 | ASTRO P25 NAC:$293 TG:1
+  Ch  2: TEAM ENCRYPT   | Rx: 852.01250 | Tx: 852.01250 | ASTRO P25 NAC:$293 TG:1 [ENC:TEAM_ADP_1]
+  Ch  3: TEAM ANALOG    | Rx: 853.01250 | Tx: 853.01250 | Analog PL:156.7/156.7Hz
 
-[Zone 2: GMRS CHANS] (2 channels)
-  Ch  1: GMRS 15        | Rx: 462.55000 | Tx: 462.55000 | Analog PL:67.0/67.0Hz
-  Ch  2: GMRS RPT 15    | Rx: 462.55000 | Tx: 467.55000 | Analog PL:141.3/141.3Hz
+[Zone 2: 800 INTEROP] (3 channels) - National Mutual Aid
+  Ch  1: 8CALL90        | Rx: 851.01250 | Tx: 806.01250 | Analog PL:156.7/156.7Hz
+  Ch  2: 8TAC91         | Rx: 851.51250 | Tx: 806.51250 | Analog PL:156.7/156.7Hz
+  Ch  3: 8TAC92         | Rx: 852.01250 | Tx: 807.01250 | Analog PL:156.7/156.7Hz
+
+[Zone 3: PS MONITOR] (3 channels) - Passive Reception Only
+  Ch  1: PSERN CTRL 1   | Rx: 851.88750 | Tx: 851.88750 | ASTRO P25 [RX-ONLY LOCK]
+  Ch  2: PSERN CTRL 2   | Rx: 852.86250 | Tx: 852.86250 | ASTRO P25 [RX-ONLY LOCK]
+  Ch  3: PSERN CTRL 3   | Rx: 853.82500 | Tx: 853.82500 | ASTRO P25 [RX-ONLY LOCK]
 ```
 
-### 3. Edit in Excel / Google Sheets
-Convert your codeplug to a CSV spreadsheet, edit it, and convert it back:
+### 2. Edit in LibreOffice Calc / Excel
 ```bash
 # Export to CSV
-open-astro to-csv my_radio.json channels.csv
+open-astro to-csv examples/king_county_800mhz_fleet.json channels.csv
 
-# ... edit channels.csv in Excel ...
+# ... edit channels in your spreadsheet editor ...
 
-# Re-import back to JSON
-open-astro from-csv channels.csv updated_radio.json
+# Import back to codeplug JSON
+open-astro from-csv channels.csv updated_fleet.json
 ```
 
-### 4. Detect Connected Programming Cables
+### 3. Detect Connected Programming Cables
 ```bash
 open-astro ports
 ```
+* **On Windows:** `COM3 (USB Serial Port - FTDI)`
+* **On Fedora Linux:** `/dev/ttyUSB0 (FT232R USB UART - FTDI)`
 
 ---
 
-## 📊 Codeplug Data Schema
+## 📚 Documentation
 
-Channels support both **Analog FM** (CTCSS/DPL) and **Digital APCO Project 25 (P25 Phase 1)**:
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `name` | String (up to 14 chars) | Channel label shown on the top/front display |
-| `rx_frequency` | Float (MHz) | Receive frequency |
-| `tx_frequency` | Float (MHz) | Transmit frequency (handles simplex & offsets) |
-| `voice_type` | String | `"Analog"`, `"ASTRO P25"`, or `"Mixed Mode"` |
-| `rx_pl_tone` / `tx_pl_tone` | Float (Hz) | CTCSS sub-audible tone (e.g. `107.2`) |
-| `rx_dpl_code` / `tx_dpl_code` | Integer | Digital coded squelch (e.g. `023`, `074`) |
-| `rx_nac` / `tx_nac` | Hex String | P25 Network Access Code (`$293` default unmuted) |
-| `talkgroup_id` | Integer | P25 Digital Talkgroup ID |
-| `power_level` | String | `"High"` (5W) or `"Low"` (1W) |
-| `secure_strapping` | String | `"Clear"`, `"Secure"`, or `"Selectable"` |
-
----
-
-## 🗺️ Roadmap
-
-- [x] Python ASTRO 25 data models & table schema mapping
-- [x] JSON parser & round-trip serializer
-- [x] CSV / Excel importer and exporter
-- [x] SB9600 packet framing & checksum engine
-- [ ] Direct serial radio memory read (`0x14` opcode block dumping)
-- [ ] Direct serial radio memory flash (`0x15` opcode block writing)
-- [ ] Binary `.cpg` decompiler / compiler
-- [ ] Web-based graphical channel manager (React + Tailwind)
+* [Fleet Setup & Encryption Guide](docs/fleet_setup_and_encryption.md): Hardware roles, PSERN Phase 2 notes, and Motorola ADP configuration.
+* [Fedora Linux Setup & Udev Rules](docs/linux_fedora_setup.md): Complete setup for Fedora users.
 
 ---
 
