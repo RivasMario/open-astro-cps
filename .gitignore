@@ -38,3 +38,20 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Proprietary binaries & raw codeplugs (DO NOT COMMIT)
+*.exe
+*.dll
+*.cab
+*.hdr
+*.tbl
+*.cpg
+*.cpr
+*.rar
+*.zip
+*.bin
+*.hex
+*.img
+*.rom
+radio_dumps/
+raw_data/
