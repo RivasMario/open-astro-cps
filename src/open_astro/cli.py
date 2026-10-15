@@ -3,7 +3,7 @@ OpenAstro Command Line Interface (CLI)
 """
 import argparse
 import sys
-from .models import RadioCodeplug, Zone, Channel
+from .models import RadioCodeplug, Zone, Channel, EncryptionKey
 from .parsers import JsonParser, CsvParser
 from .protocol import RadioSerialLink
 
@@ -13,22 +13,35 @@ def cmd_new(args):
         bandsplit=args.bandsplit,
         serial_number="OPENASTRO_SURPLUS",
         flashcode="500008-000488-4",
+        encryption_keys=[
+            EncryptionKey(key_id=1, name="TEAM_ADP_1", algorithm="ADP", key_data="A1B2C3D4E5")
+        ],
         zones=[
             Zone(
                 zone_number=1,
-                name="HAM 70CM",
+                name="TEAM SECURE",
                 channels=[
-                    Channel(1, "CALL 446.0", 446.00000, 446.00000, voice_type="Analog"),
-                    Channel(2, "RPT 444.1", 449.10000, 444.10000, voice_type="Analog", rx_pl_tone=107.2, tx_pl_tone=107.2),
-                    Channel(3, "P25 CALL", 441.00000, 441.00000, voice_type="ASTRO P25", rx_nac="$293", tx_nac="$293")
+                    Channel(1, "TEAM CLEAR", 851.51250, 851.51250, voice_type="ASTRO P25", rx_nac="$293", tx_nac="$293"),
+                    Channel(2, "TEAM ENCRYPT", 852.01250, 852.01250, voice_type="ASTRO P25", rx_nac="$293", tx_nac="$293", secure_strapping="Secure", key_id=1, key_name="TEAM_ADP_1"),
+                    Channel(3, "TEAM ANALOG", 853.01250, 853.01250, voice_type="Analog", rx_pl_tone=156.7, tx_pl_tone=156.7)
                 ]
             ),
             Zone(
                 zone_number=2,
-                name="GMRS CHANNELS",
+                name="800 INTEROP",
                 channels=[
-                    Channel(1, "GMRS 15", 462.55000, 462.55000, voice_type="Analog", rx_pl_tone=67.0, tx_pl_tone=67.0),
-                    Channel(2, "GMRS RPT15", 462.55000, 467.55000, voice_type="Analog", rx_pl_tone=141.3, tx_pl_tone=141.3)
+                    Channel(1, "8CALL90", 851.01250, 806.01250, voice_type="Analog", rx_pl_tone=156.7, tx_pl_tone=156.7),
+                    Channel(2, "8TAC91", 851.51250, 806.51250, voice_type="Analog", rx_pl_tone=156.7, tx_pl_tone=156.7),
+                    Channel(3, "8TAC92", 852.01250, 807.01250, voice_type="Analog", rx_pl_tone=156.7, tx_pl_tone=156.7)
+                ]
+            ),
+            Zone(
+                zone_number=3,
+                name="PS MONITOR",
+                channels=[
+                    Channel(1, "PSERN CTRL 1", 851.88750, 851.88750, voice_type="ASTRO P25", rx_only=True),
+                    Channel(2, "PSERN CTRL 2", 852.86250, 852.86250, voice_type="ASTRO P25", rx_only=True),
+                    Channel(3, "PSERN CTRL 3", 853.82500, 853.82500, voice_type="ASTRO P25", rx_only=True)
                 ]
             )
         ]
@@ -55,6 +68,10 @@ def cmd_info(args):
     print(f" Flashcode    : {codeplug.flashcode}")
     print(f" Total Zones  : {len(codeplug.zones)}")
     print(f" Total Chans  : {codeplug.total_channels()}")
+    if codeplug.encryption_keys:
+        print(f" Crypto Keys  : {len(codeplug.encryption_keys)} defined")
+        for k in codeplug.encryption_keys:
+            print(f"   -> Key {k.key_id:d} ({k.name}): {k.algorithm} [Hash: {k.key_data[:4]}****]")
     print(f"==========================================")
     for z in codeplug.zones:
         print(f"\n[Zone {z.zone_number}: {z.name}] ({len(z.channels)} channels)")
@@ -63,8 +80,11 @@ def cmd_info(args):
             if ch.rx_pl_tone or ch.tx_pl_tone:
                 tone_info = f" PL:{ch.rx_pl_tone}/{ch.tx_pl_tone}Hz"
             elif ch.voice_type == "ASTRO P25":
-                tone_info = f" NAC:{ch.rx_nac} TG:{ch.talkgroup_id}"
-            print(f"  Ch {ch.channel_number:2d}: {ch.name:<14} | Rx: {ch.rx_frequency:9.5f} | Tx: {ch.tx_frequency:9.5f} | {ch.voice_type}{tone_info}")
+                enc_tag = f" [ENC:{ch.key_name or ch.key_id}]" if ch.secure_strapping == "Secure" else ""
+                tone_info = f" NAC:{ch.rx_nac} TG:{ch.talkgroup_id}{enc_tag}"
+            
+            rx_lock = " [RX-ONLY LOCK]" if ch.rx_only else ""
+            print(f"  Ch {ch.channel_number:2d}: {ch.name:<14} | Rx: {ch.rx_frequency:9.5f} | Tx: {ch.tx_frequency:9.5f} | {ch.voice_type}{tone_info}{rx_lock}")
 
 def cmd_ports(args):
     ports = RadioSerialLink.list_ports()
@@ -82,8 +102,8 @@ def main():
     # new
     p_new = subparsers.add_parser("new", help="Generate a new template codeplug (JSON)")
     p_new.add_argument("-o", "--output", default="template.json", help="Output JSON filename")
-    p_new.add_argument("--model", default="Motorola XTS 2500 / PRC-153", help="Radio model name")
-    p_new.add_argument("--bandsplit", default="UHF 380-470 MHz", help="Radio frequency bandsplit")
+    p_new.add_argument("--model", default="Motorola XTS 2500 Model II", help="Radio model name")
+    p_new.add_argument("--bandsplit", default="700/800 MHz (764-870 MHz)", help="Radio frequency bandsplit")
     p_new.set_defaults(func=cmd_new)
 
     # to-csv
@@ -96,8 +116,8 @@ def main():
     p_from_csv = subparsers.add_parser("from-csv", help="Convert CSV spreadsheet to JSON codeplug")
     p_from_csv.add_argument("input", help="Input CSV file")
     p_from_csv.add_argument("output", help="Output JSON file")
-    p_from_csv.add_argument("--model", default="Motorola XTS 2500 / PRC-153")
-    p_from_csv.add_argument("--bandsplit", default="UHF 380-470 MHz")
+    p_from_csv.add_argument("--model", default="Motorola XTS 2500 Model II")
+    p_from_csv.add_argument("--bandsplit", default="700/800 MHz (764-870 MHz)")
     p_from_csv.set_defaults(func=cmd_from_csv)
 
     # info

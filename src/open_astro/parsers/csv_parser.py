@@ -5,7 +5,8 @@ from ..models import RadioCodeplug, Zone, Channel
 CSV_FIELDNAMES = [
     "Zone", "ZoneName", "Channel", "Name", "RxFrequency", "TxFrequency",
     "Spacing", "VoiceType", "RxPL", "TxPL", "RxDPL", "TxDPL",
-    "RxNAC", "TxNAC", "Talkgroup", "Power", "RxOnly", "ScanList"
+    "RxNAC", "TxNAC", "Talkgroup", "Secure", "KeyID", "KeyName",
+    "Power", "RxOnly", "ScanList"
 ]
 
 class CsvParser:
@@ -32,13 +33,16 @@ class CsvParser:
                         "RxNAC": ch.rx_nac,
                         "TxNAC": ch.tx_nac,
                         "Talkgroup": ch.talkgroup_id,
+                        "Secure": ch.secure_strapping,
+                        "KeyID": ch.key_id if ch.key_id is not None else "",
+                        "KeyName": ch.key_name or "",
                         "Power": ch.power_level,
                         "RxOnly": "TRUE" if ch.rx_only else "FALSE",
                         "ScanList": ch.scan_list or ""
                     })
 
     @staticmethod
-    def import_csv(filepath: str, radio_model: str = "Motorola XTS 2500 / PRC-153", bandsplit: str = "UHF 380-470 MHz") -> RadioCodeplug:
+    def import_csv(filepath: str, radio_model: str = "Motorola XTS 2500", bandsplit: str = "700/800 MHz (764-870 MHz)") -> RadioCodeplug:
         zones_dict = {}
         with open(filepath, "r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -68,6 +72,9 @@ class CsvParser:
                     rx_nac=row.get("RxNAC", "$293"),
                     tx_nac=row.get("TxNAC", "$293"),
                     talkgroup_id=int(row.get("Talkgroup", 1)),
+                    secure_strapping=row.get("Secure", "Clear"),
+                    key_id=parse_int(row.get("KeyID")),
+                    key_name=row.get("KeyName") or None,
                     power_level=row.get("Power", "High"),
                     rx_only=row.get("RxOnly", "").upper() in ("TRUE", "1", "YES"),
                     scan_list=row.get("ScanList") or None

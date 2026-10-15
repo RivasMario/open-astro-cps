@@ -5,13 +5,13 @@ from typing import Optional
 class Channel:
     channel_number: int
     name: str                           # 8 to 14 characters displayed on XTS LCD
-    rx_frequency: float                 # MHz (e.g., 446.00000)
-    tx_frequency: float                 # MHz (e.g., 446.00000)
+    rx_frequency: float                 # MHz (e.g., 851.51250)
+    tx_frequency: float                 # MHz (e.g., 851.51250)
     channel_spacing_khz: float = 12.5   # 12.5 kHz (narrowband) or 25.0 kHz
     voice_type: str = "Analog"          # "Analog", "ASTRO P25", or "Mixed Mode"
     
     # Analog CTCSS / CDCSS Squelch
-    rx_pl_tone: Optional[float] = None  # Hz (e.g., 67.0, 107.2)
+    rx_pl_tone: Optional[float] = None  # Hz (e.g., 67.0, 107.2, 156.7)
     tx_pl_tone: Optional[float] = None
     rx_dpl_code: Optional[int] = None   # Octal (e.g., 23, 74, 131)
     tx_dpl_code: Optional[int] = None
@@ -19,13 +19,17 @@ class Channel:
     # Digital ASTRO P25 Parameters
     rx_nac: str = "$293"                # Network Access Code (Default $293 = unmuted P25)
     tx_nac: str = "$293"
-    talkgroup_id: int = 1               # Default P25 talkgroup
+    talkgroup_id: int = 1               # Default P25 talkgroup ID
+    
+    # Encryption (ADP / AES)
+    secure_strapping: str = "Clear"     # "Clear", "Secure", "Selectable"
+    key_id: Optional[int] = None        # Encryption Key ID (e.g., 1)
+    key_name: Optional[str] = None      # e.g., "TEAM_KEY_1"
     
     # Operational Options
-    rx_only: bool = False
-    power_level: str = "High"           # "High" (5W) or "Low" (1W)
+    rx_only: bool = False               # Critical safety flag: Disables TX Power Amp
+    power_level: str = "High"           # "High" (3W on 800MHz / 5W on VHF/UHF) or "Low" (1W)
     scan_list: Optional[str] = None
-    secure_strapping: str = "Clear"     # "Clear", "Secure", "Selectable"
 
     def is_simplex(self) -> bool:
         return abs(self.rx_frequency - self.tx_frequency) < 1e-6

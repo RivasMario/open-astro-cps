@@ -3,9 +3,16 @@ from typing import List, Optional
 from .channel import Channel
 
 @dataclass
+class EncryptionKey:
+    key_id: int                         # Key ID (1 to 255)
+    name: str                           # Key label (e.g., "TEAM_ADP_KEY")
+    algorithm: str = "ADP"              # "ADP" (Software 40-bit RC4) or "AES-256"
+    key_data: str = "A1B2C3D4E5"        # 10 hex characters for ADP (or 64 for AES-256)
+
+@dataclass
 class Zone:
     zone_number: int
-    name: str                           # 8 to 16 chars (e.g., "ZONE 1", "HAM 70CM")
+    name: str                           # 8 to 16 chars (e.g., "TEAM SECURE", "800 INTEROP")
     channels: List[Channel] = field(default_factory=list)
 
     def add_channel(self, channel: Channel) -> None:
@@ -19,14 +26,18 @@ class Zone:
 
 @dataclass
 class RadioCodeplug:
-    radio_model: str                    # e.g., "Motorola XTS 2500 / PRC-153"
-    bandsplit: str                      # e.g., "UHF Range 1 (380-470 MHz)"
+    radio_model: str                    # e.g., "Motorola XTS 2500 Model II"
+    bandsplit: str                      # e.g., "700/800 MHz (764-870 MHz)"
     serial_number: str = "OPENASTRO_001"
     flashcode: str = "500008-000488-4"  # Default: Digital P25 + FPP Enabled
     zones: List[Zone] = field(default_factory=list)
+    encryption_keys: List[EncryptionKey] = field(default_factory=list)
 
     def add_zone(self, zone: Zone) -> None:
         self.zones.append(zone)
+
+    def add_encryption_key(self, key: EncryptionKey) -> None:
+        self.encryption_keys.append(key)
 
     def get_zone(self, number: int) -> Optional[Zone]:
         for z in self.zones:
