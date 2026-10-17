@@ -178,7 +178,68 @@ Now that we understand the secrets and the traps, what does the dream open-sourc
 
 ---
 
-## 6. Conclusion & Next Steps
+## 6. The "Wiping Trap": Did Motorola Do It On Purpose?
+
+When enthusiasts used leaked Depot tools to wipe a radio or recover from an error, they often discovered that wiping the radio turned it into a useless paperweight that wouldn't transmit on frequency. 
+
+**Was this deliberate by Motorola? Absolutely.**
+
+### The Dead-Man's Switch: Soft-Pots
+* In vintage 1980s radios (like the Motorola Saber or HT1000), tuning was physical. Technicians took a plastic tuning tool and turned physical potentiometers and RF coils on the circuit board. If the digital memory got corrupted, the radio's physical RF circuits were still 100% in tune.
+* With the XTS, Motorola digitized everything into **"Soft-Pots" (Software Potentiometers)** stored in a special flash block called the **Tuning Partition**.
+* This partition stores the unique analog fingerprint of that specific radio:
+  * **Crystal reference frequency offset** (keeps the radio exactly on 851.512500 MHz and not 851.514000 MHz).
+  * **RF power output calibration curves** (how much wattage to feed the power amplifier across different frequencies and temperatures).
+  * **Receiver front-end filter alignment curves**.
+  * **Squelch threshold voltages**.
+
+### The Vendor Lock-In Trap
+* Motorola’s standard customer software (CPS) had **no feature to read, back up, or restore the Tuning Partition**. Only authorized Motorola Regional Service Depots with expensive automated RF test sets (like the $25,000 Motorola R-2670 or Aeroflex 3920) had the software tools to write to it.
+* If a third-party shop or hobbyist attempted a raw wipe or forced a foreign codeplug, the Tuning Partition was zeroed out. The radio displayed `ERROR 01/82` (Checksum failure) or drifted wildly off-frequency. 
+* Motorola's business model required municipalities to send the radio back to the factory depot at $350+ per incident just to recalibrate software settings.
+
+### How We Fix This in Modern Open Architectures
+1. **Never tie tuning to user settings**: Factory RF calibration should live in a **Hardware Write-Protected Partition** (or One-Time Programmable / OTP flash block). No software update, codeplug change, or user wipe should EVER be physically capable of erasing factory RF alignment.
+2. **One-Click Calibration Backup**: In open tools like OpenAstro, the first thing the tool does before touching a single byte is clone the raw calibration partition to `radio_calibration.bin`. If anything goes wrong, you restore the exact factory tuning with one click.
+
+---
+
+## 7. Inside Motorola's Software Architecture: What They Chose & What We Would Do Differently
+
+Understanding how Motorola structured the XTS software explains both why it was an engineering marvel in 2002 and why it feels excruciatingly painful to use today.
+
+### How Motorola Built It in the 1990s
+Motorola designed the ASTRO 25 system under extreme hardware and memory constraints:
+
+1. **Tiny Memory (The Byte-Packing Obsession):**
+   * An XTS had 512 KB to 4 MB of flash and only 64 KB to 128 KB of EEPROM.
+   * Because RAM was tiny, they could not use human-readable text formats (like XML or JSON). Instead, they used **raw binary struct dumps**: the PC software simply dumped C data structures byte-for-byte directly into the radio's EEPROM chips.
+2. **The Split-Brain Architecture:**
+   * **Host CPU (Freescale ColdFire 683xx):** Ran a proprietary Motorola real-time executive. Handled the screen, buttons, battery monitoring, and the PC serial link.
+   * **DSP (Motorola 56300 / TI OMAP):** Ran hand-optimized assembly code for real-time waveform modulation (C4FM/CQPSK) and vocoder processing.
+   * They communicated over an internal serial bus.
+3. **The PC Software (CPS):**
+   * Written in Microsoft Visual C++ 6.0 and MFC (Microsoft Foundation Classes).
+   * Inside every `.cpg` codeplug file is actually a hidden **Microsoft Access Jet Database**! This is why CPS only runs on 32-bit Windows and constantly has database engine crashes on modern 64-bit systems.
+
+---
+
+### What We Would Do Differently (The Modern Blueprint)
+
+If you were building a brand-new radio architecture today with modern software and hardware engineering, here is what you would change:
+
+| Architectural Feature | Motorola's 1990s Approach | Modern Sovereign Radio Approach |
+| :--- | :--- | :--- |
+| **Configuration Format** | Opaque binary blob (`.cpg`) mapping directly to EEPROM memory pointers. Bricks if pointers mismatch. | **Declarative Schema (JSON / YAML / Protocol Buffers)**. Fully human-readable, schema-validated, and edit-friendly in any spreadsheet or text editor. |
+| **PC Connection & Drivers** | Proprietary RS-232 / USB drivers requiring a 2 GB legacy Windows installer. | **Driverless WebUSB / USB-C Mass Storage**. The radio shows up as a flash drive or opens directly in Google Chrome / Brave on any Mac, Linux, PC, or Android phone. |
+| **Failure Recovery** | Single-bank flash. A dead battery during programming causes fatal `ERROR 01/82` brick. | **Dual-Bank (A/B) Self-Healing Bootloader**. If Bank B fails to verify, the radio automatically reboots from Bank A. Impossible to brick. |
+| **RF Calibration Safety** | Stored in mutable EEPROM. Erased by unauthorized wipes (the "Depot trap"). | **Hardware-Isolated Calibration Sector**. Factory RF alignment lives in a read-only partition completely isolated from user data. |
+| **Voice Processing** | Closed, proprietary DVSI IMBE vocoder chip with patent royalties. | **Open-Source Codec2**. Free, unencumbered, crystal-clear digital voice with modern ChaCha20/AES encryption. |
+| **Data Capabilities** | Slow 9600-baud proprietary serial packets (SB9600). | **Dual-Engine Voice + Meshtastic Mesh**. High-power RF voice paired with decentralized, off-grid LoRa packet networking for live GPS tracking. |
+
+---
+
+## 8. Conclusion & Next Steps
 
 The Motorola XTS showed the world how to build **indestructible RF hardware**. But its software ecosystem was designed to trap customers inside a corporate walled garden.
 
