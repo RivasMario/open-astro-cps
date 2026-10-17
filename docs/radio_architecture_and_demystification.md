@@ -239,7 +239,79 @@ If you were building a brand-new radio architecture today with modern software a
 
 ---
 
-## 8. Conclusion & Next Steps
+## 8. The Channel & Frequency Limits: Why 16 Channels, and Was Single-Band an Intentional Limit?
+
+Two questions frequently confuse beginners:
+1. *Why does the radio only have 16 channels on the top knob?*
+2. *Why couldn't an XTS do VHF, UHF, and 800 MHz all in one radio? Was it an intentional limit or hardware limitations at the time?*
+
+### The 16-Channel Knob: Ergonomics Over Silicon
+* The physical rotary knob on the top of an XTS is a **16-position mechanical Gray-code switch** with 4 binary output pins ($2^4 = 16$ binary states from `0000` to `1111`).
+* **Why not an endless spin wheel with 1,000 channels?**
+  * Emergency responders (firefighters in pitch-black smoke wearing thick nomex gloves) specifically demanded a knob with **hard physical stops and distinct mechanical clicks**.
+  * A firefighter can reach down to their hip without looking and count three clicks to the right to know they are on `TAC 4`. An endless wheel would get bumped and change channels accidentally.
+* **The Software Side:** While each Zone has 16 knob positions, the total number of channels in memory (255, 512, or 870) was strictly limited by EEPROM table allocation.
+
+### Single-Band Radios: RF Physics vs. Corporate Greed
+* **The 1990s RF Physics Problem (Legitimate Hardware Limit):**
+  * To get military-grade receiver sensitivity and reject high-power interference, an XTS used bulky, high-Q **varactor-tuned tracking bandpass filters and discrete local oscillators (VCOs)**.
+  * In 1998, physics dictated that a clean, high-efficiency RF power amplifier and filter network could only cover a 30 to 70 MHz frequency spread.
+  * Building an all-band radio (VHF 150 MHz + UHF 450 MHz + 800 MHz) in 1998 would have required three completely separate RF transmitter decks, three antenna switches, and three preselectors inside one shell. The radio would have been the size of a shoebox, weighed 8 pounds, and cost $20,000.
+* **The Corporate Greed Side (The Intentional Limit):**
+  * Motorola *loved* this limitation. If a police department operated on 800 MHz for city dispatch but needed VHF to talk to state foresters or sheriff mutual aid, Motorola happily sold them **two separate $4,000 radios for every single officer and vehicle**, or sold them expensive cross-band vehicular repeaters (XTVA).
+  * It wasn't until the 2010s—with the advent of modern wideband direct-conversion silicon and gallium nitride (GaN) multi-band power amplifiers—that radios like the **Motorola APX 7000/8000** and **Harris Unity** could physically fit all three bands into one handheld.
+
+---
+
+## 9. Code Secrets, Developer Breadcrumbs, and Out-of-Band Hacking
+
+When analyzing Motorola’s Customer Programming Software (CPS) binaries, DLLs, and `.tbl` table definitions, several fascinating internal secrets emerge:
+
+### A. The "Out-of-Band" Frequency Check (Artificial Software Wall)
+* In official Motorola CPS, if you try to type a ham radio frequency like `144.39000 MHz` into a commercial VHF radio (`150.00000 - 174.00000 MHz`), the software pops up an angry dialog box: *"Frequency entered is outside the allowable range."*
+* **The Secret:** The physical radio hardware VCO (Voltage Controlled Oscillator) can actually lock and transmit clean RF several megahertz beyond its factory spec (e.g., down to 144 MHz or up to 875 MHz).
+* The frequency limit was **only checked in client-side Windows GUI dialog code** via simple `CMP` (compare) assembly instructions in `A25*.dll`. By hex-editing that compare instruction or bypassing CPS completely with **OpenAstro**, the radio happily accepts out-of-band ham frequencies without any hardware modification!
+
+### B. Developer Codenames and Frustrated Comments
+Decompiled CPS DLLs and firmware strings contain internal engineer breadcrumbs:
+* **Internal Platform Codenames:**
+  * `WARIS` = The commercial European/Asian platform (HT750, GP340).
+  * `CEDAR` = The high-tier ASTRO 25 platform (XTS 2500, XTS 5000).
+  * `NEPTUNE` = The early dual-deck research architecture that eventually became the APX series.
+* **Debug Opcodes:** The SB9600 protocol handler contains unadvertised debug opcodes:
+  * `OPCODE 0x3F (DSP_PEEK)` and `OPCODE 0x40 (DSP_POKE)`: Factory development commands allowing direct reading and writing of internal DSP register memory over the side serial pins.
+* **Customer-Specific Workarounds:** Hidden flags like `USFS_HACK` (an internal patch for the US Forest Service to force Front Panel Programming across all zones) and `ASK_OVERRIDE_FLAG` (a bypass for Advanced System Key hardware security dongles).
+
+---
+
+## 10. How OpenAstro Permanently Fixes the "Wiping Trap"
+
+The fundamental flaw of Motorola Depot software was that it treated the radio's memory as a monolithic, undifferentiated bucket of bytes. Wiping or modifying the codeplug risked zeroing out the critical **Tuning Partition (Soft-Pots)**.
+
+**OpenAstro completely eliminates this problem through three architectural guardrails:**
+
+```
+[ OpenAstro Engine ]
+         │
+         ├── 1. Automated Pre-Flight: Checks and backs up [0x0000 - 0x07FF] to tuning_backup.bin
+         │
+         ├── 2. Address Boundary Enforcer: HARD LOCK on memory writes
+         │      ├── [0x0000 - 0x07FF] : READ-ONLY TUNING (BLOCKED FROM WRITES)
+         │      └── [0x2000 - 0x1FFFF]: MUTABLE USER PERSONALITY & CHANNELS
+         │
+         └── 3. Checksum Re-calculator: Automatically fixes EEPROM table checksums
+```
+
+1. **Pre-Flight Tuning Partition Cloning:**
+   * Before OpenAstro sends a single write packet over serial, it reads and validates the radio’s calibration sector (`0x0000` to `0x07FF`) and writes a local `tuning_backup.bin` snapshot with SHA-256 verification.
+2. **Hard Memory Address Boundary Lock:**
+   * OpenAstro strictly enforces memory compartmentalization. It is physically impossible for an OpenAstro channel write or codeplug import to send an opcode targeting the soft-pot partition.
+3. **Soft-Brick Recovery:**
+   * If a user previously bricked an XTS using old Depot software or encountered a corrupted checksum (`ERROR 01/82`), OpenAstro can flash their backed-up calibration file back into the radio without needing a $25,000 Motorola service monitor.
+
+---
+
+## 11. Conclusion & Next Steps
 
 The Motorola XTS showed the world how to build **indestructible RF hardware**. But its software ecosystem was designed to trap customers inside a corporate walled garden.
 
@@ -247,6 +319,6 @@ By pairing:
 1. **The physical durability and RF preselection of the XTS**,
 2. **The open-source digital voice freedom of Codec2 / M17**,
 3. **The decentralized off-grid packet networking of Meshtastic**, and
-4. **The plain-text spreadsheet simplicity of OpenAstro**,
+4. **The safe, plain-text spreadsheet simplicity of OpenAstro**,
 
 ...we have the complete blueprint for a radio platform that is completely sovereign, resilient, and impossible to shut down.
