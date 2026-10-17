@@ -139,8 +139,10 @@ open-astro ports
 
 ## 📚 Documentation
 
+* [Radio Architecture Demystified](docs/radio_architecture_and_demystification.md): Codeplugs vs. Flashcodes, P25 & Trunking explained simply, the history of Depot software, and designing a sovereign voice + Meshtastic radio.
 * [Fleet Setup & Encryption Guide](docs/fleet_setup_and_encryption.md): Hardware roles, PSERN Phase 2 notes, and Motorola ADP configuration.
 * [Fedora Linux Setup & Udev Rules](docs/linux_fedora_setup.md): Complete setup for Fedora users.
+* [Interactive Web GUI Mockup](docs/gui_mockup.html): Visual comparison between legacy CPS and modern OpenAstro interface.
 
 ---
 
