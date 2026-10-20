@@ -570,3 +570,143 @@ component (if it exists elsewhere on disk or in another Motorola installer)
 or a live USB/serial capture of the real software actually running --
 which circles back to section 6.2's unresolved wall (Wine's serial driver
 can't open this radio's native-USB port as a COM port at all).
+
+---
+
+## 7.5 Update, same day, continued: real prior art, the real CRC, and a real negative test
+
+Prompted by the user's observation that this protocol has likely been publicly
+documented before. It has. Found via web search, not invention:
+
+* **The official Motorola document.** `SB9600 Serial Bus Protocol Manual`,
+  Version 05.13, August 1995 (doc control no. FL08-RQMT-85A001), archived at
+  the W9CR amateur radio wiki
+  (https://wiki.w9cr.net/index.php/SB9600). The archived copy fetched this
+  session is a 10-page front-matter/table-of-contents excerpt, not the full
+  244 pages the search index described -- but that alone is enough to confirm,
+  from Motorola's own revision history, several things this project had only
+  inferred:
+  - **`EPREQ` is a real, official opcode name**, added in protocol Version 5.1
+    ("Added 'BUTCTL', 'CNFREQ', '**EPREQ**', 'LUMCTL', 'SPAOPC', and 'TESTOP'
+    opcodes").
+  - **`MEMACS` is a real, official opcode**, present since early versions and
+    extended in 5.1 ("Added virtual address capability to MEMACS") and 5.11
+    ("Defined bit D3 in MEMACS. ... Added more comments as per the usage of
+    MEMACS opcode").
+  - **`TSTMOD` is real**, and the manual states *"TSTMOD is now usable only by
+    radio (address $01) devices"* -- which matches, exactly, this project's
+    own extracted `TSTMOD` payload having `DeviceType = 0x01` (byte[0]) as its
+    first field (see 7.1's table). This independently confirms byte[0] of the
+    4-byte payload is the **DeviceType** field, not a bus-address pair as
+    hypothesized in 7.1 (superseded below).
+  - **SBEP = "Serial Bus Expanded Protocol"**, with its own Appendix I in the
+    official manual (entry/exit sequence, handshaking, ACK/NAK, message
+    format) -- confirms `RemSBEP`/`RemESBEP` (section 2) are not invented
+    names.
+  - The manual's own table of contents gives the exact real packet field
+    order: **Section 3 "Bus Protocol" → 3.1 Standard Signalling Definition →
+    3.1.1 CRC; 3.7 Addresses; 3.8 Opcodes** (Alphabetical / Functional /
+    Numerical tables, then ~104 pages of per-opcode descriptions). Not yet
+    retrieved -- see "what's still missing" below.
+
+* **A real, independently-verified CRC implementation.** Paul Banks (M3OSL),
+  "GM1200 Controller" (GPLv3+), archived at the same W9CR wiki
+  (`Gm1200_python_SB9600_Libary.zip`, original at
+  http://paulbanks.org/projects/gm1200/). Derived by watching a real Motorola
+  GM1200 radio's wire traffic with a serial port and an oscilloscope -- not
+  reverse-engineered from documentation, measured from hardware. Ships with
+  its own test vectors, sniffed from that live GM1200, which this project's
+  copy of the algorithm (`tools/sb9600_crc_reference.py` -- kept out of
+  `src/`, deliberately not part of the installable package, since it's
+  GPLv3+ and this project is MIT; see the licensing note below) checks at
+  import time.
+  **This independently confirms the real packet field layout**, matching the
+  official manual and this project's own extraction exactly:
+
+  ```
+  Byte 0: DeviceType
+  Byte 1: Data1
+  Byte 2: Data2
+  Byte 3: OpCode
+  Byte 4: CRC  (table-based, see tools/sb9600_crc_reference.py)
+  ```
+
+  This supersedes section 7.1's weaker hypothesis that byte[0]/byte[2] formed
+  a source/destination address pair -- they're DeviceType and Data2, two
+  independent fields, and the `TSTMOD`/"radio (address $01)" cross-check above
+  confirms it.
+
+  Saved verbatim as `tools/sb9600.py` (+ its README) and re-implemented with
+  full attribution as `tools/sb9600_crc_reference.py`.
+
+  **Licensing note:** Paul Banks's code is GPLv3+; this project is MIT.
+  The table could not be independently re-derived from the standard
+  reflected-CRC-8 construction for the polynomial his comment names (0x1F) --
+  tried the obvious candidates, none reproduced his table -- so it is
+  genuinely his specific derivation, not re-creatable without copying it.
+  Decision: kept out of `src/` entirely (not imported by the installable
+  `open_astro` package), reference-only in `tools/`, both the original file
+  (`tools/sb9600.py`, verbatim, with its own `README`/`COPYING`) and this
+  project's annotated copy (`tools/sb9600_crc_reference.py`).
+
+### Real, complete, CRC-correct frames for this project's extracted commands
+
+```
+RADIO_EP_REQ: 00 12 01 06 02
+SRIB_EP_REQ:  1a 12 1a 06 db
+MEMACS:       00 09 01 08 b2
+RELEASE:      00 00 01 08 7c
+TSTMOD:       01 02 01 40 f7
+```
+
+### Tested against the real radio: a complete, CRC-correct frame, and still silence
+
+Sent `RADIO_EP_REQ`'s full, correct, CRC-valid 5-byte frame
+(`00 12 01 06 02`) directly to `/dev/ttyACM0`. No response. AT mode
+unaffected before and after.
+
+Also tried the real library's hardware **BUSY/CTS handshake** (classic
+SB9600 requires asserting a BUSY line via DTR before each transmission and
+waiting for CTS to clear before sending) -- toggling `pyserial`'s `dtr`
+property around the send. `cts` read as permanently `True` regardless of
+what was sent or how DTR was toggled, before, during, and after. On the
+physical RS-232/TTL bus classic SB9600 was designed for, these are real
+electrical signals used for multi-device bus arbitration; over this radio's
+USB-CDC virtual serial port, they appear to not be wired through to anything
+meaningful at all.
+
+**Working conclusion:** the command *content* this project extracted
+(`protocol/commands.py`'s `REAL_COMMAND_BYTES`) is real and now
+independently cross-confirmed by Motorola's own documentation and by an
+unrelated hardware analysis of a different radio (GM1200). But this
+radio generation's (ASTRO25/"Cedar", 2002+) native-USB interface most likely
+does **not** carry the classic, hardware-handshaked SB9600 bus transport
+directly -- that transport was designed for, and documented in the context
+of, an actual shared electrical bus (control head, siren amp, accessories),
+not a point-to-point USB connection. Something else carries these commands
+on this interface.
+
+One more real lead, not yet resolved: sending the command as plain
+comma-separated decimal text over the already-working AT channel
+(`"0,18,1,6\r\n"`, motivated by section 7.4's finding that `Send()`
+internally builds exactly this kind of string) got **`ERROR`**, not silence
+-- a different and more informative result than every binary attempt. `ERROR`
+from this radio's AT parser (section 6) means the line was received and
+parsed as a command, just not a recognized one. This is evidence the right
+general approach (text, not binary, on this channel) may be closer, missing
+only the correct verb/wrapper syntax (by analogy with the confirmed real
+verbs `AT#DATLCL=`, `AT+WV304=`) -- which has not been found and was not
+guessed at further, consistent with this project's practice of not sending
+unfounded guesses at the radio.
+
+### What's still missing
+
+1. **The verb/wrapper syntax**, if the text-based theory is right -- what
+   actually precedes `0,18,1,6` (or however the real software formats it) to
+   make this radio's parser recognize it as "execute this SB9600-equivalent
+   command" rather than rejecting it as `ERROR`.
+2. **The rest of the official opcode table** -- only the table of contents
+   was retrieved (confirming section locations), not the ~104 pages of actual
+   opcode descriptions (manual sections 3.8.2-3.8.5, pages 22-138). Re-fetching
+   those specific pages would very likely resolve both open questions above
+   directly from Motorola's own text, rather than more inference.
