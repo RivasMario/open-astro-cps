@@ -80,6 +80,80 @@ state-changing operations: `ATZ` (reset), `AT&F` (factory defaults), `AT&W`
 stay in the same "universally read-only" category until there's a reason to
 believe otherwise.
 
+## Update, same day: the real command set, straight from `PatComm10.dll`
+
+Rather than keep guessing AT strings blind, extracted `Comm-DLLs/PatComm10.dll`
+(the real driver for this interface, per `CPS_BINARY_ANALYSIS.md` section 1)
+and found its actual command table -- all contiguous in `.rdata`
+(`strings -n 2 -t x`, offsets `0x83c0`-`0x8404`), which is PatComm10's own
+connection-setup sequence, in order:
+
+```
+AT#DATLCL=1
+AT+WPNEI=
+AT+WV304=
+AT+IPR=
+AT&V
+AT&K0
+AT&K4
+AT&K3
+```
+
+`AT&V` matches what was already found by hand (above). The rest are new,
+real, and unambiguous:
+* `AT+IPR=` -- set baud rate (standard Hayes).
+* `AT&K0` / `AT&K3` / `AT&K4` -- set flow control mode. `AT&V`'s own
+  `FLOW:K3` field directly corresponds to one of these.
+* `AT+WV304=` -- **sets** the `WV304` field `AT&V` reports (the
+  `192.168.128.1` address). Confirms it's a real, settable radio parameter,
+  not a fixed report.
+* `AT+WPNEI=` -- unidentified Motorola-specific setter (name not decoded).
+* `AT#DATLCL=1` -- unidentified. "DATA LOCAL" was a reasonable guess at a
+  mode-switch command (classic modems use something similar to flip from
+  command mode to a raw data pipe), so it was tested, carefully:
+
+  ```
+  AT          -> OK
+  AT#DATLCL=1 -> OK
+  AT          -> OK                    (still answers normally afterward)
+  ```
+  Then, to check whether it opened a binary channel on this same port, the
+  project's own placeholder SB9600 ping frame (`\x05\x01\x00\xff`) was sent:
+  ```
+  \x05\x01\x00\xff -> b''               (no response)
+  AT\r\n            -> ERROR            (!)
+  ```
+  That `ERROR` looked promising at first -- state change! -- but turned out
+  to be mundane: the AT parser is a classic line-buffered text interpreter,
+  and the raw binary bytes just got prepended to the next line's buffer,
+  invalidating it. Confirmed by flushing the line and retrying:
+  ```
+  \r\n\r\n  -> ERROR    (the polluted empty line)
+  AT\r\n    -> OK        (back to normal -- nothing was actually switched)
+  ```
+  **Conclusion: `AT#DATLCL=1` does not unlock a binary SB9600 channel on this
+  port.** Whatever it actually controls (a plausible but unconfirmed guess:
+  routing of PPP/data traffic inside the radio versus to the host) remains
+  unknown, and the hypothesis that this AT interface secretly gates access to
+  the "real" binary protocol is not supported by anything tried so far.
+
+### What was deliberately NOT tried, and why
+
+Everything else in that command table **writes** radio or link state rather
+than reading it: `AT+IPR=` changes the baud rate (would break the link until
+reset to match), `AT&K0`/`AT&K3`/`AT&K4` change flow control, `AT+WV304=`
+would change the radio's reported network address, and `AT+WPNEI=` is an
+unidentified setter. None of these were sent. They sit in a different risk
+category from the read-only `AT`/`ATI0`/`ATI1`/`AT&V` already verified safe
+above, and trying them means deliberately changing the radio's configuration,
+not just reading it -- that needs a decision the project, not this analysis,
+should make.
+
+Also found in `PatPort.exe` (not yet confirmed as real, standalone commands --
+could be fragments of longer strings): `ATG`, `ATS`/`ATSx` (S-register
+read/write, standard Hayes), `ATW`, `ATZ` (reset -- standard Hayes, explicitly
+not tried here for the obvious reason).
+
 ## What open-astro-cps does with this
 
 `src/open_astro/protocol/at_interface.py` implements this as a real,
@@ -90,13 +164,28 @@ this path automatically for a port identified as a native Motorola USB
 device, before falling back to the unverified placeholder SB9600 path.
 
 Open questions, in order of likely value:
-1. What is the full command set? `AT+CLAC` (list commands) isn't
-   implemented, so there's no self-describing way to enumerate it --
-   command names would need to come from disassembling `PatComm10.dll`/
-   `RadioSerial10.dll` (now that `PatPort.exe` likely talks AT commands
-   to this radio class specifically) or from careful, read-only-only probing.
+1. **Updated:** the real connection-setup command set is now known (see "the
+   real command set, straight from PatComm10.dll" above) -- it's small
+   (`AT#DATLCL`, `AT+WPNEI`, `AT+WV304`, `AT+IPR`, `AT&V`, `AT&K0/3/4`), all
+   either read-only config dump (`AT&V`, already used) or write-type setters
+   for baud/flow-control/network params. None of it is a codeplug command.
+   `AT+CLAC` (list commands) isn't implemented, so there's no self-describing
+   way to find anything beyond this table short of further disassembly or
+   very carefully chosen probing. (Checked: `RadioSerial10.dll` has zero AT
+   strings of its own -- it's confirmed to be the generic `CCommPort` Win32
+   wrapper from `CPS_BINARY_ANALYSIS.md` section 1, not AT-aware. PatComm10
+   is the only place this command table lives.)
 2. Does this interface expose anything for reading/writing the codeplug
    itself, or is it limited to identity/config/PPP-data-session setup?
-   Nothing tried so far suggests a codeplug read/write path through it.
+   Nothing tried so far suggests a codeplug read/write path through it, and
+   the confirmed command set above doesn't contain one either. The working
+   hypothesis is now that this interface is identity/config/PPP-only, and
+   codeplug read/write (if it exists on native-USB radios at all) happens
+   through a different mechanism entirely -- possibly the actual
+   `RemoteProtocols01.dll`/`IRemoteProtocol` SB9600 transport from
+   `CPS_BINARY_ANALYSIS.md`, running over this same tty once some
+   still-unknown setup sequence (not `AT#DATLCL=1` -- that was tested and
+   ruled out) puts it into a different mode, or over a wholly separate path
+   this analysis hasn't found yet.
 3. What does `PROTOCOL:ALT` mean? Worth a targeted disassembly pass over
    `PatComm10.dll` for the string "ALT" in a protocol-selection context.
