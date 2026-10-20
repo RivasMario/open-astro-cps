@@ -4,6 +4,7 @@ import tempfile
 from open_astro.models import Channel, Zone, RadioCodeplug, EncryptionKey
 from open_astro.parsers import JsonParser, CsvParser
 from open_astro.protocol import PacketFramer, AstroFlasher
+from open_astro.protocol import at_interface
 
 class TestOpenAstro(unittest.TestCase):
     def test_channel_offsets(self):
@@ -94,6 +95,8 @@ class MockRadioSerialLink:
     def __init__(self):
         self.sent_commands = []  # list of (command_name, payload)
         self.responses = []
+        self.port = None  # no real port -> AstroFlasher skips the AT interface path
+        self.connection = None
 
     def ping(self, allow_unverified_protocol: bool = False):
         return True
@@ -148,6 +151,71 @@ class TestAstroFlasher(unittest.TestCase):
             self.assertIn("UNKNOWN_WRITE_BLOCK", names_sent)
             self.assertIn("UNKNOWN_COMMIT", names_sent)
             self.assertIn("UNKNOWN_REBOOT", names_sent)
+
+class FakeATConnection:
+    """Fake pyserial connection replaying the exact transcript measured
+    against a real XTS 2500 on 2026-10-20 (docs/AT_INTERFACE_DISCOVERY.md).
+    Not a simulation of the protocol in general -- just this one real
+    exchange, so the parser is tested against real bytes."""
+    _RESPONSES = {
+        "AT": b"\r\nOK\r\n",
+        "ATI1": b"\r\nMotorola System Release 6.0 Radio\r\n\r\nOK\r\n",
+        "AT&V": (
+            b"\r\nCARRIER:9600\r\n\r\nPROTOCOL:ALT\r\n\r\nCOMPRESSION:NONE\r\n\r\n"
+            b"FLOW:K3\r\n\r\nWV304:192.168.128.1\r\n\r\nRADIO:XTS 2500\r\n\r\n"
+            b"MODEL:H46UCF9PW6AN\r\n\r\nSERIAL:205CFR2930\r\n\r\n"
+            b"PORT:SIDE CONNECTOR AS USB\r\n\r\nSECURE:R000000\r\n\r\n"
+            b"CPS:HARDWARE FLOW CONTROL\r\n\r\nOK\r\n"
+        ),
+    }
+
+    def __init__(self):
+        self._pending = b""
+        self.in_waiting = 0
+
+    def reset_input_buffer(self):
+        self._pending = b""
+
+    def write(self, data: bytes):
+        cmd = data.decode("ascii").strip()
+        self._pending = self._RESPONSES.get(cmd, b"\r\nERROR\r\n")
+        self.in_waiting = len(self._pending)
+
+    def flush(self):
+        pass
+
+    def read(self, n):
+        out, self._pending = self._pending[:n], self._pending[n:]
+        self.in_waiting = len(self._pending)
+        return out
+
+
+class TestATInterface(unittest.TestCase):
+    """Tests the parser against the real captured transcript, not a model of
+    the protocol -- see FakeATConnection."""
+
+    def test_ping(self):
+        self.assertTrue(at_interface.ping(FakeATConnection()))
+
+    def test_get_radio_identity(self):
+        info = at_interface.get_radio_identity(FakeATConnection())
+        self.assertEqual(info["RADIO"], "XTS 2500")
+        self.assertEqual(info["MODEL"], "H46UCF9PW6AN")
+        self.assertEqual(info["SERIAL"], "205CFR2930")
+        self.assertEqual(info["WV304"], "192.168.128.1")
+
+    def test_get_firmware_banner(self):
+        banner = at_interface.get_firmware_banner(FakeATConnection())
+        self.assertEqual(banner, "Motorola System Release 6.0 Radio")
+
+    def test_identity_raises_on_no_response(self):
+        class DeadConnection(FakeATConnection):
+            def write(self, data):
+                self._pending = b""  # radio never answers
+
+        with self.assertRaises(at_interface.ATInterfaceError):
+            at_interface.get_radio_identity(DeadConnection())
+
 
 class TestUnverifiedProtocolGate(unittest.TestCase):
     def test_write_blocked_without_opt_in(self):

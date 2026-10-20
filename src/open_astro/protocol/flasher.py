@@ -50,6 +50,7 @@ from .commands import (
     UNKNOWN_WRITE_BLOCK,
     UNKNOWN_COMMIT,
 )
+from . import at_interface
 
 # Critical Memory Boundaries -- placeholder addresses, no basis in the real
 # installer (see module docstring).
@@ -69,8 +70,41 @@ class AstroFlasher:
         self.radio_info = {}
 
     def get_radio_identity(self, allow_unverified_protocol: bool = False) -> dict:
-        """Queries radio hardware identification. UNKNOWN_GET_RADIO_INFO has
-        no real-name basis at all (see module docstring)."""
+        """
+        Queries radio hardware identification.
+
+        Tries the REAL, VERIFIED AT command interface first (at_interface.py --
+        see docs/AT_INTERFACE_DISCOVERY.md). This is not gated: AT&V is a
+        standard, read-only, measured-safe command, confirmed working against
+        a real XTS 2500. Only radios that enumerate as a native Motorola USB
+        device (see serial_link.describe_port) are tried this way, since that
+        is the only configuration this has been verified against.
+
+        Falls back to the unverified placeholder SB9600 path
+        (UNKNOWN_GET_RADIO_INFO) only if the AT interface doesn't answer, or
+        for a cable-connected radio the AT path was never tried against.
+        """
+        link_port = getattr(self.link, "port", None)
+        link_connection = getattr(self.link, "connection", None)
+        port_info = RadioSerialLink.describe_port(link_port) if link_port else None
+        if port_info and port_info.get("native_usb_radio") and link_connection:
+            try:
+                info = at_interface.get_radio_identity(self.link.connection)
+                banner = at_interface.get_firmware_banner(self.link.connection)
+                normalized = {
+                    "model": info.get("MODEL", "UNKNOWN"),
+                    "serial": info.get("SERIAL", "UNKNOWN"),
+                    "flashcode": "UNKNOWN",  # not exposed by AT&V
+                    "firmware": banner or "UNKNOWN",
+                    "radio_name": info.get("RADIO", "UNKNOWN"),
+                    "secure": info.get("SECURE", "UNKNOWN"),
+                    "raw_at_response": info,
+                }
+                self.radio_info = normalized
+                return normalized
+            except at_interface.ATInterfaceError:
+                pass  # fall through to the placeholder path below
+
         resp = self.link.send_command(UNKNOWN_GET_RADIO_INFO, b"",
                                        allow_unverified_protocol=allow_unverified_protocol)
         if not resp:

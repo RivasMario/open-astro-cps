@@ -5,15 +5,19 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Fedora%20%2F%20Linux%20%7C%20macOS-lightgrey.svg)]()
 
 > ### Project status (2026-10-20)
-> **Working and verified:** the codeplug data model, JSON/CSV conversion, and the
-> USB transport layer (port detection, permissions, device identification).
+> **Working and verified, against real hardware:** the codeplug data model,
+> JSON/CSV conversion, the USB transport layer (port detection, permissions,
+> device identification), and — new — **`open-astro probe` actually reads a
+> real radio's identity today** (model, serial, security status) via the AT
+> command interface its own USB descriptor advertises. See
+> [**docs/AT_INTERFACE_DISCOVERY.md**](docs/AT_INTERFACE_DISCOVERY.md).
 >
-> **Not verified:** the radio programming protocol. The SB9600 opcodes, packet
-> traces and memory map in `src/open_astro/protocol/` and in several `docs/`
-> files were reasoned out rather than captured from hardware or extracted from
-> Motorola's code, despite being presented as reverse-engineering results.
-> Writing to a radio is gated off until that is resolved — see
-> [**docs/CPS_BINARY_ANALYSIS.md**](docs/CPS_BINARY_ANALYSIS.md),
+> **Still not verified:** reading or writing the codeplug itself. The SB9600
+> opcodes, packet traces and memory map for that in `src/open_astro/protocol/`
+> and in several `docs/` files were reasoned out rather than captured from
+> hardware or extracted from Motorola's code, despite being presented as
+> reverse-engineering results. Writing to a radio is gated off until that is
+> resolved — see [**docs/CPS_BINARY_ANALYSIS.md**](docs/CPS_BINARY_ANALYSIS.md),
 > [**docs/PROTOCOL_STATUS.md**](docs/PROTOCOL_STATUS.md) and
 > [**docs/HARDWARE_GROUND_TRUTH.md**](docs/HARDWARE_GROUND_TRUTH.md).
 
@@ -160,10 +164,32 @@ open-astro ports
 Legacy motherboard ports (`/dev/ttyS*`) are listed but never auto-selected.
 If the port is not accessible, install the udev rule from `scripts/`.
 
+### 4. Probe a Real Radio (works today, verified against hardware)
+```bash
+open-astro probe
+```
+```
+[*] Probing radio on port /dev/ttyACM0...
+[+] Radio responded OK to AT -- link established.
+[+] Radio Identity (AT&V):
+    Firmware: Motorola System Release 6.0 Radio
+    RADIO: XTS 2500
+    MODEL: H46UCF9PW6AN
+    SERIAL: 205CFR2930
+    SECURE: R000000
+    PORT: SIDE CONNECTOR AS USB
+    ...
+```
+This uses the radio's own AT command interface (see
+[**docs/AT_INTERFACE_DISCOVERY.md**](docs/AT_INTERFACE_DISCOVERY.md)) — a
+real, measured-safe, read-only query, not a guess. Codeplug read/write still
+isn't implemented for real; see the project status note above.
+
 ---
 
 ## 📚 Documentation
 
+* [**AT Interface Discovery — the one real, working transport**](docs/AT_INTERFACE_DISCOVERY.md): how `probe` actually talks to a real radio today.
 * [**CPS Binary Analysis — real DLL names, real COM interface, real opcode names**](docs/CPS_BINARY_ANALYSIS.md): what extracting and reading the actual Motorola installer turned up.
 * [**Protocol Status — read before trusting any opcode**](docs/PROTOCOL_STATUS.md): what is measured vs. assumed, and how to get to ground truth.
 * [**Hardware Ground Truth**](docs/HARDWARE_GROUND_TRUTH.md): verified USB descriptors, port, and permissions for the XTS 2500.

@@ -117,34 +117,53 @@ def cmd_probe(args):
     if not port:
         print("[-] Error: No serial port found. Specify --port (e.g. COM3 or /dev/ttyUSB0).")
         sys.exit(1)
-    
-    if not args.accept_unverified_protocol:
-        print("[-] Refusing to probe: the wire encoding is an unverified placeholder")
-        print("    (see docs/CPS_BINARY_ANALYSIS.md). It is known NOT to match the real")
-        print("    protocol -- expect silence, not a crash. Pass --accept-unverified-protocol")
-        print("    to try it anyway.")
-        sys.exit(1)
 
-    print(f"[*] Probing radio on port {port} (placeholder wire encoding -- see docs/CPS_BINARY_ANALYSIS.md)...")
+    print(f"[*] Probing radio on port {port}...")
     link = RadioSerialLink(port=port, baudrate=19200, timeout=1.5)
     try:
         link.connect()
-        # 1. Ping
+
+        # 1. Real, verified path: the AT command interface this radio's own
+        #    USB descriptor advertises (native-USB radios only -- see
+        #    docs/AT_INTERFACE_DISCOVERY.md). Not gated: AT&V is a standard,
+        #    read-only command, measured safe against real hardware.
+        port_info = RadioSerialLink.describe_port(port)
+        if port_info and port_info.get("native_usb_radio"):
+            from .protocol import at_interface
+            if at_interface.ping(link.connection):
+                print("[+] Radio responded OK to AT -- link established.")
+                info = at_interface.get_radio_identity(link.connection)
+                banner = at_interface.get_firmware_banner(link.connection)
+                print(f"[+] Radio Identity (AT&V):")
+                if banner:
+                    print(f"    Firmware: {banner}")
+                for k, v in info.items():
+                    print(f"    {k}: {v}")
+                return
+            else:
+                print("[!] Radio is a native USB Motorola device but didn't answer AT. "
+                      "Falling back to the unverified placeholder protocol below.")
+
+        # 2. Fallback: the unverified placeholder SB9600 path. Gated.
+        if not args.accept_unverified_protocol:
+            print("[-] Refusing to try the placeholder protocol: unverified wire encoding")
+            print("    (see docs/CPS_BINARY_ANALYSIS.md). Pass --accept-unverified-protocol")
+            print("    to try it anyway -- expect silence, not a crash.")
+            sys.exit(1)
+
         if not link.ping(allow_unverified_protocol=True):
-            print("[-] Radio did not respond to the placeholder PING. Expected -- see above.")
+            print("[-] Radio did not respond to the placeholder PING either.")
             sys.exit(1)
         print("[+] Radio PING OK: Link Established!")
 
-        # 2. Query info
         from .protocol.commands import UNKNOWN_GET_RADIO_INFO
         resp = link.send_command(UNKNOWN_GET_RADIO_INFO, b"", allow_unverified_protocol=True)
         if not resp:
             print("[!] Link responded, but failed to retrieve hardware identity string.")
             sys.exit(1)
-        
+
         payload = resp.get("payload", b"")
         print(f"[+] Radio Hardware Identity Response Received ({len(payload)} bytes):")
-        # Split null-terminated strings
         strings = [s.decode("latin1", errors="replace") for s in payload.split(b"\x00") if s]
         for s in strings:
             print(f"    -> {s}")
