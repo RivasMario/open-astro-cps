@@ -502,6 +502,71 @@ internally consistent and worth recording as such):
 * This table should replace `protocol/commands.py`'s placeholder names
   (`UNKNOWN_READ_BLOCK`, `UNKNOWN_WRITE_BLOCK`, `UNKNOWN_COMMIT`, etc.) --
   those were invented with no basis; `MEMACS`/`RELEASE`/`TSTMOD` are real
-  Motorola strings with real, extracted byte encodings. Not yet wired into
-  the project's own protocol code as of this writing; see the commit history
-  for whether that's since changed.
+  Motorola strings with real, extracted byte encodings. (Done, same session
+  -- see `REAL_COMMAND_BYTES` in `commands.py`.)
+
+### 7.3 Tested against the real radio: silence, no harm, no visible effect
+
+Sent `RADIO_EP_REQ`'s raw 4 bytes directly, with and without a leading `0x05`
+length-style prefix (that value came from the dedicated EPREQ code path,
+which set a length field to `5` right before writing 4 payload bytes --
+tried once as a plausible frame guess, not established): all four variants
+(`RADIO_EP_REQ`, `SRIB_EP_REQ`, each with and without the `0x05` prefix) got
+**zero response** over the AT-mode serial port, and the AT command channel
+kept working normally before and after every attempt -- no corruption, no
+state change. Radio screen: confirmed unchanged, no "PROGRAMMING" text, no
+visible effect at all.
+
+Conclusion: these 4 bytes alone are not a complete, transmittable frame on
+this interface. Either the real wire frame wraps them in something not yet
+known, or (per section 7.4) they don't belong on this AT-mode channel at all.
+
+### 7.4 Tracing `Send()`'s real implementation: a text-based inner layer, and a wall
+
+Resolved the `IRemoteProtocol::Send` vtable slot past two layers of
+compiler-generated thunks (an SEH frame-adjustment trampoline, then a
+COM-argument-marshaling thunk) to find the actual implementation at file
+offset `0x9306` in `RemoteProtocols01.dll`. It does something unexpected:
+
+1. Validates the payload VARIANT's type is `0x2008` (`VT_ARRAY | VT_UI1`,
+   i.e. a byte array) -- confirms the project's understanding of `Send`'s
+   payload parameter.
+2. Calls into an OLE Automation safe-array accessor (an imported function
+   pointer at `0x1000d14c`) to get the array's bounds and raw data pointer.
+3. **Loops over the bytes building what looks like a comma-separated ASCII
+   text representation of them** -- there is a literal `mov byte ptr [...],
+   0x2c` (`','`) inserted between elements in the loop.
+4. `QueryInterface`s an inner object (reached via `this+0xC` on the outer
+   COM object) for a custom interface, IID `{5BF31C6C-E368-11D0-8013-0060B03C8AFF}`,
+   then calls vtable slot 6 on it with the text buffer, then `Release()`s it.
+
+If this reading is right, **the real protocol underneath `IRemoteProtocol`
+may be ASCII text (comma-separated decimal byte values), not raw binary SB9600
+framing at all.** That would retroactively explain this session's repeated
+observation that sending raw binary frames to the radio produces total
+silence -- a radio parsing line-oriented ASCII (consistent with the AT
+command interface already confirmed working on this same port, section 6)
+would simply never see a valid command in a stream of non-ASCII control
+bytes.
+
+**The wall:** the interface IID `{5BF31C6C-...}` (and a sibling,
+`{5BF31C6F-...}`, used nearby for what is presumably the `Receive` side)
+share their exact vendor-GUID tail (`-11D0-8013-0060B03C8AFF`) with the
+mystery CLSID `{CD8D04DD-E675-11D0-8013-0060B03C8AFF}` that blocked this
+session's earlier attempt to get a live COM call working under Wine (section
+6.2) -- clearly the same Motorola GUID batch, generated together. That CLSID's
+packed bytes appear as *data* inside `RemoteProtocols01.dll`, `ByteData10.dll`,
+and `mcomUnknown.dll`, but none of them -- nor any of the ~18 other
+self-registering DLLs in this installer -- actually implements or registers
+it. `ByteData10.dll` (whose name made it the obvious suspect) registers its
+own, different CLSID (`{7AC0F7B4-9CBF-4544-8417-DD398ACFAD4D}`, "RawBytes").
+
+**Conclusion: the component that actually implements this shared interface
+-- and would show the real final step of how a command's bytes/text reach
+the wire -- is not present in this installer.** It's most likely a separate
+Motorola RDK runtime component (shared across multiple Motorola products,
+not bundled with CPS specifically). Finding it would need either that
+component (if it exists elsewhere on disk or in another Motorola installer)
+or a live USB/serial capture of the real software actually running --
+which circles back to section 6.2's unresolved wall (Wine's serial driver
+can't open this radio's native-USB port as a COM port at all).
