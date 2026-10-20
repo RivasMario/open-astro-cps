@@ -119,7 +119,8 @@ class TestAstroFlasher(unittest.TestCase):
         flasher = AstroFlasher(mock_link)
         # Attempt to write into Tuning Partition (0x0000_4000)
         with self.assertRaises(ValueError):
-            flasher.write_codeplug(b"\x00" * 512, target_bank=0x0000_4000)
+            flasher.write_codeplug(b"\x00" * 512, target_bank=0x0000_4000,
+                                   allow_unverified_protocol=True)
 
     def test_write_and_commit(self):
         mock_link = MockRadioSerialLink()
@@ -130,7 +131,8 @@ class TestAstroFlasher(unittest.TestCase):
             orig_backup = flasher.backup_tuning_partition
             flasher.backup_tuning_partition = lambda: os.path.join(tmpdir, "backup.bin")
             
-            success = flasher.write_codeplug(test_data, target_bank=0x0022_0000)
+            success = flasher.write_codeplug(test_data, target_bank=0x0022_0000,
+                                             allow_unverified_protocol=True)
             self.assertTrue(success)
 
             # Check that 0x10 (enter prog), 0x30 (write), 0x32 (commit), and 0x11 (reboot) were sent
@@ -139,6 +141,15 @@ class TestAstroFlasher(unittest.TestCase):
             self.assertIn(0x30, opcodes_sent)
             self.assertIn(0x32, opcodes_sent)
             self.assertIn(0x11, opcodes_sent)
+
+class TestUnverifiedProtocolGate(unittest.TestCase):
+    def test_write_blocked_without_opt_in(self):
+        """The invented-opcode write path must refuse to run by default."""
+        flasher = AstroFlasher(MockRadioSerialLink())
+        with self.assertRaises(RuntimeError) as ctx:
+            flasher.write_codeplug(b"\x00" * 256, target_bank=0x0022_0000)
+        self.assertIn("unverified", str(ctx.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

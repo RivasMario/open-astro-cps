@@ -1,7 +1,28 @@
 """
-AstroFlasher: Safe, high-speed memory read/write engine for Motorola ASTRO 25 radios.
-Implements the SB9600 memory protocol with hardware boundary locks, dual-bank commit,
-mandatory pre-flight calibration backups, and automated software reboots.
+AstroFlasher: memory read/write engine for Motorola ASTRO 25 radios.
+
+!! THE OPCODES AND MEMORY MAP IN THIS MODULE ARE UNVERIFIED !!
+
+Every opcode below (0x00/0x01 ping/ack, 0x10 enter-programming with the
+0xA5 0x5A token, 0x11 reboot, 0x14/0x15 radio info, 0x20/0x21 read,
+0x30/0x31 write, 0x32/0x33 CRC32 bank commit), the dual-bank A/B layout, and
+the partition addresses were authored from reasoning about how the protocol
+*ought* to work. None of them has been confirmed against a real radio or
+against Motorola's own A25 communication code. The unit tests exercise a mock
+that replies with these same invented values, so they prove the state machine
+is self-consistent -- not that it is correct.
+
+Consequences, in order of severity:
+  * Reads are likely to return nothing (the radio will not recognize the frames).
+  * A write that is partially understood can corrupt the codeplug partition.
+  * If the real address map differs, a write believed to be in-bounds can land
+    in the tuning partition and destroy factory RF calibration ("ERROR 01/82"),
+    which no amount of software can restore without the original soft-pots.
+
+write_codeplug() therefore refuses to run until the caller passes
+allow_unverified_protocol=True. Remove this gate only once the opcodes have been
+confirmed against ground truth (Motorola's A25 comm library, or a captured
+CPS <-> radio session).
 """
 import os
 import sys
@@ -97,11 +118,25 @@ class AstroFlasher:
     def write_codeplug(self, 
                        codeplug_bytes: bytes, 
                        target_bank: int = CODEPLUG_BANK_B,
-                       progress_callback: Optional[Callable[[int, int, float], None]] = None) -> bool:
+                       progress_callback: Optional[Callable[[int, int, float], None]] = None,
+                       allow_unverified_protocol: bool = False) -> bool:
         """
-        Safely writes codeplug to staging bank, validates CRC, and commits.
-        Enforces strict memory boundary protection against tuning partition corruption.
+        Writes codeplug to the staging bank, validates CRC, and commits.
+
+        Blocked by default: the opcodes and the address map this depends on are
+        unverified (see module docstring). Pass allow_unverified_protocol=True to
+        override, accepting that a wrong address map can destroy the radio's
+        factory RF calibration.
         """
+        if not allow_unverified_protocol:
+            raise RuntimeError(
+                "Refusing to write: the SB9600 opcodes and memory map in flasher.py are "
+                "unverified guesses, never confirmed against a radio or against Motorola's "
+                "own code. A write based on a wrong address map can overwrite the tuning "
+                "partition and permanently destroy factory RF calibration. "
+                "Pass allow_unverified_protocol=True only on a radio you are willing to lose."
+            )
+
         # SAFETY CHECK: Boundary interlock
         if target_bank < 0x0020_0000:
             raise ValueError(

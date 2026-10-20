@@ -4,6 +4,19 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Fedora%20%2F%20Linux%20%7C%20macOS-lightgrey.svg)]()
 
+> ### Project status (2026-10-20)
+> **Working and verified:** the codeplug data model, JSON/CSV conversion, and the
+> USB transport layer (port detection, permissions, device identification).
+>
+> **Not verified:** the radio programming protocol. The SB9600 opcodes, packet
+> traces and memory map in `src/open_astro/protocol/` and in several `docs/`
+> files were reasoned out rather than captured from hardware or extracted from
+> Motorola's code, despite being presented as reverse-engineering results.
+> Writing to a radio is gated off until that is resolved — see
+> [**docs/CPS_BINARY_ANALYSIS.md**](docs/CPS_BINARY_ANALYSIS.md),
+> [**docs/PROTOCOL_STATUS.md**](docs/PROTOCOL_STATUS.md) and
+> [**docs/HARDWARE_GROUND_TRUTH.md**](docs/HARDWARE_GROUND_TRUTH.md).
+
 **OpenAstro CPS** is an open-source codeplug engine, format converter, and serial programming toolkit for **Motorola ASTRO 25** radios:
 * **Motorola XTS 2500** (Model I, Model II, Model III)
 * **Motorola PRC-153 IISR** (Integrated Intra-Squad Radio)
@@ -26,7 +39,11 @@ Proprietary radio programming software (CPS) has historically been:
 3. **Spreadsheet Workflow**: Edit channels in Excel, LibreOffice Calc, or Google Sheets and import directly into your radio.
 4. **Software Encryption (Motorola ADP)**: Native support for configuring 40-bit RC4 digital privacy keys without external hardware.
 5. **Safety First (`rx_only: true`)**: Hardware transmitter power amplifier lockout to guarantee zero accidental interference on public safety channels.
-6. **Direct Serial Flashing**: Talk to the radio over standard USB programming cables (FTDI / `/dev/ttyUSB0`) using open-source packet framing.
+6. **Direct USB / Serial Link**: The XTS 1500 / 2500 / MT 1500 is itself a USB
+   CDC-ACM device (`0cad:1001`) and appears as `/dev/ttyACM0` with no FTDI cable
+   involved; XTS 5000 and mobiles use a USB-UART bridge (`/dev/ttyUSB0`). Both
+   are detected automatically by USB VID/PID. The command protocol on top of
+   this link is still unverified (see status note above).
 
 ---
 
@@ -44,12 +61,13 @@ Proprietary radio programming software (CPS) has historically been:
                                    |
                                    v
                  +-----------------------------------+
-                 | ASTRO 25 Packet Framer (SB9600)   |
+                 | Command Protocol  [UNVERIFIED]    |
                  +-----------------+-----------------+
                                    |
                                    v
                  +-----------------------------------+
-                 | COM Port / /dev/ttyUSB0 (FTDI)    |
+                 | /dev/ttyACM0  (radio's own USB)   |
+                 | /dev/ttyUSB0  (FTDI cable)  COMx  |
                  +-----------------+-----------------+
                                    |
                                    v
@@ -132,13 +150,23 @@ open-astro from-csv channels.csv updated_fleet.json
 ```bash
 open-astro ports
 ```
-* **On Windows:** `COM3 (USB Serial Port - FTDI)`
-* **On Fedora Linux:** `/dev/ttyUSB0 (FT232R USB UART - FTDI)`
+```
+[+] Detected serial ports:
+  -> /dev/ttyACM0 (MOTOROLA XTS 1500 , 2500 & MT 1500 RADIO - Motorola Communication Interface) [RADIO: Motorola XTS 1500 / XTS 2500 / MT 1500]
+
+[+] Auto-detect would use: /dev/ttyACM0
+    Native USB radio: XTS 1500 / XTS 2500 / MT 1500 (VID:PID 0CAD:1001, CDC-ACM)
+```
+Legacy motherboard ports (`/dev/ttyS*`) are listed but never auto-selected.
+If the port is not accessible, install the udev rule from `scripts/`.
 
 ---
 
 ## 📚 Documentation
 
+* [**CPS Binary Analysis — real DLL names, real COM interface, real opcode names**](docs/CPS_BINARY_ANALYSIS.md): what extracting and reading the actual Motorola installer turned up.
+* [**Protocol Status — read before trusting any opcode**](docs/PROTOCOL_STATUS.md): what is measured vs. assumed, and how to get to ground truth.
+* [**Hardware Ground Truth**](docs/HARDWARE_GROUND_TRUTH.md): verified USB descriptors, port, and permissions for the XTS 2500.
 * [**Agent Handoff & Mission Brief**](docs/AGENT_HANDOFF_AND_MISSION_BRIEF.md): Mandatory technical briefing for AI agents/developers picking up hardware testing and codeplug operations.
 * [Inventing Sovereign Digital Radio Protocols](docs/inventing_sovereign_digital_radio_protocols.md): How bits become radio waves, comparing digital radio dialects (P25, DMR, NXDN, M17), breaking the DVSI vocoder patent monopoly with Codec2, and using the XTS 5000 as a transparent RF engine for custom digital languages.
 * [P25 Infrastructure & Sovereign Roaming Systems](docs/p25_infrastructure_and_roaming_systems_paper.md): The Cisco enterprise model of Motorola LMR, how SmartZone cellular-style tower switching works logically, and open-source infrastructure alternatives (MMDVM, P25Reflector, Quantar Bridge).

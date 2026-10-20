@@ -1,6 +1,18 @@
 """
-Serial communication link for Motorola ASTRO 25 radios via USB programming cables.
+Serial communication link for Motorola ASTRO 25 radios.
 Cross-platform support for Windows, Linux (Fedora/Ubuntu/Arch), and macOS.
+
+Transport note (hardware-verified 2026-10-20):
+The XTS 1500 / 2500 / MT 1500 does NOT need an FTDI cable. The radio itself
+enumerates as a USB CDC-ACM device:
+
+    idVendor  0x0CAD  Motorola CGISS
+    idProduct 0x1001  "MOTOROLA XTS 1500 , 2500 & MT 1500 RADIO"
+    bInterfaceClass 2/2/1 (Communications / Abstract modem / AT-commands)
+
+Linux binds cdc_acm and exposes it as /dev/ttyACM0 (root:dialout 0660).
+Baud/parity settings are therefore cosmetic over USB, but are still applied
+for RS-232/FTDI-cabled radios (XTS 5000 Hirose, mobiles via RIB).
 """
 import platform
 import time
@@ -14,13 +26,50 @@ except ImportError:
 
 from .framing import PacketFramer
 
+# Motorola CGISS USB vendor ID. The radio is the USB device; no cable chip involved.
+MOTOROLA_VID = 0x0CAD
+MOTOROLA_PIDS = {
+    0x1001: "XTS 1500 / XTS 2500 / MT 1500",
+}
+
+# USB-to-UART bridge chips used by "ribless" cables for radios without native USB
+# (XTS 5000 / XTL mobiles). Matched on VID:PID, not on description text.
+CABLE_VID_PIDS = {
+    (0x0403, None): "FTDI",
+    (0x067B, None): "Prolific PL2303",
+    (0x1A86, None): "WCH CH340/CH341",
+    (0x10C4, None): "Silicon Labs CP210x",
+}
+
+
 def get_default_port() -> str:
     if platform.system() == "Windows":
         return "COM1"
     elif platform.system() == "Darwin":
         return "/dev/tty.usbserial"
     else:
-        return "/dev/ttyUSB0"
+        return "/dev/ttyACM0"
+
+
+def _candidates():
+    """USB serial ports only, ranked: native Motorola radios first, then cables.
+
+    Legacy 16550 ports (/dev/ttyS0-31) are always excluded. They have no hwid and
+    are present by the dozen on any PC, so picking ports[0] blindly -- as earlier
+    versions did -- selected /dev/ttyS31 and could never reach the radio.
+    """
+    if not SERIAL_AVAILABLE:
+        return []
+    radios, cables = [], []
+    for p in serial.tools.list_ports.comports():
+        if p.vid is None or p.pid is None:
+            continue  # no USB hwid => motherboard serial port, never a radio
+        if p.vid == MOTOROLA_VID:
+            radios.append(p)
+        elif (p.vid, None) in CABLE_VID_PIDS:
+            cables.append(p)
+    return radios + cables
+
 
 class RadioSerialLink:
     def __init__(self, port: Optional[str] = None, baudrate: int = 19200, timeout: float = 2.0):
@@ -31,25 +80,46 @@ class RadioSerialLink:
 
     @staticmethod
     def list_ports() -> List[str]:
+        """All serial ports, annotated. Legacy ttyS* are tagged so they are not
+        mistaken for a radio."""
         if not SERIAL_AVAILABLE:
             return []
-        ports = serial.tools.list_ports.comports()
-        return [f"{p.device} ({p.description})" for p in ports]
+        out = []
+        for p in serial.tools.list_ports.comports():
+            if p.vid == MOTOROLA_VID:
+                tag = f"[RADIO: Motorola {MOTOROLA_PIDS.get(p.pid, 'unknown model')}]"
+            elif p.vid is not None and (p.vid, None) in CABLE_VID_PIDS:
+                tag = f"[CABLE: {CABLE_VID_PIDS[(p.vid, None)]}]"
+            elif p.vid is None:
+                tag = "[legacy serial - not a radio]"
+            else:
+                tag = "[other USB serial]"
+            out.append(f"{p.device} ({p.description}) {tag}")
+        return out
 
     @staticmethod
     def auto_detect_port() -> Optional[str]:
-        """Automatically find the first available USB-to-serial programming cable."""
+        """Return the most likely radio port, or None. Never guesses a legacy ttyS*."""
+        cands = _candidates()
+        return cands[0].device if cands else None
+
+    @staticmethod
+    def describe_port(device: str) -> Optional[dict]:
+        """Identify what is on a given port before opening it."""
         if not SERIAL_AVAILABLE:
             return None
-        ports = serial.tools.list_ports.comports()
-        # Look for FTDI, Prolific, CH340, or generic USB Serial
-        for p in ports:
-            desc = (p.description or "").lower()
-            hwid = (p.hwid or "").lower()
-            if any(k in desc or k in hwid for k in ["ftdi", "prolific", "ch340", "cp210", "usb serial"]):
-                return p.device
-        if ports:
-            return ports[0].device
+        for p in serial.tools.list_ports.comports():
+            if p.device != device:
+                continue
+            native = p.vid == MOTOROLA_VID
+            return {
+                "device": p.device,
+                "description": p.description,
+                "vid": p.vid,
+                "pid": p.pid,
+                "native_usb_radio": native,
+                "model_hint": MOTOROLA_PIDS.get(p.pid) if native else None,
+            }
         return None
 
     def connect(self) -> bool:
@@ -70,6 +140,14 @@ class RadioSerialLink:
             except (AttributeError, NotImplementedError):
                 pass
             return True
+        except PermissionError as e:
+            raise ConnectionError(
+                f"Permission denied opening {self.port}: {e}\n"
+                f"       {self.port} is root:dialout 0660. Fix with either:\n"
+                f"         sudo usermod -aG dialout $USER   (then log out/in, or: newgrp dialout)\n"
+                f"         sudo cp scripts/99-openastro.rules /etc/udev/rules.d/ && "
+                f"sudo udevadm control --reload-rules && sudo udevadm trigger"
+            )
         except Exception as e:
             raise ConnectionError(f"Failed to open port {self.port}: {e}")
 

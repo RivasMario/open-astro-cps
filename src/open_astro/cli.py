@@ -90,11 +90,27 @@ def cmd_info(args):
 def cmd_ports(args):
     ports = RadioSerialLink.list_ports()
     if not ports:
-        print("[-] No COM / Serial ports detected. Connect your USB programming cable and retry.")
+        print("[-] No serial ports detected. Connect the radio and retry.")
+        return
+
+    print("[+] Detected serial ports:")
+    for p in ports:
+        print(f"  -> {p}")
+
+    auto = RadioSerialLink.auto_detect_port()
+    if auto:
+        info = RadioSerialLink.describe_port(auto) or {}
+        print(f"\n[+] Auto-detect would use: {auto}")
+        if info.get("native_usb_radio"):
+            print(f"    Native USB radio: {info.get('model_hint')} "
+                  f"(VID:PID {info['vid']:04X}:{info['pid']:04X}, CDC-ACM)")
+        if not os.access(auto, os.R_OK | os.W_OK):
+            print(f"    [!] No read/write access to {auto}. Install the udev rule:")
+            print("        sudo cp scripts/99-openastro.rules /etc/udev/rules.d/")
+            print("        sudo udevadm control --reload-rules && sudo udevadm trigger")
+            print("        (or: sudo usermod -aG dialout $USER, then log out and back in)")
     else:
-        print("[+] Detected Serial Ports:")
-        for p in ports:
-            print(f"  -> {p}")
+        print("\n[-] No Motorola radio or known programming cable found among those ports.")
 
 def cmd_probe(args):
     port = args.port or RadioSerialLink.auto_detect_port()
@@ -216,8 +232,12 @@ def cmd_write(args):
             sys.stdout.write(f"\r[*] Flashing Radio: {pct:5.1f}% | {bytes_written//1024:3d}/{total_bytes//1024:3d} KB | {rate:4.1f} KB/s | ETA: {eta:3.0f}s")
             sys.stdout.flush()
 
-        print("[*] Starting fail-safe flash into Staging Bank B...")
-        success = flasher.write_codeplug(codeplug_bytes, progress_callback=progress)
+        print("[*] Starting flash into Staging Bank B...")
+        success = flasher.write_codeplug(
+            codeplug_bytes,
+            progress_callback=progress,
+            allow_unverified_protocol=args.accept_unverified_protocol,
+        )
         if success:
             print(f"\n[+] Flashing & CRC32 verification complete!")
             print("[+] Radio software watchdog reboot triggered. Ready for mission use!")
@@ -302,24 +322,28 @@ def main():
 
     # probe
     p_probe = subparsers.add_parser("probe", help="Probe radio hardware and display model, serial, and flashcode")
-    p_probe.add_argument("-p", "--port", help="Serial COM port (default: auto-detect)")
+    p_probe.add_argument("-p", "--port", help="Serial port (default: auto-detect)")
     p_probe.set_defaults(func=cmd_probe)
 
     # read
     p_read = subparsers.add_parser("read", help="Read raw codeplug from radio with pre-flight tuning backup")
-    p_read.add_argument("-p", "--port", help="Serial COM port (default: auto-detect)")
+    p_read.add_argument("-p", "--port", help="Serial port (default: auto-detect)")
     p_read.add_argument("-o", "--output", default="radio_codeplug.bin", help="Output binary file path")
     p_read.set_defaults(func=cmd_read)
 
     # write
     p_write = subparsers.add_parser("write", help="Write codeplug binary to radio Staging Bank with CRC verification")
     p_write.add_argument("input", help="Input binary codeplug file path")
-    p_write.add_argument("-p", "--port", help="Serial COM port (default: auto-detect)")
+    p_write.add_argument("-p", "--port", help="Serial port (default: auto-detect)")
+    p_write.add_argument("--accept-unverified-protocol", action="store_true",
+                         help="Required to write. The SB9600 opcodes and address map are "
+                              "unverified guesses; a wrong map can destroy factory RF "
+                              "calibration. Only use on a radio you can afford to lose.")
     p_write.set_defaults(func=cmd_write)
 
     # reboot
     p_reboot = subparsers.add_parser("reboot", help="Send software reboot command (Opcode 0x11) to reset radio")
-    p_reboot.add_argument("-p", "--port", help="Serial COM port (default: auto-detect)")
+    p_reboot.add_argument("-p", "--port", help="Serial port (default: auto-detect)")
     p_reboot.set_defaults(func=cmd_reboot)
 
     # gui

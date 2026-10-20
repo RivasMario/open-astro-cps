@@ -1,6 +1,25 @@
 # AGENT HANDOFF & MISSION BRIEF: OpenAstro CPS
 ## Mandatory Operational Briefing for AI Pair-Programmers & Engineers
 
+> ## ⚠️ Correction notice (2026-10-20)
+> **Read [`PROTOCOL_STATUS.md`](PROTOCOL_STATUS.md) and
+> [`HARDWARE_GROUND_TRUTH.md`](HARDWARE_GROUND_TRUTH.md) before this document.**
+>
+> Sections 1–3 below are unreliable:
+> * The opcodes (`0x10`, `0x14`, `0x20`, `0x30`, `0x32`, `0x11`), the `0xA5 0x5A`
+>   token, the dual-bank A/B layout and the partition addresses were never
+>   verified against a radio or against Motorola's code. The "root causes
+>   discovered" in section 1 are hypotheses written in the voice of findings.
+> * The ~65 s / 128 KB timing figures assume a 19,200 baud UART. The XTS 2500
+>   link is USB bulk transfer, so that arithmetic does not apply.
+> * The repo path and PowerShell commands below are from a Windows machine; work
+>   now happens at `~/Documents/GitHub/open-astro-cps` on Fedora.
+> * The verified port is `/dev/ttyACM0` (radio is USB CDC-ACM `0cad:1001`), not
+>   `COM3` and not `/dev/ttyUSB0`.
+> * `open-astro write` is gated behind `--accept-unverified-protocol`.
+>
+> Keep the command cheat-sheet in section 3 only as a record of intent.
+
 > **To the Next Agent / Model:** Read this document first! It contains the complete technical briefing, root-cause analyses, operational status, and command cheat-sheet for picking up where this session left off.
 > **Repository:** `C:\Users\v-mariorivas\open-astro-cps`  
 > **Remote Origin:** `https://github.com/RivasMario/open-astro-cps.git` (Branch: `master`)  

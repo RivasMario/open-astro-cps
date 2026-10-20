@@ -1,14 +1,23 @@
-# OpenAstro Udev Rules for Motorola Programming Cables
-# Grants non-root user permissions to USB UART programming cables on Linux (Fedora, Ubuntu, Arch)
+# OpenAstro Udev Rules for Motorola radios and programming cables
+# Grants the logged-in desktop user access without adding them to the dialout group.
+#
+# Install:
+#   sudo cp scripts/99-openastro.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
 
-# FTDI FT232R / FT232BM (Most popular Motorola XTS USB cables)
-SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE="0666", TAG+="uaccess", GROUP="dialout"
+# --- Native USB radios (the radio IS the USB device; no cable chip involved) ---
+# Motorola CGISS 0x0CAD. The XTS 1500 / XTS 2500 / MT 1500 enumerates as USB
+# CDC-ACM (class 2/2/1) and appears as /dev/ttyACM0 via the cdc_acm driver.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0cad", ATTRS{idProduct}=="1001", MODE="0660", TAG+="uaccess", GROUP="dialout", SYMLINK+="motorola-xts2500"
+# Any other Motorola CGISS radio that exposes a tty.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0cad", MODE="0660", TAG+="uaccess", GROUP="dialout"
 
-# Prolific PL2303 USB-to-Serial
-SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", MODE="0666", TAG+="uaccess", GROUP="dialout"
-
-# CH340 / CH341 USB-to-Serial
-SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", MODE="0666", TAG+="uaccess", GROUP="dialout"
-
-# Silicon Labs CP210x USB-to-UART
-SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0666", TAG+="uaccess", GROUP="dialout"
+# --- USB-to-UART "ribless" cables (XTS 5000 Hirose, XTL mobiles, RIB) ---
+# FTDI FT232R / FT232BM
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE="0660", TAG+="uaccess", GROUP="dialout"
+# Prolific PL2303
+SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", MODE="0660", TAG+="uaccess", GROUP="dialout"
+# WCH CH340 / CH341
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", MODE="0660", TAG+="uaccess", GROUP="dialout"
+# Silicon Labs CP210x
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0660", TAG+="uaccess", GROUP="dialout"
