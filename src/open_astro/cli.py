@@ -2,10 +2,11 @@
 OpenAstro Command Line Interface (CLI)
 """
 import argparse
+import os
 import sys
 from .models import RadioCodeplug, Zone, Channel, EncryptionKey
 from .parsers import JsonParser, CsvParser
-from .protocol import RadioSerialLink
+from .protocol import RadioSerialLink, AstroFlasher
 
 def cmd_new(args):
     codeplug = RadioCodeplug(
@@ -149,6 +150,84 @@ def cmd_reboot(args):
     finally:
         link.disconnect()
 
+def cmd_read(args):
+    port = args.port or RadioSerialLink.auto_detect_port()
+    if not port:
+        print("[-] Error: No serial port found. Connect programming cable or specify --port.")
+        sys.exit(1)
+
+    print(f"[*] Connecting to radio on {port} at 19,200 baud...")
+    link = RadioSerialLink(port=port, baudrate=19200, timeout=1.5)
+    flasher = AstroFlasher(link)
+
+    try:
+        link.connect()
+        info = flasher.get_radio_identity()
+        print(f"[+] Radio Detected: {info.get('model')} (Serial: {info.get('serial')}, Flash: {info.get('flashcode')})")
+
+        def progress(bytes_read, total_bytes, elapsed):
+            pct = (bytes_read / total_bytes) * 100
+            rate = (bytes_read / elapsed / 1024) if elapsed > 0 else 0
+            eta = ((total_bytes - bytes_read) / (bytes_read / elapsed)) if (elapsed > 0 and bytes_read > 0) else 0
+            sys.stdout.write(f"\r[*] Reading Radio: {pct:5.1f}% | {bytes_read//1024:3d}/{total_bytes//1024:3d} KB | {rate:4.1f} KB/s | ETA: {eta:3.0f}s")
+            sys.stdout.flush()
+
+        print("[*] Initiating safe codeplug dump...")
+        raw_data = flasher.read_codeplug(progress_callback=progress)
+        print(f"\n[+] Read complete: {len(raw_data)} bytes retrieved.")
+
+        with open(args.output, "wb") as f:
+            f.write(raw_data)
+        print(f"[+] Saved raw codeplug image to: {args.output}")
+
+    except Exception as e:
+        print(f"\n[-] Read failure: {e}")
+        sys.exit(1)
+    finally:
+        link.disconnect()
+
+def cmd_write(args):
+    port = args.port or RadioSerialLink.auto_detect_port()
+    if not port:
+        print("[-] Error: No serial port found. Connect programming cable or specify --port.")
+        sys.exit(1)
+
+    if not os.path.exists(args.input):
+        print(f"[-] Input file not found: {args.input}")
+        sys.exit(1)
+
+    with open(args.input, "rb") as f:
+        codeplug_bytes = f.read()
+
+    print(f"[*] Loaded codeplug image: {len(codeplug_bytes)} bytes from {args.input}")
+    print(f"[*] Connecting to radio on {port} at 19,200 baud...")
+    link = RadioSerialLink(port=port, baudrate=19200, timeout=1.5)
+    flasher = AstroFlasher(link)
+
+    try:
+        link.connect()
+        info = flasher.get_radio_identity()
+        print(f"[+] Target Radio: {info.get('model')} (Serial: {info.get('serial')})")
+
+        def progress(bytes_written, total_bytes, elapsed):
+            pct = (bytes_written / total_bytes) * 100
+            rate = (bytes_written / elapsed / 1024) if elapsed > 0 else 0
+            eta = ((total_bytes - bytes_written) / (bytes_written / elapsed)) if (elapsed > 0 and bytes_written > 0) else 0
+            sys.stdout.write(f"\r[*] Flashing Radio: {pct:5.1f}% | {bytes_written//1024:3d}/{total_bytes//1024:3d} KB | {rate:4.1f} KB/s | ETA: {eta:3.0f}s")
+            sys.stdout.flush()
+
+        print("[*] Starting fail-safe flash into Staging Bank B...")
+        success = flasher.write_codeplug(codeplug_bytes, progress_callback=progress)
+        if success:
+            print(f"\n[+] Flashing & CRC32 verification complete!")
+            print("[+] Radio software watchdog reboot triggered. Ready for mission use!")
+
+    except Exception as e:
+        print(f"\n[-] Write failure: {e}")
+        sys.exit(1)
+    finally:
+        link.disconnect()
+
 def cmd_gui(args):
     import webbrowser
     import http.server
@@ -225,6 +304,18 @@ def main():
     p_probe = subparsers.add_parser("probe", help="Probe radio hardware and display model, serial, and flashcode")
     p_probe.add_argument("-p", "--port", help="Serial COM port (default: auto-detect)")
     p_probe.set_defaults(func=cmd_probe)
+
+    # read
+    p_read = subparsers.add_parser("read", help="Read raw codeplug from radio with pre-flight tuning backup")
+    p_read.add_argument("-p", "--port", help="Serial COM port (default: auto-detect)")
+    p_read.add_argument("-o", "--output", default="radio_codeplug.bin", help="Output binary file path")
+    p_read.set_defaults(func=cmd_read)
+
+    # write
+    p_write = subparsers.add_parser("write", help="Write codeplug binary to radio Staging Bank with CRC verification")
+    p_write.add_argument("input", help="Input binary codeplug file path")
+    p_write.add_argument("-p", "--port", help="Serial COM port (default: auto-detect)")
+    p_write.set_defaults(func=cmd_write)
 
     # reboot
     p_reboot = subparsers.add_parser("reboot", help="Send software reboot command (Opcode 0x11) to reset radio")

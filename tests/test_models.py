@@ -3,7 +3,7 @@ import os
 import tempfile
 from open_astro.models import Channel, Zone, RadioCodeplug, EncryptionKey
 from open_astro.parsers import JsonParser, CsvParser
-from open_astro.protocol import PacketFramer
+from open_astro.protocol import PacketFramer, AstroFlasher
 
 class TestOpenAstro(unittest.TestCase):
     def test_channel_offsets(self):
@@ -82,6 +82,63 @@ class TestOpenAstro(unittest.TestCase):
         self.assertIsNotNone(parsed)
         self.assertEqual(parsed["opcode"], 0x14)
         self.assertEqual(parsed["payload"], b"\x01")
+
+class MockRadioSerialLink:
+    def __init__(self):
+        self.sent_packets = []
+        self.responses = []
+
+    def ping(self):
+        return True
+
+    def send_command(self, opcode: int, payload: bytes = b""):
+        self.sent_packets.append((opcode, payload))
+        if opcode == 0x14:  # GET_RADIO_INFO
+            return {"opcode": 0x15, "payload": b"H46KDH9PW7BN\x00422CHB0123\x00500008-000488-4\x00R20.01.00\x00"}
+        elif opcode == 0x10:  # ENTER_PROGRAMMING
+            return {"opcode": 0x01, "payload": b""}
+        elif opcode == 0x11:  # EXIT_PROGRAMMING
+            return {"opcode": 0x01, "payload": b""}
+        elif opcode == 0x20:  # READ_MEMORY_BLOCK
+            # Return status 0x00 + 256 dummy bytes
+            chunk_len = payload[3] if len(payload) > 3 else 256
+            return {"opcode": 0x21, "payload": bytes([0x00]) + (b"\xAA" * chunk_len)}
+        elif opcode == 0x30:  # WRITE_MEMORY_BLOCK
+            return {"opcode": 0x31, "payload": bytes([0x00])}
+        elif opcode == 0x32:  # COMMIT_CODEPLUG
+            return {"opcode": 0x33, "payload": bytes([0x00])}
+        return {"opcode": 0x01, "payload": b""}
+
+    def reboot_radio(self):
+        self.sent_packets.append((0x11, bytes([0x01])))
+        return True
+
+class TestAstroFlasher(unittest.TestCase):
+    def test_boundary_lock(self):
+        mock_link = MockRadioSerialLink()
+        flasher = AstroFlasher(mock_link)
+        # Attempt to write into Tuning Partition (0x0000_4000)
+        with self.assertRaises(ValueError):
+            flasher.write_codeplug(b"\x00" * 512, target_bank=0x0000_4000)
+
+    def test_write_and_commit(self):
+        mock_link = MockRadioSerialLink()
+        flasher = AstroFlasher(mock_link)
+        test_data = b"\x12\x34\x56\x78" * 64  # 256 bytes
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            orig_backup = flasher.backup_tuning_partition
+            flasher.backup_tuning_partition = lambda: os.path.join(tmpdir, "backup.bin")
+            
+            success = flasher.write_codeplug(test_data, target_bank=0x0022_0000)
+            self.assertTrue(success)
+
+            # Check that 0x10 (enter prog), 0x30 (write), 0x32 (commit), and 0x11 (reboot) were sent
+            opcodes_sent = [op for op, _ in mock_link.sent_packets]
+            self.assertIn(0x10, opcodes_sent)
+            self.assertIn(0x30, opcodes_sent)
+            self.assertIn(0x32, opcodes_sent)
+            self.assertIn(0x11, opcodes_sent)
 
 if __name__ == "__main__":
     unittest.main()
