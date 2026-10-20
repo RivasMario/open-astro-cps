@@ -139,6 +139,11 @@ open-astro ports
 
 ## 📚 Documentation
 
+* [Write Failure Diagnosis & Fail-Safe Flashing Engine](docs/radio_write_failure_diagnosis_and_flashing_engine.md): Detailed root-cause analysis of the 10-minute write bottleneck, dual-bank rollback ("writing the same flash back"), and un-sticking frozen radios.
+* [Deep-Dive: Radio Port Communication & The `.cpg` Relational Database](docs/deep_dive_radio_port_and_cpg_relational_database.md): Exhaustive guide to how the radio acts as an embedded computer/network node, the SB9600 protocol packet exchange, and the `.cpg` file's internal Microsoft Jet relational database schema.
+* [Engineering Paper: Motorola ASTRO CPS Architecture & Design](docs/motorola_astro_cps_architecture_and_design_paper.md): Comprehensive formal paper on the evolution, software stack, operational workflows, and reverse engineering blueprint.
+* [CPS Subsystems & Field Reference Notes](docs/cps_subsystems_reference_notes.md): Granular field-by-field reference, switch matrix, Flashcode bitmask lookup table, and C-struct data dictionaries.
+* [ASTRO CPS Reverse-Engineering Specification](docs/astro_cps_reverse_engineering_guide.md): Technical specification for clean-room implementation of `open-astro-cps`.
 * [Radio Architecture Demystified](docs/radio_architecture_and_demystification.md): Codeplugs vs. Flashcodes, P25 & Trunking explained simply, the history of Depot software, and designing a sovereign voice + Meshtastic radio.
 * [Fleet Setup & Encryption Guide](docs/fleet_setup_and_encryption.md): Hardware roles, PSERN Phase 2 notes, and Motorola ADP configuration.
 * [Fedora Linux Setup & Udev Rules](docs/linux_fedora_setup.md): Complete setup for Fedora users.

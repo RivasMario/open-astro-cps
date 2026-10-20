@@ -95,6 +95,98 @@ def cmd_ports(args):
         for p in ports:
             print(f"  -> {p}")
 
+def cmd_probe(args):
+    port = args.port or RadioSerialLink.auto_detect_port()
+    if not port:
+        print("[-] Error: No serial port found. Specify --port (e.g. COM3 or /dev/ttyUSB0).")
+        sys.exit(1)
+    
+    print(f"[*] Probing radio on port {port} at 19,200 baud...")
+    link = RadioSerialLink(port=port, baudrate=19200, timeout=1.5)
+    try:
+        link.connect()
+        # 1. Ping
+        if not link.ping():
+            print("[-] Radio did not respond to PING (Opcode 0x00). Check cable connection & power.")
+            sys.exit(1)
+        print("[+] Radio PING OK: Link Established!")
+
+        # 2. Query info
+        resp = link.send_command(0x14, b"")
+        if not resp or resp.get("opcode") != 0x15:
+            print("[!] Link responded, but failed to retrieve hardware identity string.")
+            sys.exit(1)
+        
+        payload = resp.get("payload", b"")
+        print(f"[+] Radio Hardware Identity Response Received ({len(payload)} bytes):")
+        # Split null-terminated strings
+        strings = [s.decode("latin1", errors="replace") for s in payload.split(b"\x00") if s]
+        for s in strings:
+            print(f"    -> {s}")
+
+    except Exception as e:
+        print(f"[-] Hardware probe error: {e}")
+        sys.exit(1)
+    finally:
+        link.disconnect()
+
+def cmd_reboot(args):
+    port = args.port or RadioSerialLink.auto_detect_port()
+    if not port:
+        print("[-] Error: No serial port found. Specify --port.")
+        sys.exit(1)
+    
+    print(f"[*] Sending software watchdog reboot (Opcode 0x11) to radio on {port}...")
+    link = RadioSerialLink(port=port, baudrate=19200, timeout=1.5)
+    try:
+        link.connect()
+        if link.reboot_radio():
+            print("[+] Radio software reboot command acknowledged! Radio will reboot in ~1 second.")
+        else:
+            print("[-] Reboot command sent, but no ACK returned (radio may have already reset).")
+    except Exception as e:
+        print(f"[-] Reboot error: {e}")
+    finally:
+        link.disconnect()
+
+def cmd_gui(args):
+    import webbrowser
+    import http.server
+    import socketserver
+    import threading
+    from pathlib import Path
+
+    docs_dir = Path(__file__).resolve().parent.parent.parent / "docs"
+    html_path = docs_dir / "gui_mockup.html"
+
+    if not html_path.exists():
+        print(f"[-] GUI mockup file not found at {html_path}")
+        sys.exit(1)
+
+    port = args.port or 8080
+    print(f"[+] Launching OpenAstro Web GUI...")
+    print(f"[+] Serving interface at: http://127.0.0.1:{port}/gui_mockup.html")
+    
+    class QuietHandler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *a, **k):
+            super().__init__(*a, directory=str(docs_dir), **k)
+        def log_message(self, format, *a):
+            pass
+
+    server = socketserver.TCPServer(("127.0.0.1", port), QuietHandler)
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
+
+    webbrowser.open(f"http://127.0.0.1:{port}/gui_mockup.html")
+    print("[*] Press Ctrl+C in this terminal to stop the GUI server.")
+    try:
+        while True:
+            import time
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n[*] Stopping GUI server.")
+        server.shutdown()
+
 def main():
     parser = argparse.ArgumentParser(description="OpenAstro: Open Source Motorola ASTRO 25 Codeplug Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -128,6 +220,21 @@ def main():
     # ports
     p_ports = subparsers.add_parser("ports", help="List detected USB programming cables / COM ports")
     p_ports.set_defaults(func=cmd_ports)
+
+    # probe
+    p_probe = subparsers.add_parser("probe", help="Probe radio hardware and display model, serial, and flashcode")
+    p_probe.add_argument("-p", "--port", help="Serial COM port (default: auto-detect)")
+    p_probe.set_defaults(func=cmd_probe)
+
+    # reboot
+    p_reboot = subparsers.add_parser("reboot", help="Send software reboot command (Opcode 0x11) to reset radio")
+    p_reboot.add_argument("-p", "--port", help="Serial COM port (default: auto-detect)")
+    p_reboot.set_defaults(func=cmd_reboot)
+
+    # gui
+    p_gui = subparsers.add_parser("gui", help="Launch modern interactive GUI in web browser")
+    p_gui.add_argument("--port", type=int, default=8080, help="HTTP server port (default: 8080)")
+    p_gui.set_defaults(func=cmd_gui)
 
     args = parser.parse_args()
     args.func(args)
