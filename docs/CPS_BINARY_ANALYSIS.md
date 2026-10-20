@@ -404,3 +404,104 @@ genuine environment problems, each with a concrete fix:
   native `IDispatch::Invoke` driver, parameterized by COM port and phase).
   Both compile with `python3 -m ziglang cc -target x86-windows-gnu <file>.c
   -lole32 -loleaut32 -o <file>.exe` — no sudo, no system mingw package.
+
+---
+
+## 7. Update 2026-10-20 (same day, continued): the real opcode table, from disassembly
+
+Pushed past static strings into the actual code. Method: for a known debug
+string (e.g. `"SB9600: Sending EPREQ"`), map its file offset to a virtual
+address with `pefile`, then grep `PatPort.exe`'s raw bytes for that VA as a
+4-byte little-endian immediate -- that's how x86 code embeds the address of a
+string literal it's about to use, so it finds the exact instruction that
+references it. From there, disassemble a narrow window with `capstone`
+(`pip install capstone`, no sudo) instead of attempting to disassemble all
+24 MB of the binary.
+
+This real technique replaces the earlier, failed attempt to read the live
+COM vtable under Wine (section 6.2's wall). It needs no running process, no
+Wine, no radio -- just the binary file.
+
+### 7.1 The real command → bytes table
+
+Found a single function (`PatPort.exe`, file offset `0x914605`-`0x914870`)
+that builds a 4-byte command packet by comparing an input name string against
+a fixed list, byte-for-byte:
+
+```c
+// paraphrased from the disassembly -- not literal source, the real function
+// has no symbol name. ecx = packet object (this), [ebp+8] = command name
+// string, [ebp+0xc] = device/connection type, [ebp+0x10] = numeric id.
+packet->field_0x20 = (uint16_t)numeric_id;   // always set, regardless of match
+if (StrEqual(name, "TSTMOD"))       packet->bytes = {0x01, 0x02, 0x01, 0x40};
+if (StrEqual(name, "MEMACS"))       packet->bytes = {0x00, 0x09, 0x01, 0x08};
+if (StrEqual(name, "RELEASE"))      packet->bytes = {0x00, 0x00, 0x01, 0x08};
+if (StrEqual(name, "RADIO_EP_REQ")) packet->bytes = {0x00, 0x12, 0x01, 0x06};
+if (StrEqual(name, "SRIB_EP_REQ"))  packet->bytes = {0x1A, 0x12, 0x1A, 0x06};
+if (StrEqual(name, "TRANSPARENT"))  /* no bytes written -- true passthrough */;
+// then dispatches via one of two vtable pointers (offset 0x50 vs 0x4c on the
+// packet object) depending on whether connection_type == 0x7d1, calling
+// vtable slot 0x14 (the 6th slot -- same slot EPREQ's dedicated code path
+// below calls into, consistent with this being the real Send()).
+```
+
+Table, with the structural pattern now visible:
+
+| Command | Bytes (hex) | byte[3] ("opcode"?) | byte[1] ("sub-code"?) | byte[0],[2] ("addr pair"?) |
+|---|---|---|---|---|
+| `TSTMOD`       | `01 02 01 40` | `0x40` | `0x02` | `01, 01` |
+| `MEMACS`       | `00 09 01 08` | `0x08` | `0x09` | `00, 01` |
+| `RELEASE`      | `00 00 01 08` | `0x08` | `0x00` | `00, 01` |
+| `RADIO_EP_REQ` | `00 12 01 06` | `0x06` | `0x12` | `00, 01` |
+| `SRIB_EP_REQ`  | `1A 12 1A 06` | `0x06` | `0x12` | `1A, 1A` |
+| `TRANSPARENT`  | *(passthrough, no fixed bytes)* | -- | -- | -- |
+
+Reading across the table (a hypothesis, not yet independently confirmed, but
+internally consistent and worth recording as such):
+* **byte[3] looks like the real opcode.** `MEMACS` and `RELEASE` share
+  `0x08` -- a "memory access" family, where `MEMACS` opens it
+  (sub-code `0x09`) and `RELEASE` closes it (sub-code `0x00`). `RADIO_EP_REQ`
+  and `SRIB_EP_REQ` share `0x06` -- an "enter programming" family, both using
+  sub-code `0x12`, differing only in the address pair.
+* **byte[0] and byte[2] look like a source/destination bus-address pair.**
+  `RADIO_EP_REQ` uses `(0x00, 0x01)`; `SRIB_EP_REQ` uses `(0x1A, 0x1A)`. This
+  is the first real, specific evidence for the old docs' "SB9600 is a
+  multi-drop bus with per-device addresses" claim -- previously asserted
+  with no support at all, now at least plausible: a cable-based SRIB adapter
+  and a direct radio connection would legitimately need different addresses
+  on the same logical bus.
+* **The `SRIB_EP_REQ` bytes are identical to the hardcoded "EPREQ" bytes**
+  found independently in a *different* function (the one logging
+  `"SB9600: Open"` / `"SB9600: Sending EPREQ"`, file offset `~0x914fd0`-ish,
+  found first in this same session before this table was located). That
+  function hardcodes `1A 12 1A 06` with a length field of `5` and calls the
+  same vtable slot (`0x14`, i.e. offset 0x14 = the 6th pointer) that this
+  table's dispatch also calls. The two independent findings corroborate each
+  other exactly: that code path is specifically the SRIB (cable / "Smart
+  RIB") variant of entering programming mode, not a generically-named
+  "EPREQ" as the project's own placeholder commands.py assumed.
+
+### 7.2 What this means
+
+* **`MEMACS` is the real lead for codeplug access.** "Memory Access" is
+  exactly the kind of command name a codeplug read/write session would open
+  with, and finding it paired with a `RELEASE` counterpart (open/close a
+  session) is a coherent, plausible protocol shape -- a specific, named
+  thing to test, not a guess at a numeric opcode.
+* **None of this has been sent to a radio.** Everything in this section came
+  from the binary file alone. `MEMACS` in particular is not a read-only
+  query like the AT interface commands -- it's plausibly the start of a
+  state-changing session (the kind of action this project has consistently
+  held back on without an explicit decision to proceed), so it has
+  deliberately not been tried yet.
+* **The byte-field interpretation (opcode / sub-code / address pair) is a
+  hypothesis from pattern-matching six data points, not a confirmed field
+  layout.** It's internally consistent and worth acting on, but should be
+  verified further (more commands from the same function, or an actual
+  capture) before being treated as settled.
+* This table should replace `protocol/commands.py`'s placeholder names
+  (`UNKNOWN_READ_BLOCK`, `UNKNOWN_WRITE_BLOCK`, `UNKNOWN_COMMIT`, etc.) --
+  those were invented with no basis; `MEMACS`/`RELEASE`/`TSTMOD` are real
+  Motorola strings with real, extracted byte encodings. Not yet wired into
+  the project's own protocol code as of this writing; see the commit history
+  for whether that's since changed.

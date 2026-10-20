@@ -57,9 +57,36 @@ class DeviceAddress(NamedTuple):
 
 
 # Real command names, confirmed as literal ASCII strings inside PatPort.exe.
-# Their wire-level byte encoding is NOT known (see module docstring).
 ENTER_PROGRAMMING = "EPREQ"
 TEST_MODE = "TSTMODREQ"
+TRANSPARENT = "TRANSPARENT"  # pure passthrough mode, no fixed payload bytes
+
+# Real command names + real 4-byte payloads, extracted 2026-10-20 by locating
+# and disassembling PatPort.exe's own command-table function (file offset
+# 0x914605-0x914870) -- see docs/CPS_BINARY_ANALYSIS.md section 7. These are
+# the literal bytes that function writes for each name; NOT inferred, NOT
+# placeholders. What remains unknown is the WIRE FRAME around these bytes
+# (start byte, length prefix, checksum, addressing) -- RemoteProtocols01.dll's
+# Send() takes this payload as a VARIANT and does its own framing internally,
+# which has not been disassembled. Do not confuse these real payload bytes
+# with "ready to transmit" -- they are the command's content, not its frame.
+#
+# RADIO_EP_REQ and SRIB_EP_REQ share opcode byte [3]=0x06 and sub-code
+# byte[1]=0x12, differing only in byte[0]/[2] (0,1) vs (0x1A,0x1A) -- a
+# source/destination bus-address pair, the first real evidence for the
+# "SB9600 is a multi-drop bus" claim. SRIB_EP_REQ's bytes independently match
+# a *second*, separately-found hardcoded "EPREQ" code path (the one logging
+# "SB9600: Sending EPREQ") -- that path is specifically the cable/SRIB
+# variant, not a generic "EPREQ" as this project assumed before this analysis.
+REAL_COMMAND_BYTES = {
+    "TSTMOD":       bytes((0x01, 0x02, 0x01, 0x40)),
+    "MEMACS":       bytes((0x00, 0x09, 0x01, 0x08)),  # plausibly: open a memory-access session
+    "RELEASE":      bytes((0x00, 0x00, 0x01, 0x08)),  # plausibly: close one (shares opcode 0x08 with MEMACS)
+    "RADIO_EP_REQ": bytes((0x00, 0x12, 0x01, 0x06)),  # enter-programming, direct radio connection
+    "SRIB_EP_REQ":  bytes((0x1A, 0x12, 0x1A, 0x06)),  # enter-programming, via SRIB cable adapter
+    # TRANSPARENT: deliberately omitted -- the real code writes no fixed
+    # bytes for it (true passthrough of whatever payload the caller supplies).
+}
 
 # Everything below has no real-name evidence at all. These are the project's
 # own placeholder identifiers for operations we believe some real command must
