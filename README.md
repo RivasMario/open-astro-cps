@@ -139,6 +139,7 @@ open-astro ports
 
 ## 📚 Documentation
 
+* [ASTRO 25 Software Internals & DLL Architecture](docs/astro_25_software_internals_and_dll_architecture.md): Complete dissection of Motorola CPS executables (A25CPS, A25Tuner), subsystem DLLs (A25Core, A25DB, A25Comm, A25Val, A25Sec), database layers, and 700/800/900 MHz XTS 5000 RF specifications.
 * [ELINT Fingerprinting & Firmware Modification Horizons](docs/firmware_analysis_and_elint_fingerprinting.md): Naval ELINT specific emitter identification (SEI), soft-pot calibration physics, post-Motorola firmware enhancements, and the sovereign Codec2/Meshtastic side-car architecture.
 * [Write Failure Diagnosis & Fail-Safe Flashing Engine](docs/radio_write_failure_diagnosis_and_flashing_engine.md): Detailed root-cause analysis of the 10-minute write bottleneck, dual-bank rollback ("writing the same flash back"), and un-sticking frozen radios.
 * [Deep-Dive: Radio Port Communication & The `.cpg` Relational Database](docs/deep_dive_radio_port_and_cpg_relational_database.md): Exhaustive guide to how the radio acts as an embedded computer/network node, the SB9600 protocol packet exchange, and the `.cpg` file's internal Microsoft Jet relational database schema.
