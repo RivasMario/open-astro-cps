@@ -139,6 +139,7 @@ open-astro ports
 
 ## 📚 Documentation
 
+* [Inventing Sovereign Digital Radio Protocols](docs/inventing_sovereign_digital_radio_protocols.md): How bits become radio waves, comparing digital radio dialects (P25, DMR, NXDN, M17), breaking the DVSI vocoder patent monopoly with Codec2, and using the XTS 5000 as a transparent RF engine for custom digital languages.
 * [P25 Infrastructure & Sovereign Roaming Systems](docs/p25_infrastructure_and_roaming_systems_paper.md): The Cisco enterprise model of Motorola LMR, how SmartZone cellular-style tower switching works logically, and open-source infrastructure alternatives (MMDVM, P25Reflector, Quantar Bridge).
 * [ASTRO 25 Software Internals & DLL Architecture](docs/astro_25_software_internals_and_dll_architecture.md): Complete dissection of Motorola CPS executables (A25CPS, A25Tuner), subsystem DLLs (A25Core, A25DB, A25Comm, A25Val, A25Sec), database layers, and 700/800/900 MHz XTS 5000 RF specifications.
 * [ELINT Fingerprinting & Firmware Modification Horizons](docs/firmware_analysis_and_elint_fingerprinting.md): Naval ELINT specific emitter identification (SEI), soft-pot calibration physics, post-Motorola firmware enhancements, and the sovereign Codec2/Meshtastic side-car architecture.
