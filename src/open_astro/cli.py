@@ -118,19 +118,27 @@ def cmd_probe(args):
         print("[-] Error: No serial port found. Specify --port (e.g. COM3 or /dev/ttyUSB0).")
         sys.exit(1)
     
-    print(f"[*] Probing radio on port {port} at 19,200 baud...")
+    if not args.accept_unverified_protocol:
+        print("[-] Refusing to probe: the wire encoding is an unverified placeholder")
+        print("    (see docs/CPS_BINARY_ANALYSIS.md). It is known NOT to match the real")
+        print("    protocol -- expect silence, not a crash. Pass --accept-unverified-protocol")
+        print("    to try it anyway.")
+        sys.exit(1)
+
+    print(f"[*] Probing radio on port {port} (placeholder wire encoding -- see docs/CPS_BINARY_ANALYSIS.md)...")
     link = RadioSerialLink(port=port, baudrate=19200, timeout=1.5)
     try:
         link.connect()
         # 1. Ping
-        if not link.ping():
-            print("[-] Radio did not respond to PING (Opcode 0x00). Check cable connection & power.")
+        if not link.ping(allow_unverified_protocol=True):
+            print("[-] Radio did not respond to the placeholder PING. Expected -- see above.")
             sys.exit(1)
         print("[+] Radio PING OK: Link Established!")
 
         # 2. Query info
-        resp = link.send_command(0x14, b"")
-        if not resp or resp.get("opcode") != 0x15:
+        from .protocol.commands import UNKNOWN_GET_RADIO_INFO
+        resp = link.send_command(UNKNOWN_GET_RADIO_INFO, b"", allow_unverified_protocol=True)
+        if not resp:
             print("[!] Link responded, but failed to retrieve hardware identity string.")
             sys.exit(1)
         
@@ -153,11 +161,16 @@ def cmd_reboot(args):
         print("[-] Error: No serial port found. Specify --port.")
         sys.exit(1)
     
-    print(f"[*] Sending software watchdog reboot (Opcode 0x11) to radio on {port}...")
+    if not args.accept_unverified_protocol:
+        print("[-] Refusing to send reboot: unverified placeholder wire encoding (see")
+        print("    docs/CPS_BINARY_ANALYSIS.md). Pass --accept-unverified-protocol to try anyway.")
+        sys.exit(1)
+
+    print(f"[*] Sending placeholder reboot command to radio on {port}...")
     link = RadioSerialLink(port=port, baudrate=19200, timeout=1.5)
     try:
         link.connect()
-        if link.reboot_radio():
+        if link.reboot_radio(allow_unverified_protocol=True):
             print("[+] Radio software reboot command acknowledged! Radio will reboot in ~1 second.")
         else:
             print("[-] Reboot command sent, but no ACK returned (radio may have already reset).")
@@ -172,13 +185,18 @@ def cmd_read(args):
         print("[-] Error: No serial port found. Connect programming cable or specify --port.")
         sys.exit(1)
 
-    print(f"[*] Connecting to radio on {port} at 19,200 baud...")
+    if not args.accept_unverified_protocol:
+        print("[-] Refusing to read: the wire encoding is an unverified placeholder")
+        print("    (see docs/CPS_BINARY_ANALYSIS.md). Pass --accept-unverified-protocol to try anyway.")
+        sys.exit(1)
+
+    print(f"[*] Connecting to radio on {port} (placeholder wire encoding)...")
     link = RadioSerialLink(port=port, baudrate=19200, timeout=1.5)
     flasher = AstroFlasher(link)
 
     try:
         link.connect()
-        info = flasher.get_radio_identity()
+        info = flasher.get_radio_identity(allow_unverified_protocol=args.accept_unverified_protocol)
         print(f"[+] Radio Detected: {info.get('model')} (Serial: {info.get('serial')}, Flash: {info.get('flashcode')})")
 
         def progress(bytes_read, total_bytes, elapsed):
@@ -188,8 +206,8 @@ def cmd_read(args):
             sys.stdout.write(f"\r[*] Reading Radio: {pct:5.1f}% | {bytes_read//1024:3d}/{total_bytes//1024:3d} KB | {rate:4.1f} KB/s | ETA: {eta:3.0f}s")
             sys.stdout.flush()
 
-        print("[*] Initiating safe codeplug dump...")
-        raw_data = flasher.read_codeplug(progress_callback=progress)
+        print("[*] Initiating codeplug dump (placeholder protocol)...")
+        raw_data = flasher.read_codeplug(progress_callback=progress, allow_unverified_protocol=True)
         print(f"\n[+] Read complete: {len(raw_data)} bytes retrieved.")
 
         with open(args.output, "wb") as f:
@@ -222,7 +240,7 @@ def cmd_write(args):
 
     try:
         link.connect()
-        info = flasher.get_radio_identity()
+        info = flasher.get_radio_identity(allow_unverified_protocol=args.accept_unverified_protocol)
         print(f"[+] Target Radio: {info.get('model')} (Serial: {info.get('serial')})")
 
         def progress(bytes_written, total_bytes, elapsed):
@@ -323,12 +341,17 @@ def main():
     # probe
     p_probe = subparsers.add_parser("probe", help="Probe radio hardware and display model, serial, and flashcode")
     p_probe.add_argument("-p", "--port", help="Serial port (default: auto-detect)")
+    p_probe.add_argument("--accept-unverified-protocol", action="store_true",
+                         help="Required to probe. The wire encoding is an unverified placeholder "
+                              "known not to match the real protocol -- see docs/CPS_BINARY_ANALYSIS.md.")
     p_probe.set_defaults(func=cmd_probe)
 
     # read
     p_read = subparsers.add_parser("read", help="Read raw codeplug from radio with pre-flight tuning backup")
     p_read.add_argument("-p", "--port", help="Serial port (default: auto-detect)")
     p_read.add_argument("-o", "--output", default="radio_codeplug.bin", help="Output binary file path")
+    p_read.add_argument("--accept-unverified-protocol", action="store_true",
+                        help="Required to read. See docs/CPS_BINARY_ANALYSIS.md.")
     p_read.set_defaults(func=cmd_read)
 
     # write
@@ -342,8 +365,10 @@ def main():
     p_write.set_defaults(func=cmd_write)
 
     # reboot
-    p_reboot = subparsers.add_parser("reboot", help="Send software reboot command (Opcode 0x11) to reset radio")
+    p_reboot = subparsers.add_parser("reboot", help="Send placeholder reboot command to reset radio (unverified)")
     p_reboot.add_argument("-p", "--port", help="Serial port (default: auto-detect)")
+    p_reboot.add_argument("--accept-unverified-protocol", action="store_true",
+                          help="Required to send. See docs/CPS_BINARY_ANALYSIS.md.")
     p_reboot.set_defaults(func=cmd_reboot)
 
     # gui

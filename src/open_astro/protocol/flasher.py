@@ -1,16 +1,25 @@
 """
 AstroFlasher: memory read/write engine for Motorola ASTRO 25 radios.
 
-!! THE OPCODES AND MEMORY MAP IN THIS MODULE ARE UNVERIFIED !!
+!! THE WIRE ENCODING IN THIS MODULE IS UNVERIFIED !!
 
-Every opcode below (0x00/0x01 ping/ack, 0x10 enter-programming with the
-0xA5 0x5A token, 0x11 reboot, 0x14/0x15 radio info, 0x20/0x21 read,
-0x30/0x31 write, 0x32/0x33 CRC32 bank commit), the dual-bank A/B layout, and
-the partition addresses were authored from reasoning about how the protocol
-*ought* to work. None of them has been confirmed against a real radio or
-against Motorola's own A25 communication code. The unit tests exercise a mock
-that replies with these same invented values, so they prove the state machine
-is self-consistent -- not that it is correct.
+This module calls commands by name (protocol/commands.py), matching the real
+transport's confirmed shape (Send(name, payload, device-address) -- see
+docs/CPS_BINARY_ANALYSIS.md). Exactly one of those names, ENTER_PROGRAMMING
+("EPREQ"), is a real string found inside the actual Motorola PatPort.exe.
+Every other name here (UNKNOWN_PING, UNKNOWN_GET_RADIO_INFO,
+UNKNOWN_READ_BLOCK, UNKNOWN_WRITE_BLOCK, UNKNOWN_COMMIT, UNKNOWN_REBOOT) is
+this project's own placeholder -- there is no evidence a command by any of
+those names exists at all, real or otherwise.
+
+Even for EPREQ, the actual bytes that get transmitted when PatPort.exe calls
+Send("EPREQ", ...) are not known. This module sends everything through
+framing.py's placeholder byte encoding, which static disassembly of the real
+transport DLL confirms does NOT match the real protocol (no use of its
+START_BYTE anywhere in that DLL). The dual-bank A/B layout, the partition
+addresses below, and the CRC32-commit sequence were authored from reasoning
+about how the protocol *ought* to work, before the real installer had been
+read; nothing in the real installer corresponds to them.
 
 Consequences, in order of severity:
   * Reads are likely to return nothing (the radio will not recognize the frames).
@@ -20,9 +29,9 @@ Consequences, in order of severity:
     which no amount of software can restore without the original soft-pots.
 
 write_codeplug() therefore refuses to run until the caller passes
-allow_unverified_protocol=True. Remove this gate only once the opcodes have been
-confirmed against ground truth (Motorola's A25 comm library, or a captured
-CPS <-> radio session).
+allow_unverified_protocol=True. Remove this gate only once the wire encoding
+has been confirmed against ground truth (a captured CPS <-> radio session, or
+disassembly that locates the real opcode-name -> bytes table).
 """
 import os
 import sys
@@ -32,8 +41,18 @@ import struct
 from typing import Optional, Callable
 from .framing import PacketFramer
 from .serial_link import RadioSerialLink
+from .commands import (
+    DeviceAddress,
+    ENTER_PROGRAMMING,
+    UNKNOWN_PING,
+    UNKNOWN_GET_RADIO_INFO,
+    UNKNOWN_READ_BLOCK,
+    UNKNOWN_WRITE_BLOCK,
+    UNKNOWN_COMMIT,
+)
 
-# Critical Memory Boundaries
+# Critical Memory Boundaries -- placeholder addresses, no basis in the real
+# installer (see module docstring).
 TUNING_START    = 0x0000_4000
 TUNING_END      = 0x0000_7FFF
 TUNING_LEN      = TUNING_END - TUNING_START  # 16 KB
@@ -42,22 +61,24 @@ CODEPLUG_BANK_A = 0x0020_0000
 CODEPLUG_BANK_B = 0x0022_0000
 CODEPLUG_LEN    = 0x0002_0000  # 128 KB per bank
 
-OPTIMAL_BLOCK_SIZE = 256  # 256 bytes per SB9600 chunk
+OPTIMAL_BLOCK_SIZE = 256  # placeholder chunk size, no confirmed basis
 
 class AstroFlasher:
     def __init__(self, serial_link: RadioSerialLink):
         self.link = serial_link
         self.radio_info = {}
 
-    def get_radio_identity(self) -> dict:
-        """Queries radio hardware identification via Opcode 0x14."""
-        resp = self.link.send_command(0x14, b"")
-        if not resp or resp.get("opcode") != 0x15:
-            raise ConnectionError("Radio failed to respond to GET_RADIO_INFO (0x14)")
-        
+    def get_radio_identity(self, allow_unverified_protocol: bool = False) -> dict:
+        """Queries radio hardware identification. UNKNOWN_GET_RADIO_INFO has
+        no real-name basis at all (see module docstring)."""
+        resp = self.link.send_command(UNKNOWN_GET_RADIO_INFO, b"",
+                                       allow_unverified_protocol=allow_unverified_protocol)
+        if not resp:
+            raise ConnectionError("Radio did not respond to GET_RADIO_INFO")
+
         payload = resp.get("payload", b"")
         strings = [s.decode("latin1", errors="replace") for s in payload.split(b"\x00") if s]
-        
+
         info = {
             "model": strings[0] if len(strings) > 0 else "UNKNOWN",
             "serial": strings[1] if len(strings) > 1 else "UNKNOWN",
@@ -67,100 +88,103 @@ class AstroFlasher:
         self.radio_info = info
         return info
 
-    def backup_tuning_partition(self, output_dir: str = ".") -> str:
+    def backup_tuning_partition(self, output_dir: str = ".", allow_unverified_protocol: bool = False) -> str:
         """
         MANDATORY SAFETY PRE-FLIGHT:
-        Dumps the RF alignment partition (0x0000_4000 to 0x0000_7FFF) to a local backup file.
-        This contains the unique factory crystal oscillator warping, power curves, and filters.
+        Dumps the RF alignment partition (placeholder address range) to a
+        local backup file before any write, on the theory that having *a*
+        backup is better than none even though the address range itself is
+        unconfirmed (see module docstring).
         """
         serial = self.radio_info.get("serial", "UNKNOWN_RADIO")
         backup_filename = os.path.join(output_dir, f"{serial}_tuning_backup.bin")
-        
-        # Read the 16KB tuning partition
-        tuning_bytes = self._read_memory_range(TUNING_START, TUNING_LEN)
-        
+
+        tuning_bytes = self._read_memory_range(TUNING_START, TUNING_LEN,
+                                                allow_unverified_protocol=allow_unverified_protocol)
+
         with open(backup_filename, "wb") as f:
             f.write(tuning_bytes)
-            
+
         return backup_filename
 
-    def read_codeplug(self, 
-                      start_addr: int = CODEPLUG_BANK_A, 
+    def read_codeplug(self,
+                      start_addr: int = CODEPLUG_BANK_A,
                       length: int = CODEPLUG_LEN,
-                      progress_callback: Optional[Callable[[int, int, float], None]] = None) -> bytes:
+                      progress_callback: Optional[Callable[[int, int, float], None]] = None,
+                      allow_unverified_protocol: bool = False) -> bytes:
         """
-        Reads codeplug partition from the radio.
+        Reads codeplug partition from the radio. Blocked by default -- see
+        module docstring; this has the same wire-encoding problem as writes,
+        it just can't destroy anything if the encoding is wrong.
         """
-        # 1. Ping
-        if not self.link.ping():
-            raise ConnectionError("Radio did not respond to PING (0x00)")
+        if not allow_unverified_protocol:
+            raise RuntimeError(
+                "Refusing to read: the wire encoding in flasher.py is an unverified "
+                "placeholder (see docs/CPS_BINARY_ANALYSIS.md). A bad read can't damage "
+                "the radio, but it also won't return anything real. "
+                "Pass allow_unverified_protocol=True to try it anyway."
+            )
 
-        # 2. Query Identity
-        self.get_radio_identity()
+        if not self.link.ping(allow_unverified_protocol=True):
+            raise ConnectionError("Radio did not respond to PING")
 
-        # 3. Enter Programming Mode
-        enter_resp = self.link.send_command(0x10, bytes([0xA5, 0x5A]))
-        if not enter_resp or enter_resp.get("opcode") != 0x01:
-            raise RuntimeError("Radio rejected ENTER_PROGRAMMING_MODE (0x10)")
+        self.get_radio_identity(allow_unverified_protocol=True)
+
+        enter_resp = self.link.send_command(ENTER_PROGRAMMING, bytes([0xA5, 0x5A]),
+                                             allow_unverified_protocol=True)
+        if not enter_resp or not enter_resp.get("is_ack"):
+            raise RuntimeError(f"Radio rejected {ENTER_PROGRAMMING}")
 
         try:
-            # 4. Mandatory tuning partition backup
-            self.backup_tuning_partition()
-
-            # 5. Read codeplug memory block by block
-            codeplug_bytes = self._read_memory_range(start_addr, length, progress_callback)
+            self.backup_tuning_partition(allow_unverified_protocol=True)
+            codeplug_bytes = self._read_memory_range(start_addr, length, progress_callback,
+                                                       allow_unverified_protocol=True)
             return codeplug_bytes
-
         finally:
-            # 6. Exit Programming Mode and software reboot
-            self.link.reboot_radio()
+            self.link.reboot_radio(allow_unverified_protocol=True)
 
-    def write_codeplug(self, 
-                       codeplug_bytes: bytes, 
+    def write_codeplug(self,
+                       codeplug_bytes: bytes,
                        target_bank: int = CODEPLUG_BANK_B,
                        progress_callback: Optional[Callable[[int, int, float], None]] = None,
                        allow_unverified_protocol: bool = False) -> bool:
         """
         Writes codeplug to the staging bank, validates CRC, and commits.
 
-        Blocked by default: the opcodes and the address map this depends on are
-        unverified (see module docstring). Pass allow_unverified_protocol=True to
-        override, accepting that a wrong address map can destroy the radio's
-        factory RF calibration.
+        Blocked by default: the wire encoding and the address map this
+        depends on are unverified (see module docstring). Pass
+        allow_unverified_protocol=True to override, accepting that a wrong
+        address map can destroy the radio's factory RF calibration.
         """
         if not allow_unverified_protocol:
             raise RuntimeError(
-                "Refusing to write: the SB9600 opcodes and memory map in flasher.py are "
-                "unverified guesses, never confirmed against a radio or against Motorola's "
-                "own code. A write based on a wrong address map can overwrite the tuning "
-                "partition and permanently destroy factory RF calibration. "
+                "Refusing to write: the wire encoding and memory map in flasher.py are "
+                "unverified placeholders, never confirmed against a radio or against "
+                "Motorola's own code. A write based on a wrong address map can overwrite "
+                "the tuning partition and permanently destroy factory RF calibration. "
                 "Pass allow_unverified_protocol=True only on a radio you are willing to lose."
             )
 
-        # SAFETY CHECK: Boundary interlock
+        # SAFETY CHECK: Boundary interlock (placeholder address, see module docstring)
         if target_bank < 0x0020_0000:
             raise ValueError(
                 f"HARDWARE BOUNDARY LOCK VIOLATION: Refusing write below 0x0020_0000! "
                 f"Target address {hex(target_bank)} would overwrite critical calibration or bootloader!"
             )
 
-        # 1. Ping
-        if not self.link.ping():
-            raise ConnectionError("Radio did not respond to PING (0x00)")
+        if not self.link.ping(allow_unverified_protocol=True):
+            raise ConnectionError("Radio did not respond to PING")
 
-        # 2. Query Identity
-        self.get_radio_identity()
+        self.get_radio_identity(allow_unverified_protocol=True)
 
-        # 3. Enter Programming Mode
-        enter_resp = self.link.send_command(0x10, bytes([0xA5, 0x5A]))
-        if not enter_resp or enter_resp.get("opcode") != 0x01:
-            raise RuntimeError("Radio rejected ENTER_PROGRAMMING_MODE (0x10)")
+        enter_resp = self.link.send_command(ENTER_PROGRAMMING, bytes([0xA5, 0x5A]),
+                                             allow_unverified_protocol=True)
+        if not enter_resp or not enter_resp.get("is_ack"):
+            raise RuntimeError(f"Radio rejected {ENTER_PROGRAMMING}")
 
         try:
-            # 4. Mandatory tuning backup before any write
-            self.backup_tuning_partition()
+            self.backup_tuning_partition(allow_unverified_protocol=True)
 
-            # 5. Write blocks
             total_bytes = len(codeplug_bytes)
             offset = 0
             start_time = time.time()
@@ -169,8 +193,6 @@ class AstroFlasher:
                 chunk = codeplug_bytes[offset:offset + OPTIMAL_BLOCK_SIZE]
                 current_addr = target_bank + offset
 
-                # Payload: [ADDR_HI, ADDR_MID, ADDR_LO] + [CHUNK_LEN] + [DATA...]
-                # Note: In SB9600 8-bit length encoding, 256 bytes is encoded as 0x00
                 addr_bytes = [
                     (current_addr >> 16) & 0xFF,
                     (current_addr >> 8) & 0xFF,
@@ -179,10 +201,10 @@ class AstroFlasher:
                 ]
                 payload = bytes(addr_bytes) + chunk
 
-                resp = self.link.send_command(0x30, payload)
-                if not resp or resp.get("opcode") != 0x31:
-                    raise IOError(f"Write failed at offset {hex(current_addr)}! Opcode: {resp.get('opcode') if resp else 'None'}")
-                
+                resp = self.link.send_command(UNKNOWN_WRITE_BLOCK, payload, allow_unverified_protocol=True)
+                if not resp:
+                    raise IOError(f"Write failed at offset {hex(current_addr)}: no response")
+
                 resp_payload = resp.get("payload", b"")
                 if len(resp_payload) > 0 and resp_payload[0] != 0x00:
                     status = resp_payload[0]
@@ -193,15 +215,14 @@ class AstroFlasher:
                 if progress_callback:
                     progress_callback(offset, total_bytes, elapsed)
 
-            # 6. Final Commit & Bank Switch (Opcode 0x32)
+            # Placeholder commit (see module docstring -- no real basis)
             crc32_val = zlib.crc32(codeplug_bytes) & 0xFFFFFFFF
             bank_id = 0x01 if target_bank == CODEPLUG_BANK_B else 0x00
             commit_payload = struct.pack(">IB", crc32_val, bank_id)
 
-            commit_resp = self.link.send_command(0x32, commit_payload)
-            if not commit_resp or commit_resp.get("opcode") != 0x33:
-                # If radio didn't ACK commit, warn or trigger rollback
-                raise RuntimeError("Radio CRC32 commit command (0x32) failed. Staging bank not activated.")
+            commit_resp = self.link.send_command(UNKNOWN_COMMIT, commit_payload, allow_unverified_protocol=True)
+            if not commit_resp:
+                raise RuntimeError("Commit command got no response. Staging bank not activated.")
 
             commit_status = commit_resp.get("payload", b"")[0] if commit_resp.get("payload") else 0x00
             if commit_status != 0x00:
@@ -210,14 +231,15 @@ class AstroFlasher:
             return True
 
         finally:
-            # 7. Exit Programming Mode and software watchdog reboot
-            self.link.reboot_radio()
+            self.link.reboot_radio(allow_unverified_protocol=True)
 
-    def _read_memory_range(self, 
-                           start_addr: int, 
+    def _read_memory_range(self,
+                           start_addr: int,
                            total_len: int,
-                           progress_callback: Optional[Callable[[int, int, float], None]] = None) -> bytes:
-        """Reads a range of ColdFire memory via Opcode 0x20 in optimal chunks."""
+                           progress_callback: Optional[Callable[[int, int, float], None]] = None,
+                           allow_unverified_protocol: bool = False) -> bytes:
+        """Reads a range of memory in placeholder-sized chunks. See module
+        docstring -- UNKNOWN_READ_BLOCK has no real-name basis."""
         result = bytearray()
         offset = 0
         start_time = time.time()
@@ -226,7 +248,6 @@ class AstroFlasher:
             chunk_size = min(OPTIMAL_BLOCK_SIZE, total_len - offset)
             current_addr = start_addr + offset
 
-            # Payload: [ADDR_HI, ADDR_MID, ADDR_LO] + [CHUNK_LEN]
             payload = bytes([
                 (current_addr >> 16) & 0xFF,
                 (current_addr >> 8) & 0xFF,
@@ -234,9 +255,9 @@ class AstroFlasher:
                 chunk_size & 0xFF
             ])
 
-            resp = self.link.send_command(0x20, payload)
-            if not resp or resp.get("opcode") != 0x21:
-                raise IOError(f"Read memory command (0x20) failed at address {hex(current_addr)}")
+            resp = self.link.send_command(UNKNOWN_READ_BLOCK, payload, allow_unverified_protocol=True)
+            if not resp:
+                raise IOError(f"Read memory command failed at address {hex(current_addr)}: no response")
 
             resp_payload = resp.get("payload", b"")
             if len(resp_payload) < 1:

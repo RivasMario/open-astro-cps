@@ -251,13 +251,18 @@ the Google Drive folder checked this session.
 
 ## 5. What this means for `open-astro-cps`
 
-1. **The transport-layer rename is now mandatory, not optional.** Any future
-   protocol document for this project should talk about `IRemoteProtocol` /
-   `RemSB9600` / `opcodeName`-based dispatch, not the invented `0x05`-framed byte
-   opcodes. `src/open_astro/protocol/framing.py` and `flasher.py` implement the
-   old, unevidenced story and should not be trusted as a starting point for real
-   opcodes — only as a rough shape (named commands, request/response) that turned
-   out to accidentally resemble the truth in spirit.
+1. **Done (2026-10-20):** `src/open_astro/protocol/` was refactored to speak in
+   the real shape -- `commands.py` now defines named commands (the two
+   confirmed real names, `ENTER_PROGRAMMING`/"EPREQ" and `TEST_MODE`, plus a
+   `DeviceAddress` four-tuple matching the real `Send()`/`Receive()`
+   signature), and `serial_link.py`/`flasher.py` call by name instead of by
+   invented numeric opcode. `framing.py`'s actual byte encoding is still the
+   same unverified placeholder as before (name -> small-int -> `0x05`-framed
+   packet) -- that part still has zero basis and is still gated behind
+   `allow_unverified_protocol` everywhere. What changed is the *shape* of the
+   API, so that swapping in the real wire encoding later (once captured) is a
+   change to one lookup table in `framing.py`, not a redesign of
+   `serial_link.py`/`flasher.py`'s call sites.
 2. **The single highest-value remaining unknown is the opcode-name → byte-value
    table**, plus the actual packet byte layout `Send()`/`Receive()` produce on the
    wire. Two paths to it, in order of reliability:
@@ -281,3 +286,121 @@ the Google Drive folder checked this session.
    or deeper disassembly turns up the real boundary, `flasher.py`'s
    `allow_unverified_protocol` gate (see `PROTOCOL_STATUS.md`) stays in place for
    exactly this reason.
+
+---
+
+## 6. Update 2026-10-20 (same day): exact `IRemoteProtocol` signatures, and why live calls still don't work
+
+Follow-up session. Built a native typelib introspector and a native COM
+driver (both compiled with `ziglang` — `pip install ziglang`, no sudo, full
+`x86-windows-gnu` cross-compiler) instead of relying on VBScript's loose
+automation binding. Source for both is in `tools/wine_harness/`
+(`tlbdump.c`, `sb9600_live.c`).
+
+### 6.1 Exact method signatures (via Wine's real `oleaut32`, not guesswork)
+
+`tlbdump.c` calls `LoadTypeLib` + `ITypeInfo::GetFuncDesc`/`GetNames` — the
+real Microsoft/Wine typelib parser, not a hand-rolled one — against the
+embedded typelib. This is authoritative, not inferred:
+
+```
+GetPortNames()                                                      -> VARIANT
+GetConfiguration()                                                   -> VARIANT
+GetConfigurationValues(lpszProperty: BSTR)                           -> VARIANT
+SetQueues(RxQueueSize: I4, TxQueueSize: I4)                          -> void
+SetConfiguration(lpszParams: VARIANT)                                -> void
+Close()                                                               -> void
+Open(lpszDeviceName: BSTR, dwFlags: I4)                              -> void
+Read()                                                                -> VARIANT
+Broadcast(lpInPacket: VARIANT)                                       -> void
+Request(rTxPacket: VARIANT)                                          -> VARIANT
+GetTimers()                                                           -> VARIANT
+SetTimers(timers: VARIANT)                                           -> void
+Send(opcodeName: BSTR, tPacket: VARIANT,
+     lAddress: I4, lDeviceMajor: I4, lDeviceMinor: I4, lGroup: I4)   -> void
+Receive(opcodeName: OUT BSTR*, lAddress: OUT I4*, lDeviceMajor: OUT I4*,
+        lDeviceMinor: OUT I4*, lGroup: OUT I4*)                      -> VARIANT
+```
+
+This directly explains why the earlier VBScript probes failed: `GetTimers()`
+and `GetPortNames()` take **zero** arguments (the earlier scripts passed one),
+and `Open()` returns `VT_VOID` (the earlier scripts tried to capture a return
+value from it). Those were script bugs, not findings about the radio.
+
+`Send`'s signature confirms, precisely: the opcode is a name (`BSTR`), the
+payload is a `VARIANT` (so presumably a `VT_ARRAY|VT_UI1` byte array in
+practice), and every call is addressed to a device by the same four-integer
+tuple (`lAddress`, `lDeviceMajor`, `lDeviceMinor`, `lGroup`) that
+`PortManager10.dll`'s `DeviceList` struct uses to enumerate devices (§1).
+`Receive` returns the same tuple identifying who sent what was received.
+This is a real, coherent, cross-confirmed piece of the architecture — not
+present anywhere in the earlier (fabricated) docs.
+
+### 6.2 Getting a live call to actually run: three real bugs fixed, one real wall hit
+
+Driving the real `RemoteProtocols01.dll` (`RemSB9600` COM class,
+`{BB885C92-9093-11D3-A0A4-00108302D33D}`) under Wine surfaced a chain of
+genuine environment problems, each with a concrete fix:
+
+1. **32-bit DLL into a 64-bit host.** This Wine build's default `cscript.exe`
+   and a plain `-target x86_64-windows-gnu` build are 64-bit; the DLL is
+   32-bit. Loading it into a 64-bit process doesn't fail cleanly — it
+   produces confusing downstream errors (COM 429, then `E_ACCESSDENIED`)
+   that look like registration problems but aren't. Fix: use
+   `C:\windows\syswow64\cscript.exe` for scripts, and compile native tools
+   with `-target x86-windows-gnu` (32-bit).
+2. **`sed`-in-`sed` backslash collapse.** Generating the `.reg` file's
+   `InprocServer32` path by escaping backslashes once, then feeding that into
+   a second `sed` substitution, silently undoes the escaping — `sed`'s own
+   replacement-string syntax treats `\\` specially. Symptom: the registered
+   path had no backslashes left at all. Fix: do the substitution in Python,
+   not nested shell tools.
+3. **Wine's loader does not search a dependent DLL's own directory** (same as
+   modern Windows' default/safe search order) — only the loading
+   executable's directory and `system32`/`syswow64`. `PatComm10.dll` (which
+   imports `PortManager10.dll`) failed to load with `STATUS_INVALID_IMAGE_FORMAT`
+   (0xc0000135, "not found") even sitting right next to its dependency in a
+   scratch directory. Fix: copy every extracted DLL into
+   `~/.wine/drive_c/windows/syswow64/` (32-bit DLLs need the 32-bit system
+   directory in a WoW64 prefix, not `system32`).
+4. **The real wall:** even with every self-registering DLL in the installer
+   (`RemoteProtocols01`, `mcomUnknown`, `ByteData10`, `PatComm10`, `NextGen10`,
+   `Macro`, `iBtnWrapperDLL`, `iBtnEncDec`, `EncatenComponent` — checked by
+   grepping every DLL in the installer for `DllRegisterServer` as an export)
+   registered cleanly via `regsvr32`, calling `Open()` or `GetPortNames()`
+   still fails with `DISP_E_EXCEPTION`, `scode=0x80040154`
+   (`REGDB_E_CLASSNOTREG`) for CLSID `{CD8D04DD-E675-11D0-8013-0060B03C8AFF}`.
+   That GUID's packed binary form (not readable as text — it's constructed at
+   runtime via `StringFromCLSID`, not a static resource string) appears
+   inside `ByteData10.dll`, `RemoteProtocols01.dll`, and `mcomUnknown.dll` —
+   but all three only *reference* it (call `CoCreateInstance`/
+   `CoGetClassObject` with it), none of them *register* it. It is not
+   registered by any `DllRegisterServer` in this installer. It is most likely
+   written by the real InstallShield engine's own script-driven registry
+   merge (a `.reg`/`.ini` step, separate from per-DLL self-registration),
+   which was never run — this session extracted files with `unshield` and
+   registered individual DLLs by hand, deliberately skipping the installer
+   GUI/engine.
+
+### 6.3 What this means going forward
+
+* The method signatures in §6.1 are solid ground truth and don't depend on
+  resolving §6.2's wall — they came from Wine's real typelib parser reading
+  the DLL's own embedded type library.
+* Getting a live call to actually complete needs either: (a) running the
+  real InstallShield installer properly (interactively, with a display, not
+  the silent flags tried earlier which did nothing) so its own registry
+  script runs in full, or (b) finding and hand-registering whatever CLSID
+  `{CD8D04DD-...}` is by tracking down its owner more directly — e.g. a
+  registry `.reg`/`.ini` file bundled in `data1.cab`/`data2.cab` that this
+  session's extraction may have passed over as "support files" rather than
+  inspected (worth a targeted `grep` for that GUID's text form, since a
+  static `.reg` file — unlike the DLLs — stores GUIDs as plain ASCII, not
+  packed binary).
+* Reusable tools from this session: `tools/wine_harness/tlbdump.c` (dumps any
+  DLL's embedded typelib with exact types via Wine's own `oleaut32` — useful
+  for `PortManager10.dll`'s plain exports too, if it ever gets its own
+  typelib, or for any other RDK DLL), `tools/wine_harness/sb9600_live.c` (the
+  native `IDispatch::Invoke` driver, parameterized by COM port and phase).
+  Both compile with `python3 -m ziglang cc -target x86-windows-gnu <file>.c
+  -lole32 -loleaut32 -o <file>.exe` — no sudo, no system mingw package.

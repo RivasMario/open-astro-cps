@@ -25,6 +25,7 @@ except ImportError:
     SERIAL_AVAILABLE = False
 
 from .framing import PacketFramer
+from .commands import DeviceAddress, CommandResponse, UNKNOWN_PING, UNKNOWN_REBOOT
 
 # Motorola CGISS USB vendor ID. The radio is the USB device; no cable chip involved.
 MOTOROLA_VID = 0x0CAD
@@ -199,29 +200,48 @@ class RadioSerialLink:
             if timeout is not None:
                 self.connection.timeout = orig_timeout
 
-    def send_command(self, opcode: int, payload: bytes = b"") -> Optional[dict]:
+    def send_command(self,
+                      command_name: str,
+                      payload: bytes = b"",
+                      device: DeviceAddress = DeviceAddress(),
+                      allow_unverified_protocol: bool = False) -> Optional[dict]:
         """
-        Transmits an SB9600 command and immediately reads the framed response packet.
+        Sends a named command, mirroring the real transport's shape confirmed
+        in docs/CPS_BINARY_ANALYSIS.md (Motorola's IRemoteProtocol.Send(name,
+        payload, address-tuple)). `device` is accepted for shape-compatibility
+        with that real interface but is not yet used by anything on the wire
+        -- the placeholder encoding below has no concept of device addressing.
+
+        This still only speaks the PLACEHOLDER byte encoding in framing.py,
+        which is confirmed NOT to match the real protocol (see that module's
+        docstring). Refuses to run unless allow_unverified_protocol=True.
         """
+        if not allow_unverified_protocol:
+            raise RuntimeError(
+                f"Refusing to send {command_name!r}: framing.py's wire encoding is an "
+                f"unverified placeholder, known not to match the real protocol "
+                f"(see docs/CPS_BINARY_ANALYSIS.md). Pass allow_unverified_protocol=True "
+                f"to send it anyway -- expect no response, not a crash or a beep."
+            )
         if not self.connection or not self.connection.is_open:
             raise ConnectionError("Radio link is not open.")
-        
-        packet = PacketFramer.build_packet(opcode, payload)
+
+        packet = PacketFramer.build_packet(command_name, payload)
         self.connection.write(packet)
         self.connection.flush()
-        
+
         # Read exact framed packet response
         return self.read_packet()
 
-    def ping(self) -> bool:
-        """Pings radio using Opcode 0x00. Returns True if radio returns 0x01 ACK."""
-        resp = self.send_command(0x00, b"")
-        return resp is not None and resp.get("opcode") == 0x01
+    def ping(self, allow_unverified_protocol: bool = False) -> bool:
+        """Sends the placeholder PING command. Returns True only if something
+        answers with the placeholder ACK opcode -- on real hardware this has
+        been tested and simply times out (see docs/CPS_BINARY_ANALYSIS.md)."""
+        resp = self.send_command(UNKNOWN_PING, b"", allow_unverified_protocol=allow_unverified_protocol)
+        return resp is not None and resp.get("is_ack", False)
 
-    def reboot_radio(self) -> bool:
-        """
-        Commands ColdFire CPU to perform software watchdog reboot (Opcode 0x11).
-        Eliminates the need for manual power knob toggling!
-        """
-        resp = self.send_command(0x11, bytes([0x01]))
-        return resp is not None and resp.get("opcode") == 0x01
+    def reboot_radio(self, allow_unverified_protocol: bool = False) -> bool:
+        """Sends the placeholder reboot command. See module docstring in
+        framing.py -- this opcode has no confirmed basis."""
+        resp = self.send_command(UNKNOWN_REBOOT, bytes([0x01]), allow_unverified_protocol=allow_unverified_protocol)
+        return resp is not None and resp.get("is_ack", False)

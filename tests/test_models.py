@@ -76,41 +76,48 @@ class TestOpenAstro(unittest.TestCase):
                 os.remove(tmp_path)
 
     def test_packet_framer(self):
-        packet = PacketFramer.build_packet(opcode=0x14, payload=b"\x01")
+        packet = PacketFramer.build_packet("UNKNOWN_GET_RADIO_INFO", payload=b"\x01")
         self.assertEqual(packet[0], 0x05)
         parsed = PacketFramer.parse_packet(packet)
         self.assertIsNotNone(parsed)
-        self.assertEqual(parsed["opcode"], 0x14)
+        self.assertEqual(parsed["command_name"], "UNKNOWN_GET_RADIO_INFO")
         self.assertEqual(parsed["payload"], b"\x01")
 
+    def test_packet_framer_unknown_name_rejected(self):
+        with self.assertRaises(KeyError):
+            PacketFramer.build_packet("NOT_A_REAL_COMMAND")
+
 class MockRadioSerialLink:
+    """Mock for the named-command transport shape (see protocol/commands.py).
+    Response opcodes are this test's own placeholders, same as framing.py's --
+    they do not represent anything confirmed about the real radio."""
     def __init__(self):
-        self.sent_packets = []
+        self.sent_commands = []  # list of (command_name, payload)
         self.responses = []
 
-    def ping(self):
+    def ping(self, allow_unverified_protocol: bool = False):
         return True
 
-    def send_command(self, opcode: int, payload: bytes = b""):
-        self.sent_packets.append((opcode, payload))
-        if opcode == 0x14:  # GET_RADIO_INFO
-            return {"opcode": 0x15, "payload": b"H46KDH9PW7BN\x00422CHB0123\x00500008-000488-4\x00R20.01.00\x00"}
-        elif opcode == 0x10:  # ENTER_PROGRAMMING
-            return {"opcode": 0x01, "payload": b""}
-        elif opcode == 0x11:  # EXIT_PROGRAMMING
-            return {"opcode": 0x01, "payload": b""}
-        elif opcode == 0x20:  # READ_MEMORY_BLOCK
-            # Return status 0x00 + 256 dummy bytes
+    def send_command(self, command_name: str, payload: bytes = b"", device=None,
+                     allow_unverified_protocol: bool = False):
+        self.sent_commands.append((command_name, payload))
+        if command_name == "UNKNOWN_GET_RADIO_INFO":
+            return {"command_name": command_name, "is_ack": False,
+                    "payload": b"H46KDH9PW7BN\x00422CHB0123\x00500008-000488-4\x00R20.01.00\x00"}
+        elif command_name == "EPREQ":
+            return {"command_name": command_name, "is_ack": True, "payload": b""}
+        elif command_name == "UNKNOWN_READ_BLOCK":
             chunk_len = payload[3] if len(payload) > 3 else 256
-            return {"opcode": 0x21, "payload": bytes([0x00]) + (b"\xAA" * chunk_len)}
-        elif opcode == 0x30:  # WRITE_MEMORY_BLOCK
-            return {"opcode": 0x31, "payload": bytes([0x00])}
-        elif opcode == 0x32:  # COMMIT_CODEPLUG
-            return {"opcode": 0x33, "payload": bytes([0x00])}
-        return {"opcode": 0x01, "payload": b""}
+            return {"command_name": command_name, "is_ack": False,
+                    "payload": bytes([0x00]) + (b"\xAA" * chunk_len)}
+        elif command_name == "UNKNOWN_WRITE_BLOCK":
+            return {"command_name": command_name, "is_ack": False, "payload": bytes([0x00])}
+        elif command_name == "UNKNOWN_COMMIT":
+            return {"command_name": command_name, "is_ack": False, "payload": bytes([0x00])}
+        return {"command_name": command_name, "is_ack": True, "payload": b""}
 
-    def reboot_radio(self):
-        self.sent_packets.append((0x11, bytes([0x01])))
+    def reboot_radio(self, allow_unverified_protocol: bool = False):
+        self.sent_commands.append(("UNKNOWN_REBOOT", bytes([0x01])))
         return True
 
 class TestAstroFlasher(unittest.TestCase):
@@ -126,21 +133,21 @@ class TestAstroFlasher(unittest.TestCase):
         mock_link = MockRadioSerialLink()
         flasher = AstroFlasher(mock_link)
         test_data = b"\x12\x34\x56\x78" * 64  # 256 bytes
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
-            orig_backup = flasher.backup_tuning_partition
-            flasher.backup_tuning_partition = lambda: os.path.join(tmpdir, "backup.bin")
-            
+            flasher.backup_tuning_partition = lambda allow_unverified_protocol=False: os.path.join(tmpdir, "backup.bin")
+
             success = flasher.write_codeplug(test_data, target_bank=0x0022_0000,
                                              allow_unverified_protocol=True)
             self.assertTrue(success)
 
-            # Check that 0x10 (enter prog), 0x30 (write), 0x32 (commit), and 0x11 (reboot) were sent
-            opcodes_sent = [op for op, _ in mock_link.sent_packets]
-            self.assertIn(0x10, opcodes_sent)
-            self.assertIn(0x30, opcodes_sent)
-            self.assertIn(0x32, opcodes_sent)
-            self.assertIn(0x11, opcodes_sent)
+            # Check that EPREQ (enter programming), the write, the commit, and the
+            # reboot were all sent, by name.
+            names_sent = [name for name, _ in mock_link.sent_commands]
+            self.assertIn("EPREQ", names_sent)
+            self.assertIn("UNKNOWN_WRITE_BLOCK", names_sent)
+            self.assertIn("UNKNOWN_COMMIT", names_sent)
+            self.assertIn("UNKNOWN_REBOOT", names_sent)
 
 class TestUnverifiedProtocolGate(unittest.TestCase):
     def test_write_blocked_without_opt_in(self):
