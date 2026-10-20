@@ -139,6 +139,7 @@ open-astro ports
 
 ## 📚 Documentation
 
+* [ELINT Fingerprinting & Firmware Modification Horizons](docs/firmware_analysis_and_elint_fingerprinting.md): Naval ELINT specific emitter identification (SEI), soft-pot calibration physics, post-Motorola firmware enhancements, and the sovereign Codec2/Meshtastic side-car architecture.
 * [Write Failure Diagnosis & Fail-Safe Flashing Engine](docs/radio_write_failure_diagnosis_and_flashing_engine.md): Detailed root-cause analysis of the 10-minute write bottleneck, dual-bank rollback ("writing the same flash back"), and un-sticking frozen radios.
 * [Deep-Dive: Radio Port Communication & The `.cpg` Relational Database](docs/deep_dive_radio_port_and_cpg_relational_database.md): Exhaustive guide to how the radio acts as an embedded computer/network node, the SB9600 protocol packet exchange, and the `.cpg` file's internal Microsoft Jet relational database schema.
 * [Engineering Paper: Motorola ASTRO CPS Architecture & Design](docs/motorola_astro_cps_architecture_and_design_paper.md): Comprehensive formal paper on the evolution, software stack, operational workflows, and reverse engineering blueprint.
