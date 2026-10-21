@@ -15,6 +15,24 @@ zero support in the disassembly. Read that document before this one for current
 findings; this document's "what is known" section is superseded where the two
 disagree.
 
+**Second update, same day:** both paths this file originally listed under
+"Getting to ground truth" have now actually been done, with real results —
+see `CPS_BINARY_ANALYSIS.md` sections 7-8. Short version: real opcode names
+and byte payloads were extracted from `PatPort.exe` by disassembly
+(`MEMACS`, `RELEASE`, `EPREQ`, `TSTMOD`, ...), independently cross-confirmed
+against a leaked official Motorola SB9600 manual and an unrelated
+open-source CRC implementation sniffed from different hardware, and a real
+`usbmon` capture of the actual software running under Wine recorded its
+exact real connection sequence. The command *content* is no longer a
+hypothesis. What's still unresolved: the real software itself fails partway
+through that sequence (`AT+IPR=` errors at every baud rate tried, for both
+the real app and this project's own test code), and running the original
+Windows CPS under Wine on this machine turned out to be a dead end on its
+own terms (broken rendering, repeated crashes) separate from that wall. See
+`CPS_BINARY_ANALYSIS.md` and `docs/AT_INTERFACE_DISCOVERY.md` (the one
+transport that *is* fully working today, for identity only) for the current
+state in full.
+
 ---
 
 ## The problem
@@ -68,32 +86,52 @@ address nobody confirmed.
 
 * `write_codeplug()` refuses to run unless the caller passes
   `allow_unverified_protocol=True`; the CLI exposes this as
-  `--accept-unverified-protocol` on `open-astro write`.
-* `read_codeplug()`, `probe` and `reboot` are **not** gated. They are expected to
-  do nothing useful, and they are the natural first-contact tests once the
-  framing is known.
+  `--accept-unverified-protocol` on `open-astro write`. This still protects
+  against something real: the REAL_COMMAND_BYTES in `commands.py` are
+  confirmed command *content*, but the wire *frame* around them for this
+  radio's USB interface (as opposed to the classic hardware-bus SB9600 the
+  real CRC algorithm was built for) is still not confirmed to work at all —
+  see `CPS_BINARY_ANALYSIS.md` section 7.5's negative test results.
+* `probe` now has a real, working, ungated path for native-USB radios: the AT
+  command interface (`at_interface.py`, `docs/AT_INTERFACE_DISCOVERY.md`).
+  It returns real radio identity today. `read_codeplug()` and `reboot` are
+  still only the unverified placeholder path and remain gated/expected to do
+  nothing.
 * The transport layer (port detection, CDC-ACM, permissions) **is** verified —
   see `HARDWARE_GROUND_TRUTH.md`. That part can be trusted.
 
-## Getting to ground truth
+## Getting to ground truth: done, with results
 
-In rough order of cost:
+Both paths originally listed here have now actually been carried out:
 
-1. **Disassemble the real CPS communication code.** Extract the installer with
-   `unshield`, find the module that drives the serial port, and read its framing
-   and opcode dispatch. This is the authoritative answer and needs no radio.
-2. **Capture a live session.** Run CPS R20.01.00 under Wine or in a Windows VM
-   with the radio passed through, and record the USB traffic with `usbmon`
-   (`modprobe usbmon; cat /sys/kernel/debug/usb/usbmon/3u`) or Wireshark's
-   USB capture. This gives the exact byte sequence for read and write, including
-   whatever handshake precedes it.
-3. **Cross-check against published work.** Other projects have documented parts
-   of Motorola's serial protocols; treat them as leads to verify against (1) or
-   (2), not as sources to copy into this repo as fact.
+1. **Disassembled the real CPS communication code** -- found the real DLL
+   topology, the real `IRemoteProtocol` COM interface, and (the big one) the
+   actual function in `PatPort.exe` that builds each named command's 4-byte
+   payload, by cross-referencing debug-log strings to their code rather than
+   disassembling the whole 24 MB binary. See `CPS_BINARY_ANALYSIS.md`
+   sections 1-2 and 7.
+2. **Captured a live session** -- got the real `PatPort.exe` running under
+   Wine far enough to generate genuine USB traffic, and recorded it with
+   `usbmon`. Got the real, exact connection sequence, and caught the real
+   software failing at a specific, reproducible step. See
+   `CPS_BINARY_ANALYSIS.md` section 8.
+3. **Cross-checked against published work** -- found a leaked official
+   Motorola SB9600 protocol manual and an independent, hardware-verified
+   open-source CRC implementation (different radio, different author), both
+   of which independently confirm the real packet field layout this
+   project's own disassembly produced. See `CPS_BINARY_ANALYSIS.md`
+   section 7.5.
 
-Until one of those lands, the honest description of this project is: a working
-codeplug data model and CSV/JSON toolchain, a verified USB transport, and a
-protocol layer that is a hypothesis.
+**What remains:** the command content is real and triply cross-confirmed
+(disassembly + official manual + independent hardware analysis). What's not
+yet working is getting that content actually transmitted and acknowledged by
+this specific radio over its native-USB interface -- every direct attempt
+this session produced silence or `ERROR`, and the real software itself fails
+partway through its own connection sequence in this environment. The honest
+description of this project today: a working codeplug data model and
+CSV/JSON toolchain, a verified USB transport, a real and working (if narrow)
+identity-query command set, and a codeplug protocol whose *content* is now
+solid ground truth but whose *transmission* is still unresolved.
 
 ## Rule going forward
 
