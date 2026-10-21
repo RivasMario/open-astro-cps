@@ -7,19 +7,39 @@
 > ### Project status (2026-10-20)
 > **Working and verified, against real hardware:** the codeplug data model,
 > JSON/CSV conversion, the USB transport layer (port detection, permissions,
-> device identification), and — new — **`open-astro probe` actually reads a
-> real radio's identity today** (model, serial, security status) via the AT
-> command interface its own USB descriptor advertises. See
+> device identification), and **`open-astro probe`**, which reads a real
+> radio's identity today (model, serial, security status) via the AT command
+> interface its own USB descriptor advertises — a real, measured-safe,
+> read-only query, not a guess. See
 > [**docs/AT_INTERFACE_DISCOVERY.md**](docs/AT_INTERFACE_DISCOVERY.md).
 >
-> **Still not verified:** reading or writing the codeplug itself. The SB9600
-> opcodes, packet traces and memory map for that in `src/open_astro/protocol/`
-> and in several `docs/` files were reasoned out rather than captured from
-> hardware or extracted from Motorola's code, despite being presented as
-> reverse-engineering results. Writing to a radio is gated off until that is
-> resolved — see [**docs/CPS_BINARY_ANALYSIS.md**](docs/CPS_BINARY_ANALYSIS.md),
+> **Real, but not yet sufficient for codeplug read/write:** static analysis of
+> the actual Motorola CPS installer (`PatPort.exe`) recovered real command
+> names and byte payloads (`MEMACS`, `RELEASE`, `EPREQ`, `TSTMOD`, ...),
+> independently cross-confirmed against a leaked official Motorola protocol
+> manual and an unrelated open-source SB9600 CRC implementation. A live
+> `usbmon` capture of the real software running under Wine recorded its exact
+> real connection sequence (`AT&V` → `AT#DATLCL=1` → `AT+IPR=...`) — and
+> caught it failing at the same `AT+IPR=` step, every baud rate tried,
+> reproducibly, for both the real software and this project's own test code.
+> **Running the original 2002-era Windows CPS under Wine on this Fedora
+> laptop is a dead end** — broken rendering, repeated crashes, and this same
+> communication wall the real software hits too. See
+> [**docs/CPS_BINARY_ANALYSIS.md**](docs/CPS_BINARY_ANALYSIS.md) sections 7-8
+> for the full trail (opcode table, real CRC, captured sequence, crash
+> analysis).
+>
+> **Still not implemented:** reading or writing the codeplug itself. Writing
+> to a radio is gated off (`--accept-unverified-protocol`) until the
+> transport this is resolved — see
 > [**docs/PROTOCOL_STATUS.md**](docs/PROTOCOL_STATUS.md) and
 > [**docs/HARDWARE_GROUND_TRUTH.md**](docs/HARDWARE_GROUND_TRUTH.md).
+>
+> **A number of `docs/` files predate this investigation and were written
+> without reading any real Motorola code** — they present a plausible but
+> fabricated protocol (invented opcodes, a `0x05` start byte with no basis,
+> a Microsoft Jet database that isn't there). They're marked below; read
+> `CPS_BINARY_ANALYSIS.md` first for what's actually confirmed.
 
 **OpenAstro CPS** is an open-source codeplug engine, format converter, and serial programming toolkit for **Motorola ASTRO 25** radios:
 * **Motorola XTS 2500** (Model I, Model II, Model III)
@@ -193,16 +213,22 @@ isn't implemented for real; see the project status note above.
 * [**CPS Binary Analysis — real DLL names, real COM interface, real opcode names**](docs/CPS_BINARY_ANALYSIS.md): what extracting and reading the actual Motorola installer turned up.
 * [**Protocol Status — read before trusting any opcode**](docs/PROTOCOL_STATUS.md): what is measured vs. assumed, and how to get to ground truth.
 * [**Hardware Ground Truth**](docs/HARDWARE_GROUND_TRUTH.md): verified USB descriptors, port, and permissions for the XTS 2500.
-* [**Agent Handoff & Mission Brief**](docs/AGENT_HANDOFF_AND_MISSION_BRIEF.md): Mandatory technical briefing for AI agents/developers picking up hardware testing and codeplug operations.
+* [**Agent Handoff & Mission Brief**](docs/AGENT_HANDOFF_AND_MISSION_BRIEF.md): Mandatory technical briefing for AI agents/developers picking up hardware testing and codeplug operations. Carries a correction notice — read that first.
+
+**The following predate the binary analysis and present an invented protocol
+as fact (fabricated opcodes, a `0x05` start byte, a Jet database — none of
+which exist in the real software). Kept for the genuinely original essay/
+analysis content on digital radio, trunking, and RF — not as protocol
+reference:**
 * [Inventing Sovereign Digital Radio Protocols](docs/inventing_sovereign_digital_radio_protocols.md): How bits become radio waves, comparing digital radio dialects (P25, DMR, NXDN, M17), breaking the DVSI vocoder patent monopoly with Codec2, and using the XTS 5000 as a transparent RF engine for custom digital languages.
 * [P25 Infrastructure & Sovereign Roaming Systems](docs/p25_infrastructure_and_roaming_systems_paper.md): The Cisco enterprise model of Motorola LMR, how SmartZone cellular-style tower switching works logically, and open-source infrastructure alternatives (MMDVM, P25Reflector, Quantar Bridge).
-* [ASTRO 25 Software Internals & DLL Architecture](docs/astro_25_software_internals_and_dll_architecture.md): Complete dissection of Motorola CPS executables (A25CPS, A25Tuner), subsystem DLLs (A25Core, A25DB, A25Comm, A25Val, A25Sec), database layers, and 700/800/900 MHz XTS 5000 RF specifications.
+* [ASTRO 25 Software Internals & DLL Architecture](docs/astro_25_software_internals_and_dll_architecture.md) ⚠️ *DLL names (A25Core, A25DB, A25Comm, A25Val, A25Sec) are fabricated — see `CPS_BINARY_ANALYSIS.md` §1 for the real ones.*
 * [ELINT Fingerprinting & Firmware Modification Horizons](docs/firmware_analysis_and_elint_fingerprinting.md): Naval ELINT specific emitter identification (SEI), soft-pot calibration physics, post-Motorola firmware enhancements, and the sovereign Codec2/Meshtastic side-car architecture.
-* [Write Failure Diagnosis & Fail-Safe Flashing Engine](docs/radio_write_failure_diagnosis_and_flashing_engine.md): Detailed root-cause analysis of the 10-minute write bottleneck, dual-bank rollback ("writing the same flash back"), and un-sticking frozen radios.
-* [Deep-Dive: Radio Port Communication & The `.cpg` Relational Database](docs/deep_dive_radio_port_and_cpg_relational_database.md): Exhaustive guide to how the radio acts as an embedded computer/network node, the SB9600 protocol packet exchange, and the `.cpg` file's internal Microsoft Jet relational database schema.
+* [Write Failure Diagnosis & Fail-Safe Flashing Engine](docs/radio_write_failure_diagnosis_and_flashing_engine.md) ⚠️ *The dual-bank rollback "root cause" is invented — no such mechanism was found in the real installer.*
+* [Deep-Dive: Radio Port Communication & The `.cpg` Relational Database](docs/deep_dive_radio_port_and_cpg_relational_database.md) ⚠️ *The Jet/Access database claim has no support in the real binaries — see `CPS_BINARY_ANALYSIS.md` §3.*
 * [Engineering Paper: Motorola ASTRO CPS Architecture & Design](docs/motorola_astro_cps_architecture_and_design_paper.md): Comprehensive formal paper on the evolution, software stack, operational workflows, and reverse engineering blueprint.
 * [CPS Subsystems & Field Reference Notes](docs/cps_subsystems_reference_notes.md): Granular field-by-field reference, switch matrix, Flashcode bitmask lookup table, and C-struct data dictionaries.
-* [ASTRO CPS Reverse-Engineering Specification](docs/astro_cps_reverse_engineering_guide.md): Technical specification for clean-room implementation of `open-astro-cps`.
+* [ASTRO CPS Reverse-Engineering Specification](docs/astro_cps_reverse_engineering_guide.md) ⚠️ *Its opcode table is the fabricated one — use `CPS_BINARY_ANALYSIS.md` §7 instead.*
 * [Radio Architecture Demystified](docs/radio_architecture_and_demystification.md): Codeplugs vs. Flashcodes, P25 & Trunking explained simply, the history of Depot software, and designing a sovereign voice + Meshtastic radio.
 * [Fleet Setup & Encryption Guide](docs/fleet_setup_and_encryption.md): Hardware roles, PSERN Phase 2 notes, and Motorola ADP configuration.
 * [Fedora Linux Setup & Udev Rules](docs/linux_fedora_setup.md): Complete setup for Fedora users.
