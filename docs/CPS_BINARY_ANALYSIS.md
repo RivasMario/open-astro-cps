@@ -710,3 +710,94 @@ unfounded guesses at the radio.
    opcode descriptions (manual sections 3.8.2-3.8.5, pages 22-138). Re-fetching
    those specific pages would very likely resolve both open questions above
    directly from Motorola's own text, rather than more inference.
+
+---
+
+## 8. Update 2026-10-20 (continued): captured the real CPS's actual connection sequence
+
+With the real `PatPort.exe` actually running under Wine (Wine serial support
+working this time -- the earlier wall was two *separate* issues: a missing
+`HKCU\Software\Wine\Ports` registry entry, now set alongside the
+`dosdevices\com5` symlink; this did not by itself make the app succeed, but
+it got far enough to generate real USB traffic) and a `usbmon` capture
+running (`cat /sys/kernel/debug/usb/usbmon/3u`, root, redirected to a file
+readable by the normal user), clicking "Connect" produced a complete, real,
+byte-for-byte capture of the actual software's connection attempt against
+the actual radio. Not simulated, not inferred -- `usbmon` on bus 3 device 7,
+the real XTS 2500.
+
+### The real sequence, decoded
+
+```
+1. SET_LINE_CODING: 9600 baud, 8N1          (USB control transfer, cosmetic
+                                              over CDC-ACM, but this is what
+                                              the real software actually sets)
+2. "AT&V\r"           -> full identity dump, byte-identical to what this
+                          project's own at_interface.py gets (section 6/
+                          AT_INTERFACE_DISCOVERY.md) -- CARRIER:9600,
+                          PROTOCOL:ALT, RADIO:XTS 2500, MODEL:H46UCF9PW6AN,
+                          SERIAL:205CFR2930, SECURE:R000000,
+                          CPS:HARDWARE FLOW CONTROL, ...
+3. "AT#DATLCL=1\r"    -> OK
+4. "AT+IPR=115200\r"  -> ERROR   (retried 5 times, ~2 seconds apart, then
+                                   the app hangs/becomes unresponsive)
+```
+
+This is the real software's real startup handshake, and it fails at step 4,
+every time, reproducibly. `PatPort.exe` needs to raise the link to 115200
+baud before it will proceed, and this radio's AT parser refuses the request.
+
+### Why: `CPS:HARDWARE FLOW CONTROL`, and `CTS` that never moves
+
+`AT&V`'s own response (step 2, and section 6) includes the literal field
+`CPS:HARDWARE FLOW CONTROL`. Read together with section 7.5's earlier,
+separate finding -- that toggling `pyserial`'s `dtr` property on this port
+had no effect on `cts`, which read permanently `True` regardless -- the most
+likely explanation is that the radio's firmware requires a working RTS/CTS
+hardware handshake before it will permit a baud increase to 115200 (a safety
+behavior: don't ramp the link speed up if flow control can't be guaranteed),
+and the RTS/CTS status this virtual USB-CDC-ACM port exposes isn't wired
+through to anything the radio's firmware actually reads as real signaling.
+
+This reframes the entire session's Wine-based wall from section 6.2 and 7.4:
+**it may not be Wine-specific at all.** If RTS/CTS genuinely isn't carried
+over this radio's USB-CDC interface the way the real software expects (on
+any OS, any driver), then the real software's own `AT+IPR=115200` step would
+fail the same way under real Windows with Motorola's own official driver,
+not just under Wine. This has not been tested on real Windows and remains
+unconfirmed -- but it is now the leading hypothesis, not a guess invented to
+explain away a Wine bug.
+
+### Follow-up test: `AT+IPR=` fails at every baud value, not just 115200
+
+Tested `AT+IPR=9600`, `19200`, `38400`, `57600` directly (not just the real
+software's `115200`). **All four get `ERROR`** -- including `9600`, the
+radio's own self-reported current value (`AT&V`'s `CARRIER:9600` field).
+This refutes the flow-control-at-high-speed hypothesis above: if setting the
+rate to its own already-current value still fails, the problem isn't "can't
+safely go faster," it's that `AT+IPR=` isn't accepted on this connection
+path at all, for any value. (`CPS:HARDWARE FLOW CONTROL`/the stuck `CTS` line
+may still be relevant to something else; they just don't explain this
+specific, cleaner negative result.)
+
+Also notable: the real `PatPort.exe` capture (above) sent `AT#DATLCL=1`
+*before* `AT+IPR=115200` and still got `ERROR` every time -- so `DATLCL`
+isn't a precondition that unlocks it either, at least not with a plain `=1`.
+
+### What this changes for next steps
+
+* **The AT interface's scope is now much better understood.** `AT&V` and
+  `AT#DATLCL=1` are confirmed, both by this session's own probing and now by
+  the real software using the identical commands. `AT+IPR=` itself -- at any
+  value tried, including the radio's own current rate -- is confirmed broken
+  or disallowed on this connection path, for both this project's own test
+  and the real software.
+* Whether that's a hardware-flow-control precondition this project hasn't
+  satisfied, a required DATLCL argument value other than `1`, or something
+  else entirely, is still open. The real software hitting the identical wall
+  is informative either way: it means this isn't a bug specific to this
+  project's own AT usage.
+* **This was captured, not guessed.** Unlike most of this session's deeper
+  disassembly work, this is a direct, reproducible observation of the real
+  software failing in a specific, identifiable way -- the strongest ground
+  truth obtained all session.
