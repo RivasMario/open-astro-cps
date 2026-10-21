@@ -133,6 +133,28 @@ CSV/JSON toolchain, a verified USB transport, a real and working (if narrow)
 identity-query command set, and a codeplug protocol whose *content* is now
 solid ground truth but whose *transmission* is still unresolved.
 
+**Third update, same day:** the `AT+IPR=` dead end above turned into the
+session's biggest result. `ATD` (bare dial) is the missing precondition --
+it returns `CONNECT`, and from that state the radio runs a real, standard
+PPP stack: a from-scratch RFC 1661/1662 LCP negotiation came up clean
+(FCS-verified frames both ways), followed by a real IPCP negotiation
+assigning `192.168.128.2` (us) / `192.168.128.1` (radio) -- the same pair
+`AT+WPNEI`/`AT+WV304` had already revealed as configured. Brought up a real
+kernel `ppp0` with `pppd` against this and confirmed the radio answers ICMP
+ping over it. **This is a live, working IP link to the radio**, not a
+hypothesis. See `docs/AT_INTERFACE_DISCOVERY.md`'s last two sections and
+`tools/ppp_probe.py`.
+
+What's not yet found: the actual codeplug service riding on top of this IP
+link. A full TCP port scan of `192.168.128.1` came back entirely filtered --
+no TCP service. A UDP scan was started but the `pppd` link died mid-scan
+(radio stayed on the USB bus throughout -- a link issue, not a radio fault)
+and needs a retry with a narrower range / slower rate. If UDP also comes up
+empty, consider a non-socket transport: a raw IP protocol number, multicast,
+or a vendor-private PPP protocol field (the way LCP/IPCP occupy their own
+protocol numbers) -- see the open question at the end of
+`AT_INTERFACE_DISCOVERY.md`.
+
 ## Rule going forward
 
 Any claim about opcodes, addresses or timing that enters this repo carries its

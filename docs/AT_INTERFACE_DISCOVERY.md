@@ -293,3 +293,84 @@ The actual precondition `AT+IPR=` needs. Narrowed, not yet found:
   got no response at all, consistent with "not listening yet," but doesn't
   prove what *would* make it listen.
 * Or some other required state entirely, not yet identified.
+
+### Resolved: `ATD` is the missing dial step, and a real PPP link comes up
+
+Tried `ATD` (bare, no number) as a low-risk probe. **It returned
+`CONNECT`** -- the classic Hayes "data call established" response. This
+is the precondition the sections above were missing: the channel has to
+be put into data mode first, which also explains why the plain-`AT`
+silence after the earlier raw-PPP-bytes test happened (the channel was
+already in data mode and not listening for AT commands at all, not
+"corrupted").
+
+With the channel in `CONNECT` state, sent a bare LCP `Configure-Request`
+(code 1, id 1, length 4, no options) using the same from-scratch
+RFC 1661/1662 framing as before. **The radio replied with real, valid,
+FCS-verified PPP frames** -- the single biggest result of this
+investigation:
+
+1. A `Configure-Ack` (code 2, id 1, length 4) for our request.
+2. Its own `Configure-Request` (code 1, id 1, length 20) with real
+   options: `Async-Control-Character-Map` (all zero), `Magic-Number`
+   (changes per retransmit), `Protocol-Field-Compression`, and
+   `Address-and-Control-Field-Compression`. This is a standard,
+   spec-shaped PPP LCP request, not a toy or echo.
+
+Sent back a generic `Configure-Ack` (code 2, id 1, length 4, no
+options) rather than a spec-correct one that mirrors the radio's actual
+options -- this is **not** technically correct per RFC 1661 (an ack must
+echo the peer's options verbatim), and it only worked because our id
+happened to coincidentally match the radio's request id. Flagging this
+honestly: it is not confirmed whether the radio's stack is lenient about
+this, or whether it just got lucky on the id match. A future pass should
+send a proper mirrored ack.
+
+Regardless of correctness, the radio's state machine accepted it and
+immediately moved to **IPCP** (protocol `0x8021`), sending its own IPCP
+`Configure-Request` asking for IP option `192.168.128.1` (matching the
+local/remote pair already found via `AT+WPNEI`/`AT+WV304` above) plus
+Van Jacobson TCP/IP header compression. Acked that verbatim, then sent our
+own IPCP `Configure-Request` for `192.168.128.2` -- **the radio
+`Configure-Ack`'d it immediately.** IPCP is up on both sides. The radio
+also sends LCP `Echo-Request` keepalives (magic-number based) once the
+link is idle, which is normal, healthy PPP behavior.
+
+Reproducer: [`tools/ppp_probe.py`](../tools/ppp_probe.py).
+
+### Real kernel PPP link, and the search for the actual codeplug service
+
+Brought this up for real with the kernel's own `pppd` (not just the raw
+probe script) against the same `ATD`/`CONNECT` precondition:
+
+```
+sudo pppd /dev/ttyACM0 9600 192.168.128.2:192.168.128.1 noauth local \
+    nodetach debug dump nocrtscts lock connect 'chat -v "" ATD CONNECT'
+```
+
+This needs root and a real interactive terminal (sudo has no tty in a
+non-interactive automation shell) -- run it manually, outside any script.
+Confirmed: `ppp0` comes up with exactly the addresses negotiated above,
+and the radio answers ICMP ping over it (~13ms RTT, 0% loss). **This is a
+genuine, live IP link to the radio**, not a simulation.
+
+Scanned `192.168.128.1` for whatever service the real CPS/`PatPort.exe`
+talks to once this link is up:
+
+* **TCP, full range (`nmap -Pn -sT -p1-65535`): everything filtered.** No
+  TCP service answers on this interface at all.
+* **UDP, full range: not completed.** The `pppd` link died partway
+  through a full 65535-port UDP scan at `--min-rate 2000` -- possibly
+  from flooding the single slow serial channel all at once. The radio
+  itself stayed enumerated on the USB bus throughout (confirmed via
+  `lsusb`), so this was a link-level issue, not a radio crash or hardware
+  fault. Not yet retried with a narrower range / slower rate (see
+  `tools/ppp_probe.py`'s docstring for the suggested retry command).
+
+**Open question for the next session:** if a full UDP scan (done
+carefully, without flooding the link) also comes back empty, the
+codeplug protocol may not be a conventional TCP/UDP socket service at
+all -- consider a raw IP protocol number (not 6/17), multicast, or
+something riding directly over PPP's own protocol-field space the way
+LCP/IPCP do (a vendor-private PPP protocol number would also explain why
+nothing shows up in an ordinary port scan).

@@ -29,9 +29,21 @@
 > for the full trail (opcode table, real CRC, captured sequence, crash
 > analysis).
 >
-> **Still not implemented:** reading or writing the codeplug itself. Writing
-> to a radio is gated off (`--accept-unverified-protocol`) until the
-> transport this is resolved — see
+> **Biggest result yet:** the `AT+IPR=` wall turned out to need `ATD`
+> (bare dial) first — it returns `CONNECT`, and from there the radio runs a
+> real, standard PPP stack. A from-scratch LCP negotiation came up clean
+> (FCS-verified both ways), followed by a real IPCP negotiation assigning
+> `192.168.128.2`/`192.168.128.1`. A real kernel `ppp0` brought up against
+> this answers ICMP ping from the radio — **a live IP link, not a
+> hypothesis.** A full TCP port scan of the radio came back entirely
+> filtered (no TCP service); a UDP scan is in progress. See
+> [**docs/AT_INTERFACE_DISCOVERY.md**](docs/AT_INTERFACE_DISCOVERY.md)'s
+> final sections and [`tools/ppp_probe.py`](tools/ppp_probe.py).
+>
+> **Still not implemented:** reading or writing the codeplug itself. The
+> service it rides on top of this new IP link hasn't been found yet (TCP
+> ruled out, UDP scan incomplete). Writing to a radio is gated off
+> (`--accept-unverified-protocol`) until this is resolved — see
 > [**docs/PROTOCOL_STATUS.md**](docs/PROTOCOL_STATUS.md) and
 > [**docs/HARDWARE_GROUND_TRUTH.md**](docs/HARDWARE_GROUND_TRUTH.md).
 >
