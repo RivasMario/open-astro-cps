@@ -253,14 +253,43 @@ software side either. The genuinely confirmed fact is narrower than "code
 reason** from the radio's own firmware, not a generic catch-all, and not
 caused by rate choice, DATLCL state, or command syntax.
 
+### Follow-up: tried standing up the PPP link directly, and isolated error 25 further
+
+Implemented real RFC 1661/1662 PPP-over-async framing from scratch (HDLC-like
+`0x7E` flags, standard byte-stuffing of `0x7E`/`0x7D`/control bytes, FCS-16
+per RFC 1662 Appendix C) and sent a bare LCP `Configure-Request` (code 1, no
+options) right after the known-good `AT` / `AT&V` / `AT#DATLCL=1` preamble.
+
+**Result: complete silence.** No `0x7E` byte came back at all -- this
+interface is not listening for PPP framing in this state, at least not
+without some further precondition not yet found (a real "dial"/connect step
+analogous to `ATD`, perhaps, which was not guessed at further).
+
+**Side effect, genuinely informative:** sending those raw framed bytes left
+garbage in the AT parser's line buffer, and the very next plain `AT`
+command -- which has returned `OK` unconditionally all session -- came back
+as `+CME ERROR:25`, the *same* code `AT+IPR=` produces. The channel
+self-recovered on the next command. This means **error 25 is not
+IPR-specific** -- it's reused by this radio's firmware as a generic
+"couldn't process that input" response for at least two different causes
+(malformed/leftover buffer content, and whatever makes `IPR=` fail).
+
+To make sure the original `IPR=` failure wasn't itself a buffer artifact,
+retested it as a clean first command on a fresh connection (`AT` → `OK`,
+`AT+CMEE=1` → `OK`, `AT+IPR=19200` → `+CME ERROR:25`, nothing before it).
+**Still fails, identically.** So the IPR rejection is real and intrinsic,
+not an artifact of this session's own test sequence -- it just happens to
+share a generic error code with other, unrelated failure causes.
+
 ### What's still open
 
-The actual semantic cause of rejection code 25 on this radio. Candidates
-not yet tested or ruled out:
-* A precondition tied to the PPP link (`WPNEI`/`WV304`) actually being
-  *established*, not just configured -- i.e. `IPR` might only be settable
-  during an active data call, a common pattern in real Hayes modems (where
-  `+IPR` sets a fixed local DTE rate that's only meaningful once connected).
-  Testing this means actually bringing up the PPP link first, a
-  meaningfully bigger step than an AT command tweak.
-* Some other required state this session hasn't located.
+The actual precondition `AT+IPR=` needs. Narrowed, not yet found:
+* Not: rate choice, `DATLCL` state, command syntax, or buffer corruption
+  (all directly ruled out above).
+* Still plausible: a "dial"/connect step this session hasn't located that
+  actually brings the PPP link up (as opposed to just configuring its
+  addresses via `WPNEI`/`WV304`) -- real Hayes modems commonly only honor
+  `+IPR` once connected. A bare LCP frame with no preceding dial command
+  got no response at all, consistent with "not listening yet," but doesn't
+  prove what *would* make it listen.
+* Or some other required state entirely, not yet identified.
