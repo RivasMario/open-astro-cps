@@ -189,3 +189,78 @@ Open questions, in order of likely value:
    this analysis hasn't found yet.
 3. What does `PROTOCOL:ALT` mean? Worth a targeted disassembly pass over
    `PatComm10.dll` for the string "ALT" in a protocol-selection context.
+
+## Update 2026-10-20 (later): digging into `AT+IPR=` specifically
+
+Per `CPS_BINARY_ANALYSIS.md` section 8, the real `PatPort.exe` fails at
+`AT+IPR=115200` every time. Dug further using only standard, safe Hayes
+introspection and diagnostic commands -- no guessing at undocumented syntax.
+
+### The query forms all work cleanly
+
+```
+AT+IPR=?    -> IPR:(9600,19200,38400,57600,115200)
+AT+IPR?     -> IPR:9600
+AT#DATLCL=? -> DATLCL:(0,1)
+AT#DATLCL?  -> DATLCL:1
+AT+WPNEI=?  -> WPNEI:(1-255).(1-255).(1-255).(1-255)
+AT+WPNEI?   -> WPNEI:192.168.128.2
+AT+WV304=?  -> WV304:(1-255).(1-255).(1-255).(1-255)
+AT+WV304?   -> WV304:192.168.128.1
+```
+
+This resolves what `WPNEI`/`WV304` are: a local/remote IPv4 address pair
+(`.2`/`.1`) for what is almost certainly the PPP data link
+`RadioCustStack10.dll`'s real `CUSNETppp` code implements (see
+`CPS_BINARY_ANALYSIS.md` section 1) -- confirms the "radio as PPP/IP device"
+story has a real, now-located mechanism behind it.
+
+It also directly rules out several hypotheses:
+* **Not an unsupported-rate problem.** `115200` (and every other rate this
+  project tried) is listed by the radio itself as a valid `IPR` value.
+* **Not a stale-DATLCL problem.** Explicitly toggled `AT#DATLCL=0` then
+  back to `AT#DATLCL=1` (a fresh transition, both calls returning `OK`,
+  confirmed by `AT#DATLCL?` each time) immediately before retrying
+  `AT+IPR=19200`. Still `ERROR`.
+* **Not a syntax problem.** Tried quoted (`AT+IPR="19200"`), spaced
+  (`AT+IPR =19200`), and semicolon-terminated (`AT+IPR=19200;`) variants.
+  All four syntax variants (plain, quoted, spaced, semicolon) return the
+  *identical* error below -- a stable, semantic rejection, not malformed
+  input.
+
+### A real, specific error code -- with an important caveat
+
+Standard AT dialects support `AT+CMEE=1` (verbose numeric error reporting)
+in place of a bare `ERROR`. Enabling it (`AT+CMEE=1` -> `OK`) and retrying
+`AT+IPR=19200` gets:
+
+```
++CME ERROR:25
+```
+
+Checked against two independent AT-command references for the standard
+GSM 07.07 / 3GPP TS 27.007 `+CME ERROR` table: **code 25 = "Invalid
+characters in text string"**.
+
+**Caveat, stated plainly: this radio is not a GSM device**, and nothing
+confirms Motorola's firmware honors the standard table's specific
+per-number meanings rather than just reusing the `+CME ERROR:N` *format*
+with its own internal numbering. Checked `PatPort.exe` for its own
+CME-error-to-text lookup table (it would need one to show a human-readable
+message) -- found none, so there's no way to resolve this from the
+software side either. The genuinely confirmed fact is narrower than "code
+25 means X": it's that this is a **stable, named, numbered rejection
+reason** from the radio's own firmware, not a generic catch-all, and not
+caused by rate choice, DATLCL state, or command syntax.
+
+### What's still open
+
+The actual semantic cause of rejection code 25 on this radio. Candidates
+not yet tested or ruled out:
+* A precondition tied to the PPP link (`WPNEI`/`WV304`) actually being
+  *established*, not just configured -- i.e. `IPR` might only be settable
+  during an active data call, a common pattern in real Hayes modems (where
+  `+IPR` sets a fixed local DTE rate that's only meaningful once connected).
+  Testing this means actually bringing up the PPP link first, a
+  meaningfully bigger step than an AT command tweak.
+* Some other required state this session hasn't located.
