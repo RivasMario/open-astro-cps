@@ -372,16 +372,41 @@ layer uses the full 8001–8003 set. The guide's "8002 = flasher" stands; its
 ### 8.4 Why the cleanroom write still failed, reconciled with all this
 
 The branch's opcodes, UUID commit, CRC, key, and 8002 are all **correct**. The
-write failed on transport *mechanics*, not protocol: the real CPS connects via
-`ByteData10`'s socket over its own `RadioCustStack10` PPP stack (and/or a
-`CRemotePcIntranet` proxy), with a proper TCP handshake and the radio's own
-PPP/IPCP state. The hand-rolled pure-Python TCP in `ppp_flasher.py` did not
-complete a real TCP connection to the listening service (the Fedora direct-IP
-TCP scan saw nothing because the service/handshake path differs from a raw SYN to
-`192.168.128.1`). Nothing was ever ACKed → nothing written → "rebooted to
-original." Fix path: replicate `ByteData10`'s connect sequence (ports 8001–8003,
-proper TCP handshake over the established PPP link), or drive the real
-`RadioCustStack10`/`ByteData10` stack.
+write failed on transport *mechanics*, not protocol.
+
+**The real connect choreography** (decoded from `CRawBytes::Open`,
+`ByteData10.dll` @ `0x110045C0`–`0x110046C6`):
+
+```
+call PPPConnect(CUSNETppp, ...)              ; @0x11004641 ; timeout 0xbb8=3000, must return 1
+call PPPGetRemoteIPaddr(CUSNETppp, &ip)      ; @0x11004659 ; LEARN radio IP (don't assume)
+sprintf(buf, "%d.%d.%d.%d", ip[0..3])        ; @0x1100467C
+call CUSNETdpi::Nopen(ipstr, svc, 8001, 8002, 0)  ; @0x1100469C ; TCP connect radio:8002, local 8001
+call CS_SOCKET_TCPCLOSE_TOUT(sock, 200)      ; @0x110046AF
+call CS_SOCKET_RXTOUT(sock, 5000)            ; @0x110046BD
+... CUSNETdpi::Nread / Nwrite carry RCMP frames
+```
+
+So: a normal **TCP 3-way handshake to `radio_ip:8002`** (local port 8001), on a
+link the radio's own PPP stack brought up, with a learned (not assumed) radio IP
+and a 5 s receive timeout.
+
+`ppp_flasher.py` actually *does* a correct SYN/SYN-ACK/ACK handshake
+(`tcp_connect`, line 362) — so the failure is **below** it: its pure-Python
+PPP/IP stack (the Fedora session flagged its LCP/IPCP acks as "worked by luck on
+an id match"), and it assumes `192.168.128.1` rather than learning the peer IP.
+If PPP isn't correctly established, the radio never routes the TCP, so nothing is
+ACKed → nothing written → "rebooted to original."
+
+**Fix implemented this session (static, untested):**
+[`cleanroom_flasher/rcmp_socket_transport.py`](../cleanroom_flasher/rcmp_socket_transport.py)
+— uses the kernel's `pppd` for the link (which the Fedora session proved brings
+up a real `ppp0` answering ICMP) and an ordinary OS TCP socket to `radio:8002`,
+eliminating the pure-Python PPP/TCP correctness risk. It learns the radio IP from
+`ppp0`'s peer (mirroring `PPPGetRemoteIPaddr`), sets the 5 s RX timeout, and
+exposes a read-only `probe()` (connect → unlock → query UUID) as the first
+hardware test. **Writes are hard-gated** on the `IsRWPartition` allowlist that
+does not exist yet. Needs a radio to validate end-to-end.
 
 ### 8.5 Net correction to `PROVENANCE_AUDIT.md`
 
