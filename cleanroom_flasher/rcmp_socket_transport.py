@@ -57,6 +57,19 @@ OP_ENTER_MODE = 0x0106    # mode 4 = write, 6 = program; + timeout (seconds)
 
 RESP_FLAG = 0x8000        # radio response opcode = 0x8000 | request opcode
 
+# --- Partition AccessRights enum: VERIFIED from cgIsh10c.dll ---
+# (IsROPartition/IsRWPartition/IsRWLockedPartition each call GetAccessRights and
+#  test the result: ==0 RO, ==1 RW, ==2 RW-locked. See NEXTGEN10 doc section 8.1.)
+ACCESS_READ_ONLY = 0          # calibration / security -- NEVER write
+ACCESS_READ_WRITE = 1         # the ONLY writable class
+ACCESS_READ_WRITE_LOCKED = 2  # NEVER write
+
+
+def partition_is_writable(access_rights: int) -> bool:
+    """A partition is safe to write only if its schema AccessRights == ReadWrite.
+    Soft-pot calibration and security partitions are ReadOnly / ReadWriteLocked."""
+    return access_rights == ACCESS_READ_WRITE
+
 DEFAULT_RADIO_IP = "192.168.128.1"
 FLASH_PORT = 8002         # confirmed: ByteData10 Nopen remote port (0x1F42)
 LOCAL_PORT = 8001         # confirmed: ByteData10 Nopen local port  (0x1F41)

@@ -339,6 +339,30 @@ CRC confirmed: `cgIshCalculateChecksum` uses **CRC-16-CCITT poly `0x1021`**
 (`mov word[esp+0xa],0x1021` @ `0x100077AA`) — matches the
 `FEDORA_RADIO_PROTOCOLS_GUIDE.md` §5 claim.
 
+**AccessRights enum — decoded, and it is the safe-write rule.** The three
+predicates each call `GetAccessRights(partNum)` (`CcgIshCpLayout`, export
+@ `0x100035B0`) and test the returned value:
+
+| Predicate (export) | test | ⇒ enum value |
+|---|---|---|
+| `IsROPartition` @ `0x100036E0` | `neg/sbb/inc` → ==0 | **ReadOnly = 0** |
+| `IsRWPartition` @ `0x100036A0` | `dec/neg/sbb/inc` → ==1 | **ReadWrite = 1** |
+| `IsRWLockedPartition` @ `0x100036C0` | `cmp eax,2; sete` → ==2 | **ReadWriteLocked = 2** |
+
+`GetAccessRights` resolves the partition in a hash table (bucket `partNum>>4` via
+`div [ecx+0x88]`, list at `[ecx+0x84]`, match `word[entry+8]==partNum`) and
+returns the rights field at `[pkinfo+8]`; an unknown partition throws. The
+partition→rights map is **loaded per radio/model at runtime** (populated by
+`AddPartition(partNum, accessRights)`), so it is not a static table in this DLL.
+
+**Safe-write rule (exact, verified):** write an ISH item only if its partition's
+`AccessRights == 1` (ReadWrite). `0` (ReadOnly) and `2` (ReadWriteLocked) —
+which is where soft-pot calibration and security live — must never be written.
+This is encoded as `partition_is_writable()` in
+[`cleanroom_flasher/rcmp_socket_transport.py`](../cleanroom_flasher/rcmp_socket_transport.py).
+The remaining piece is to read each radio's live partition list + rights (via the
+RCMP ISH/layout reads) and gate every write against it.
+
 ### 8.2 `fhAdk10c.dll` — the file encrypt / checksum layer
 
 `CFhAdkEncrypt::Encrypt/Decrypt`, `CFhAdkFileHandler::SaveImage`,
