@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenAstro CPS - Clean-Room Radio Programming System</title>
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --panel-dark: #131b2e;
+      --card-bg: #1a233b;
+      --border-dark: #24304f;
+      --border-focus: #38bdf8;
+      --accent-blue: #38bdf8;
+      --accent-indigo: #6366f1;
+      --accent-green: #10b981;
+      --accent-orange: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      background: var(--panel-dark);
+      border-bottom: 1px solid var(--border-dark);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .device-status-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-dark);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #64748b;
+      transition: all 0.3s ease;
+    }
+    .status-dot.online {
+      background: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green);
+    }
+    .status-dot.busy {
+      background: var(--accent-orange);
+      box-shadow: 0 0 10px var(--accent-orange);
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-outline {
+      background: transparent;
+      border-color: var(--border-dark);
+      color: var(--text-muted);
+    }
+    .btn-outline:hover:not(:disabled) {
+      background: var(--card-bg);
+      color: var(--text-main);
+      border-color: #475569;
+    }
+    .btn-primary {
+      background: #0284c7;
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #0369a1;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+    .btn-success {
+      background: #059669;
+      color: white;
+    }
+    .btn-success:hover:not(:disabled) {
+      background: #047857;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: #b91c1c;
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      padding: 24px;
+      max-width: 1440px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Radio Info Card */
+    .radio-summary-card {
+      background: var(--panel-dark);
+      border: 1px solid var(--border-dark);
+      border-radius: 10px;
+      padding: 18px 24px;
+      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .info-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .info-val {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    /* Zone Navigation Strip */
+    .zone-strip {
+      background: var(--panel-dark);
+      border: 1px solid var(--border-dark);
+      border-bottom: none;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .zone-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .zone-pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--card-bg);
+      color: var(--text-muted);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .zone-pill:hover {
+      color: var(--text-main);
+      border-color: var(--border-dark);
+    }
+    .zone-pill.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-blue);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    /* Channels Grid Table */
+    .table-container {
+      background: var(--panel-dark);
+      border: 1px solid var(--border-dark);
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+      overflow-x: auto;
+    }
+    .channel-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    .channel-table th {
+      background: #0d1322;
+      color: var(--text-muted);
+      font-weight: 700;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-dark);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .channel-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1a233b;
+      vertical-align: middle;
+    }
+    .channel-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Form Controls inside Table */
+    .table-input {
+      background: #0b0f19;
+      border: 1px solid var(--border-dark);
+      color: var(--text-main);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+      width: 100%;
+      transition: border-color 0.15s ease;
+    }
+    .table-input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      background: #0f172a;
+    }
+    .table-input.mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 600;
+      color: var(--accent-blue);
+    }
+    .table-select {
+      background: #0b0f19;
+      border: 1px solid var(--border-dark);
+      color: var(--text-main);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .table-select:focus {
+      outline: none;
+      border-color: var(--border-focus);
+    }
+
+    /* Badges */
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .badge-p25 {
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+    }
+    .badge-analog {
+      background: rgba(16, 185, 129, 0.2);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    /* Action icon buttons */
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-btn:hover {
+      color: var(--accent-red);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Footer / Status Bar */
+    footer {
+      background: var(--panel-dark);
+      border-top: 1px solid var(--border-dark);
+      padding: 10px 24px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+    }
+
+    /* Modal / Progress Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(2, 6, 23, 0.85);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-box {
+      background: var(--panel-dark);
+      border: 1px solid var(--border-dark);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-dark);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .modal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .progress-bar-bg {
+      background: #0f172a;
+      border: 1px solid var(--border-dark);
+      border-radius: 8px;
+      height: 12px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #38bdf8, #10b981);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .modal-log {
+      background: #090d16;
+      border: 1px solid var(--border-dark);
+      border-radius: 6px;
+      padding: 12px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-dark);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-dark);
+      color: var(--text-main);
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      gap: 10px;
+      z-index: 2000;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .toast.success { border-color: var(--accent-green); color: #6ee7b7; }
+    .toast.error { border-color: var(--accent-red); color: #fca5a5; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-logo">
+        <span>⚡ OpenAstro CPS</span>
+      </div>
+      <span class="brand-badge">Pure Python · Clean-Room</span>
+    </div>
+
+    <!-- Active Hardware Connection Chip -->
+    <div class="device-status-chip">
+      <div class="status-dot" id="radio-status-dot"></div>
+      <span id="radio-status-text">Detecting Radio...</span>
+      <span style="color: var(--text-muted); font-size: 11px;" id="radio-port-text">COM7</span>
+    </div>
+
+    <!-- Global Actions -->
+    <div class="header-actions">
+      <button class="btn btn-outline" onclick="fetchRadioStatus()">🔄 Refresh</button>
+      <button class="btn btn-outline" onclick="saveCodeplug()">💾 Save Codeplug</button>
+      <button class="btn btn-outline" onclick="exportCodeplugJson()">📥 Export JSON</button>
+      <button class="btn btn-success" id="btn-flash" onclick="openFlashModal()">🚀 Flash Radio</button>
+    </div>
+  </header>
+
+  <!-- Main Work Area -->
+  <main>
+    <!-- Radio Specs Banner -->
+    <div class="radio-summary-card">
+      <div class="info-item">
+        <span class="info-label">Active Radio Model</span>
+        <span class="info-val" id="disp-model">Motorola XTS 2500 Model II</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Serial Number</span>
+        <span class="info-val" id="disp-serial">205CMB2249</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">RF Frequency Band</span>
+        <span class="info-val" id="disp-bandsplit">700/800 MHz (764-870 MHz)</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Flashcode</span>
+        <span class="info-val" id="disp-flashcode">500008-000488-4</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Flasher Engine</span>
+        <span class="info-val" style="color: var(--accent-green);">Port 8002 Native PPP</span>
+      </div>
+    </div>
+
+    <!-- Zone Strip -->
+    <div class="zone-strip">
+      <div class="zone-pills" id="zone-pill-container">
+        <!-- Rendered by JS -->
+      </div>
+      <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;" onclick="addChannel()">+ Add Channel</button>
+    </div>
+
+    <!-- Channel Table -->
+    <div class="table-container">
+      <table class="channel-table">
+        <thead>
+          <tr>
+            <th style="width: 45px;">CH</th>
+            <th style="width: 160px;">Channel Name</th>
+            <th style="width: 140px;">Rx Freq (MHz)</th>
+            <th style="width: 140px;">Tx Freq (MHz)</th>
+            <th style="width: 130px;">Voice Mode</th>
+            <th style="width: 120px;">Tone / NAC</th>
+            <th style="width: 100px;">Talkgroup</th>
+            <th style="width: 110px;">Power</th>
+            <th style="width: 110px;">Privacy</th>
+            <th style="width: 50px;"></th>
+          </tr>
+        </thead>
+        <tbody id="channel-table-body">
+          <!-- Rendered dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Footer Status Bar -->
+  <footer>
+    <div>Clean-room ASTRO 25 Subscriber Tool · Zero Reliance on Motorola Software or Legacy XP DLLs</div>
+    <div>Target: <strong>851.5125 MHz P25 Simplex</strong> & <strong>853.0125 MHz Analog Simplex</strong></div>
+  </footer>
+
+  <!-- Flashing Modal -->
+  <div class="modal-overlay" id="flash-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title">⚡ Flashing Codeplug to Radio</h3>
+        <button class="icon-btn" onclick="closeFlashModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="modal-desc" style="font-size: 13px; color: var(--text-muted);">
+          Transferring codeplug streams over USB Point-to-Point Protocol (PPP) directly to ASTRO 25 Flasher Daemon on TCP port 8002...
+        </p>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="flash-progress-bar"></div>
+        </div>
+        <div class="modal-log" id="flash-log">
+          <div>[*] Initializing ASTRO 25 Flashing Engine...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="modal-btn-cancel" onclick="closeFlashModal()">Close</button>
+        <button class="btn btn-success" id="modal-btn-start" onclick="executeFlash()">Start Flash</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let activeCodeplug = null;
+    let activeZoneIndex = 0;
+
+    // Load initial data
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchCodeplug();
+      fetchRadioStatus();
+      setInterval(fetchRadioStatus, 3000);
+    });
+
+    async function fetchCodeplug() {
+      try {
+        const resp = await fetch('/api/codeplug');
+        activeCodeplug = await resp.json();
+        renderCodeplug();
+      } catch (e) {
+        showToast('Error loading codeplug: ' + e.message, true);
+      }
+    }
+
+    async function fetchRadioStatus() {
+      try {
+        const resp = await fetch('/api/status');
+        const st = await resp.json();
+        const dot = document.getElementById('radio-status-dot');
+        const txt = document.getElementById('radio-status-text');
+        const portTxt = document.getElementById('radio-port-text');
+
+        if (st.online) {
+          dot.className = 'status-dot online';
+          txt.textContent = `${st.model_number || 'XTS 2500'} (${st.serial_number || 'Online'})`;
+          portTxt.textContent = st.port;
+          if (st.serial_number) {
+            document.getElementById('disp-serial').textContent = st.serial_number;
+          }
+          if (st.model_number) {
+            document.getElementById('disp-model').textContent = st.model_number;
+          }
+        } else {
+          dot.className = 'status-dot';
+          txt.textContent = st.port ? `Radio Offline on ${st.port}` : 'No Radio Detected';
+          portTxt.textContent = st.port || '---';
+        }
+      } catch (e) {
+        // server might be busy or restarting
+      }
+    }
+
+    function renderCodeplug() {
+      if (!activeCodeplug) return;
+
+      document.getElementById('disp-model').textContent = activeCodeplug.radio_model || '---';
+      document.getElementById('disp-serial').textContent = activeCodeplug.serial_number || '---';
+      document.getElementById('disp-bandsplit').textContent = activeCodeplug.bandsplit || '---';
+      document.getElementById('disp-flashcode').textContent = activeCodeplug.flashcode || '---';
+
+      // Render Zones
+      const zoneContainer = document.getElementById('zone-pill-container');
+      zoneContainer.innerHTML = '';
+      (activeCodeplug.zones || []).forEach((zone, idx) => {
+        const pill = document.createElement('div');
+        pill.className = `zone-pill ${idx === activeZoneIndex ? 'active' : ''}`;
+        pill.textContent = `Zone ${zone.zone_number}: ${zone.name} (${zone.channels.length})`;
+        pill.onclick = () => {
+          activeZoneIndex = idx;
+          renderCodeplug();
+        };
+        zoneContainer.appendChild(pill);
+      });
+
+      // Render Channels for active zone
+      const tbody = document.getElementById('channel-table-body');
+      tbody.innerHTML = '';
+
+      const currentZone = activeCodeplug.zones ? activeCodeplug.zones[activeZoneIndex] : null;
+      if (!currentZone) return;
+
+      currentZone.channels.forEach((ch, chIdx) => {
+        const tr = document.createElement('tr');
+        const isP25 = (ch.voice_type || '').includes('P25');
+
+        tr.innerHTML = `
+          <td><strong>${String(ch.channel_number).padStart(2, '0')}</strong></td>
+          <td>
+            <input type="text" class="table-input" value="${ch.name}" 
+                   onchange="updateChannel(${chIdx}, 'name', this.value)" maxlength="16">
+          </td>
+          <td>
+            <input type="number" step="0.0001" class="table-input mono" value="${ch.rx_frequency.toFixed(4)}" 
+                   onchange="updateChannel(${chIdx}, 'rx_frequency', parseFloat(this.value))">
+          </td>
+          <td>
+            <input type="number" step="0.0001" class="table-input mono" value="${ch.tx_frequency.toFixed(4)}" 
+                   onchange="updateChannel(${chIdx}, 'tx_frequency', parseFloat(this.value))">
+          </td>
+          <td>
+            <select class="table-select" onchange="updateChannel(${chIdx}, 'voice_type', this.value)">
+              <option value="ASTRO P25" ${isP25 ? 'selected' : ''}>ASTRO P25</option>
+              <option value="Analog" ${!isP25 ? 'selected' : ''}>Analog FM</option>
+            </select>
+          </td>
+          <td>
+            <input type="text" class="table-input" value="${isP25 ? (ch.rx_nac || '$293') : (ch.rx_pl_tone ? ch.rx_pl_tone + ' Hz' : 'None')}" 
+                   onchange="updateToneNac(${chIdx}, this.value, '${ch.voice_type}')">
+          </td>
+          <td>
+            <input type="number" class="table-input" value="${ch.talkgroup_id || 1}" 
+                   onchange="updateChannel(${chIdx}, 'talkgroup_id', parseInt(this.value))" ${!isP25 ? 'disabled' : ''}>
+          </td>
+          <td>
+            <select class="table-select" onchange="updateChannel(${chIdx}, 'power_level', this.value)">
+              <option value="High" ${ch.power_level === 'High' ? 'selected' : ''}>High (3W)</option>
+              <option value="Low" ${ch.power_level === 'Low' ? 'selected' : ''}>Low (1W)</option>
+            </select>
+          </td>
+          <td>
+            <select class="table-select" onchange="updateChannel(${chIdx}, 'secure_strapping', this.value)">
+              <option value="Clear" ${ch.secure_strapping === 'Clear' ? 'selected' : ''}>Clear</option>
+              <option value="Secure" ${ch.secure_strapping === 'Secure' ? 'selected' : ''}>Secure</option>
+            </select>
+          </td>
+          <td>
+            <button class="icon-btn" title="Delete Channel" onclick="deleteChannel(${chIdx})">🗑️</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateChannel(idx, key, val) {
+      if (activeCodeplug && activeCodeplug.zones[activeZoneIndex]) {
+        activeCodeplug.zones[activeZoneIndex].channels[idx][key] = val;
+      }
+    }
+
+    function updateToneNac(idx, val, voiceType) {
+      if (!activeCodeplug) return;
+      const ch = activeCodeplug.zones[activeZoneIndex].channels[idx];
+      if (voiceType.includes('P25')) {
+        ch.rx_nac = val.startsWith('$') ? val : '$' + val;
+        ch.tx_nac = ch.rx_nac;
+      } else {
+        const tone = parseFloat(val.replace(/[^\d.]/g, ''));
+        ch.rx_pl_tone = tone || null;
+        ch.tx_pl_tone = tone || null;
+      }
+    }
+
+    function addChannel() {
+      if (!activeCodeplug || !activeCodeplug.zones[activeZoneIndex]) return;
+      const chs = activeCodeplug.zones[activeZoneIndex].channels;
+      const nextNum = chs.length + 1;
+      chs.push({
+        channel_number: nextNum,
+        name: `CH ${nextNum}`,
+        rx_frequency: 851.5125,
+        tx_frequency: 851.5125,
+        channel_spacing_khz: 12.5,
+        voice_type: "ASTRO P25",
+        rx_pl_tone: null,
+        tx_pl_tone: null,
+        rx_nac: "$293",
+        tx_nac: "$293",
+        talkgroup_id: 1,
+        secure_strapping: "Clear",
+        power_level: "High",
+        rx_only: false
+      });
+      renderCodeplug();
+    }
+
+    function deleteChannel(idx) {
+      if (!activeCodeplug || !activeCodeplug.zones[activeZoneIndex]) return;
+      activeCodeplug.zones[activeZoneIndex].channels.splice(idx, 1);
+      // re-number
+      activeCodeplug.zones[activeZoneIndex].channels.forEach((c, i) => c.channel_number = i + 1);
+      renderCodeplug();
+    }
+
+    async function saveCodeplug() {
+      if (!activeCodeplug) return;
+      try {
+        const resp = await fetch('/api/codeplug', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(activeCodeplug)
+        });
+        const res = await resp.json();
+        showToast(res.message || 'Codeplug saved successfully!', false);
+      } catch (e) {
+        showToast('Error saving codeplug: ' + e.message, true);
+      }
+    }
+
+    function exportCodeplugJson() {
+      if (!activeCodeplug) return;
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activeCodeplug, null, 2));
+      const dl = document.createElement('a');
+      dl.setAttribute("href", dataStr);
+      dl.setAttribute("download", `${activeCodeplug.serial_number || 'codeplug'}.json`);
+      dl.click();
+    }
+
+    function openFlashModal() {
+      document.getElementById('flash-modal').style.display = 'flex';
+      document.getElementById('flash-progress-bar').style.width = '0%';
+      document.getElementById('flash-log').innerHTML = '<div>[*] Ready to flash active codeplug. Click "Start Flash" to proceed.</div>';
+      document.getElementById('modal-btn-start').disabled = false;
+    }
+
+    function closeFlashModal() {
+      document.getElementById('flash-modal').style.display = 'none';
+    }
+
+    async function executeFlash() {
+      const btn = document.getElementById('modal-btn-start');
+      const log = document.getElementById('flash-log');
+      const bar = document.getElementById('flash-progress-bar');
+      btn.disabled = true;
+
+      function addLog(msg) {
+        const div = document.createElement('div');
+        div.textContent = msg;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      addLog("[*] Negotiating RFC 1661 PPP session with radio...");
+      bar.style.width = "25%";
+
+      try {
+        // Save first
+        await fetch('/api/codeplug', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(activeCodeplug)
+        });
+
+        addLog("[+] Codeplug verified & prepared.");
+        addLog("[*] Connecting to TCP Port 8002 (ASTRO 25 Flasher Daemon)...");
+        bar.style.width = "50%";
+
+        const resp = await fetch('/api/write', { method: 'POST' });
+        const res = await resp.json();
+
+        if (res.success) {
+          bar.style.width = "100%";
+          addLog("[+] Flashing sequence successfully completed!");
+          addLog(`[+] Radio ${res.radio_serial || ''} restarted into operational mode!`);
+          showToast("Flash completed successfully!", false);
+        } else {
+          addLog("[-] Flashing failed: " + (res.error || "Unknown error"));
+          showToast("Flash failed: " + res.error, true);
+        }
+      } catch (e) {
+        addLog("[-] Network error during flash: " + e.message);
+        showToast("Error: " + e.message, true);
+      }
+    }
+
+    function showToast(msg, isError) {
+      const t = document.getElementById('toast');
+      t.textContent = (isError ? '⚠️ ' : '✅ ') + msg;
+      t.className = 'toast ' + (isError ? 'error' : 'success');
+      t.style.display = 'flex';
+      setTimeout(() => { t.style.display = 'none'; }, 4000);
+    }
+  </script>
+</body>
+</html>

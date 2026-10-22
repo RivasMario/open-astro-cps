@@ -55,3 +55,9 @@ htmlcov/
 *.rom
 radio_dumps/
 raw_data/
+
+backups/
+scratch*/
+*.cpg
+*.cpglog
+*.tun
