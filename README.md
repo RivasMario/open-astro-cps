@@ -187,10 +187,39 @@ open-astro read -o my_radio_backup.json
 open-astro write examples/king_county_800mhz_fleet.json
 ```
 
+### 8. Binary Codeplug (.cpg) Inspection, Decryption & Patching
+Inspect, decrypt, search, and patch Motorola ASTRO 25 binary codeplug files (`.cpg`) directly in pure Python across Linux, macOS, and Windows:
+
+```bash
+# Display binary codeplug metadata, encryption status, and stream count
+open-astro cpg-info backups/Radio1_205CMB2249_codeplug.cpg
+
+# Extract and decrypt all relational streams to disk with manifest.json
+open-astro cpg-dump backups/Radio1_205CMB2249_codeplug.cpg -o extracted_streams/
+
+# Search decrypted streams for text or hex patterns
+open-astro cpg-search backups/Radio1_205CMB2249_codeplug.cpg "TAC"
+open-astro cpg-search backups/Radio1_205CMB2249_codeplug.cpg 6d35f1 --hex
+
+# Patch a stream in-place into an output .cpg archive
+open-astro cpg-patch original.cpg -s Strm_22 -d modified_strm22.bin -o patched.cpg
+```
+
+### 9. Modern Web GUI
+Launch the modern, responsive web application directly in your browser:
+```bash
+open-astro gui
+```
+* **Real-time Status Polling**: Auto-detects connected radios, serial number, model, and port status every 3 seconds.
+* **Spreadsheet-style Channel Grid**: Rapidly configure channel names, frequencies, voice modes (P25 vs Analog FM), PL tones, NACs, talkgroups, and power levels.
+* **One-Click Flashing**: Visual modal showing live progress across PPP negotiation, TCP socket connect, RCMP stream transfer, and radio reboot.
+* **Direct Import/Export**: Save codeplugs to JSON and export directly from the browser.
+
 ---
 
 ## 📚 Documentation
 
+* [ASTRO 25 Codeplug & Flashing Internals Guide](docs/astro25_codeplug_and_flashing_internals.md): Plain-English deep dive into OLE2 structure, LCG/RC4 ciphers, USB PPP transport (`192.168.128.1`), and recovery rules.
 * [Fleet Setup & Encryption Guide](docs/fleet_setup_and_encryption.md): Hardware roles, PSERN Phase 2 notes, and Motorola ADP configuration.
 * [Fedora Linux Setup & Udev Rules](docs/linux_fedora_setup.md): Complete setup for Fedora users.
 

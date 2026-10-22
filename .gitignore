@@ -55,3 +55,5 @@ htmlcov/
 *.rom
 radio_dumps/
 raw_data/
+scratch*/
+backups/

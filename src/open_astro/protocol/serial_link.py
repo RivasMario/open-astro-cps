@@ -42,6 +42,8 @@ class RadioSerialLink:
 
             if "2047:0a7c" in hwid or "vid_2047&pid_0a7c" in hwid or "kfdtool" in desc:
                 device_type = "P25 Key Variable Loader (KFDtool KVL)"
+            elif "0cad:1001" in hwid or "vid_0cad&pid_1001" in hwid:
+                device_type = "Motorola ASTRO 25 Native USB (RKN4105 / 0CAD:1001)"
             elif any(k in hwid or k in desc for k in ["1a86:7523", "ch340", "ftdi", "0403:6001", "prolific", "cp210"]):
                 device_type = "Motorola ASTRO / Radio Programming Cable"
 
@@ -59,6 +61,11 @@ class RadioSerialLink:
         if not SERIAL_AVAILABLE:
             return None
         ports = serial.tools.list_ports.comports()
+        # Prioritize native Motorola ASTRO 25 USB (0CAD:1001)
+        for p in ports:
+            hwid = (p.hwid or "").lower()
+            if "0cad:1001" in hwid or "vid_0cad&pid_1001" in hwid:
+                return p.device
         for p in ports:
             hwid = (p.hwid or "").lower()
             desc = (p.description or "").lower()
