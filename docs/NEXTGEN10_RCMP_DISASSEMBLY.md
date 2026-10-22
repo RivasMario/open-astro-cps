@@ -393,6 +393,38 @@ it's 8003" (from `NextGen10`, which only exposed 8003) was mistaken; the socket
 layer uses the full 8001–8003 set. The guide's "8002 = flasher" stands; its
 "8010 = debug" was not seen (8001/8003 instead).
 
+### 8.3b RCMP wire header structure (SendRcmp buffer builder @ 0x1000b5b0)
+
+Disassembled `SendRcmp`'s message construction (`0x1000B5FE`–`0x1000B782`):
+
+* Buffer size = `payload_len + 0x17` (23-byte header), or `0x18` when empty
+  (`movzx eax,word[ebp+0x1c]; add eax,0x17`).
+* The header is filled by a **loop over 7 fields** (`[ebp-0x20]` 0→6,
+  terminated by `cmp [ebp-0x20],7`). A jump ladder at `0x1000B690` picks which
+  of the 9 `SendRcmp` args each field comes from:
+  - field 0 → arg1 = **opcode** (serialized 16-bit: `mov ah,byte[field]` high,
+    then low byte via the generic writer at `0x1000B758`)
+  - field 1 → a `tag`/length byte `= 1` then arg3 (`0x1000B711`)
+  - field 2 → arg4, with a **special case** `0x1000B6DD`: if opcode `== 0x107`
+    (`UNLOCK_PARTITION`) or `== 0x1`, two bytes are emitted
+  - fields 3–6 → args 5,6,7,8 (the ISH `type`/`id`/`partition`/`offset`/`length`
+    words read from the item descriptor; see §6b)
+* The payload (arg2, the `VT_UI1` SafeArray) is appended after the header.
+
+**Shape recovered (high confidence):** a ~23-byte, 7-field, opcode-first header
+followed by payload — consistent with the `[length][opcode][payload]` model the
+cleanroom used, but with structured inner fields. **Exact per-field byte
+counts / tag bytes (low confidence) are not fully pinned** — the generic writer
+at `0x1000B758` and the arg6/arg8 length reuse make the precise widths ambiguous
+from static reading alone.
+
+**Recommended resolver:** one `usbmon` capture of the real `PatPort.exe` issuing
+a single RCMP op over TCP:8002 gives the exact header bytes directly — far
+cheaper than more disassembly, and it anchors the serializer above to real
+bytes. Needs the radio + the real software running (Wine or Windows). Until
+then, treat the header field *order* as known and the exact byte widths as
+to-be-confirmed.
+
 ### 8.4 Why the cleanroom write still failed, reconciled with all this
 
 The branch's opcodes, UUID commit, CRC, key, and 8002 are all **correct**. The
