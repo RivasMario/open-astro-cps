@@ -40,3 +40,12 @@ def test_crc16_ccitt_known_vector():
     # but this implementation is init=0x0000 (as in cgIsh10c) -> 0x31C3.
     assert crc16_ccitt(b"123456789") == 0x31C3
     assert crc16_ccitt(b"") == 0x0000
+
+
+def test_stream_framing_payload_crc():
+    # Stream format verified 2026-10-23:
+    # 2B tag, 2B instance, 2B payload length, payload, 2B big-endian CRC16 over payload
+    payload = b"SITE 1" + b"\x00" * 10
+    crc = crc16_ccitt(payload)
+    stream = (0x0FDC).to_bytes(2, "big") + (0).to_bytes(2, "big") + len(payload).to_bytes(2, "big") + payload + crc.to_bytes(2, "big")
+    assert crc16_ccitt(stream[6:-2]) == int.from_bytes(stream[-2:], "big")

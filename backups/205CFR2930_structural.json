@@ -1,0 +1,1153 @@
+{
+  "format": "cpg/ole-compound",
+  "rc4_key": "292665820d",
+  "header": {
+    "stream": "AdkFileHeader",
+    "size": 800,
+    "encrypted": false,
+    "uuid": "cde9c2bdb9755841b32c204e0e98e009",
+    "model": "H46UCF9PW6AN",
+    "serial": "205CFR2930"
+  },
+  "streams": [
+    {
+      "name": "AdkFileHeader",
+      "size": 800
+    },
+    {
+      "name": "DataStg/Strm_0",
+      "size": 1462,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "1005000000810e3b00011004000000812b6e0002100600000081acf000030034000000805ce200040ff0000000807de100050ff1000000809c67000600180000"
+    },
+    {
+      "name": "DataStg/Strm_1",
+      "size": 51,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "10050000002d1d16325b7ef5b534fbebb9e20298c53400000080100000831066000000000c0000000000080000020401000e3b"
+    },
+    {
+      "name": "DataStg/Strm_10",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "004a0000000e00010011003200140fce00003dbe"
+    },
+    {
+      "name": "DataStg/Strm_100",
+      "size": 33,
+      "crc_ok": false,
+      "ascii": [
+        "SITE 1"
+      ],
+      "decrypted_hex": "0fdc0000001b00000011003200015349544520310000000000000000000000b131"
+    },
+    {
+      "name": "DataStg/Strm_101",
+      "size": 25,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fd10000001300000009000800010000000001000000004eb6"
+    },
+    {
+      "name": "DataStg/Strm_102",
+      "size": 120,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "003c000000720000000d00080008000000000001000000ffff0000000000000001000000ffff0000000000000001000000ffff0000000000000001000000ffff"
+    },
+    {
+      "name": "DataStg/Strm_103",
+      "size": 31,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "003d00000019000000050003000300ffff000000ffff000000ffff00003e98"
+    },
+    {
+      "name": "DataStg/Strm_104",
+      "size": 224,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "003a000000da0000000d0010001000000000000000000f0fff000000000000000000000f0fff000000000000000000000f0fff000000000000000000000f0fff"
+    },
+    {
+      "name": "DataStg/Strm_105",
+      "size": 31,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "003b0000001900000005000300030f0fff00000f0fff00000f0fff0000fedf"
+    },
+    {
+      "name": "DataStg/Strm_106",
+      "size": 142,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fe700000088020fe600000fe500000fe000000fd0000095641c200001000c00000000000a010fdb00000fd800000fde00002601260126012601000100010001"
+    },
+    {
+      "name": "DataStg/Strm_107",
+      "size": 51,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fe60000002d00010178000005150028280000000000000000000000000000000000000000000000000000000000000000f4e7"
+    },
+    {
+      "name": "DataStg/Strm_108",
+      "size": 26,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fe5000000140000000000000000000000000000ffff000084c0"
+    },
+    {
+      "name": "DataStg/Strm_109",
+      "size": 41,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fe400000023020fe300000fe700000fe200002210000000000fef00000fd500000fd100000000b443"
+    },
+    {
+      "name": "DataStg/Strm_11",
+      "size": 337,
+      "crc_ok": false,
+      "ascii": [
+        "PHONE 1",
+        "PHONE 2",
+        "PHONE 3",
+        "PHONE 4",
+        "PHONE 5",
+        "PHONE 6",
+        "PHONE 7",
+        "PHONE 8"
+      ],
+      "decrypted_hex": "0fce0000014b00000000001350484f4e4520310000000000000000000050484f4e4520320000000000000000000050484f4e4520330000000000000000000050"
+    },
+    {
+      "name": "DataStg/Strm_110",
+      "size": 10,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fe30000000400000000"
+    },
+    {
+      "name": "DataStg/Strm_111",
+      "size": 17,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fee0000000b00000000000100000076b4"
+    },
+    {
+      "name": "DataStg/Strm_112",
+      "size": 27,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fef0000001500010003006400640fee00000fed0000000000bfeb"
+    },
+    {
+      "name": "DataStg/Strm_113",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fed0000000e00010011006400140fec00009eaa"
+    },
+    {
+      "name": "DataStg/Strm_114",
+      "size": 31,
+      "crc_ok": false,
+      "ascii": [
+        "CALL 1"
+      ],
+      "decrypted_hex": "0fec0000001900000000000143414c4c20310000000000000000000000417d"
+    },
+    {
+      "name": "DataStg/Strm_115",
+      "size": 33,
+      "crc_ok": false,
+      "ascii": [
+        "LIST 1"
+      ],
+      "decrypted_hex": "004d0000001b00000011003200014c495354203100000000000000000000009f8f"
+    },
+    {
+      "name": "DataStg/Strm_116",
+      "size": 176,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fd0000000aa0000000a00100010006400b400320a2510a2006440b400320a2510a2006440b400320a2510a2006440b400320a2510a2006440b400320a2510a2"
+    },
+    {
+      "name": "DataStg/Strm_117",
+      "size": 36,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fd50000001e0001000b003000300fd40000000fff0000010fd30000000000000000e884"
+    },
+    {
+      "name": "DataStg/Strm_118",
+      "size": 25,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fd4000000130000000000010001000001000000000000d451"
+    },
+    {
+      "name": "DataStg/Strm_119",
+      "size": 24,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fd80000001200010001001000100fd700000fd600006f6e"
+    },
+    {
+      "name": "DataStg/Strm_12",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00570000000e0000000400130001a1cba1cbd5eb"
+    },
+    {
+      "name": "DataStg/Strm_120",
+      "size": 15,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fd700000009000000000001012310"
+    },
+    {
+      "name": "DataStg/Strm_121",
+      "size": 33,
+      "crc_ok": false,
+      "ascii": [
+        "MESSAGE 1"
+      ],
+      "decrypted_hex": "0fd60000001b00000011001000014d45535341474520310000000000000000855e"
+    },
+    {
+      "name": "DataStg/Strm_122",
+      "size": 19,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fdf0000000d000000000001000322000036da"
+    },
+    {
+      "name": "DataStg/Strm_123",
+      "size": 24,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fe00000001200010005000800080fdf0000000000007706"
+    },
+    {
+      "name": "DataStg/Strm_124",
+      "size": 15,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fda00000009000000000001012310"
+    },
+    {
+      "name": "DataStg/Strm_125",
+      "size": 33,
+      "crc_ok": false,
+      "ascii": [
+        "STATUS 1"
+      ],
+      "decrypted_hex": "0fd90000001b00000011000800015354415455532031000000000000000000fa5c"
+    },
+    {
+      "name": "DataStg/Strm_126",
+      "size": 24,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fdb0000001200010001000800080fda00000fd9000024e7"
+    },
+    {
+      "name": "DataStg/Strm_127",
+      "size": 32,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fa90000001a000000010010001000000000000000000000000000000000fbaa"
+    },
+    {
+      "name": "DataStg/Strm_128",
+      "size": 40,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fa80000002200000003000800089896809896809896809896809896809896809896809896807782"
+    },
+    {
+      "name": "DataStg/Strm_129",
+      "size": 19,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fd20000000d00000000000180032203224579"
+    },
+    {
+      "name": "DataStg/Strm_13",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00700000000e00010029006400080fab0000541b"
+    },
+    {
+      "name": "DataStg/Strm_130",
+      "size": 25,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fd30000001300010005003000300fd200000003220322d995"
+    },
+    {
+      "name": "DataStg/Strm_131",
+      "size": 19,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fe20000000d020fe1000080011f010001cc9f"
+    },
+    {
+      "name": "DataStg/Strm_132",
+      "size": 21,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fe10000000f0100010000010fff0000010000339f"
+    },
+    {
+      "name": "DataStg/Strm_133",
+      "size": 41,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0051000000230000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "name": "DataStg/Strm_134",
+      "size": 55,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00730000003100000003000d000d0000000000000000000000000000000000000000000000000000000000000000000000000000001206"
+    },
+    {
+      "name": "DataStg/Strm_135",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00650000000e0001000f004000100fbc0000c6db"
+    },
+    {
+      "name": "DataStg/Strm_136",
+      "size": 29,
+      "crc_ok": false,
+      "ascii": [
+        "MPL 1"
+      ],
+      "decrypted_hex": "0fbc000000170000000000014d504c20310000000000000000000060e7"
+    },
+    {
+      "name": "DataStg/Strm_137",
+      "size": 18,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fbd0000000c00000000000100000000aa51"
+    },
+    {
+      "name": "DataStg/Strm_138",
+      "size": 23,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00640000001100010004004000100fbd0000000101250d"
+    },
+    {
+      "name": "DataStg/Strm_139",
+      "size": 21,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fa60000000f00000005002800010000000000e262"
+    },
+    {
+      "name": "DataStg/Strm_14",
+      "size": 55,
+      "crc_ok": false,
+      "ascii": [
+        "USERNAME 1"
+      ],
+      "decrypted_hex": "0fab00000031000000000001555345524e414d4520310000000000000000000000000000000000000000000000000000000000000068da"
+    },
+    {
+      "name": "DataStg/Strm_140",
+      "size": 40,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "007400000022000000080003000301cc348001ee6c440210908002112cc00504ca40059a538009a2"
+    },
+    {
+      "name": "DataStg/Strm_141",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00750000000e0001000f004000100fa10000c7e9"
+    },
+    {
+      "name": "DataStg/Strm_142",
+      "size": 254,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fa1000000f80fa10001001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "name": "DataStg/Strm_143",
+      "size": 254,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fa1000100f80fa10002001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "name": "DataStg/Strm_144",
+      "size": 254,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fa1000200f80fa10003001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "name": "DataStg/Strm_145",
+      "size": 254,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fa1000300f800000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "name": "DataStg/Strm_146",
+      "size": 52,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00470000002e26101812370300240000010000000000000000000000000000000000000000000000000000000000000000141bdd"
+    },
+    {
+      "name": "DataStg/Strm_15",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00710000000e00010033009600060faa00005f9e"
+    },
+    {
+      "name": "DataStg/Strm_16",
+      "size": 65,
+      "crc_ok": false,
+      "ascii": [
+        "MESSAGE 1"
+      ],
+      "decrypted_hex": "0faa0000003b0000000000014d455353414745203100000000000000000000000000000000000000000000000000000000000000000000000000000000000030"
+    },
+    {
+      "name": "DataStg/Strm_17",
+      "size": 112,
+      "crc_ok": false,
+      "ascii": [
+        "30\"1\"2\"3\"4\"5\"6\"7\"8\"9\":\";\"C",
+        "PWQXR@SAp"
+      ],
+      "decrypted_hex": "001b0000006a0000000200310030002d011602171030113112321333b030b131b232b33330223122322233223422352236223722382239223a223b2243038013"
+    },
+    {
+      "name": "DataStg/Strm_18",
+      "size": 24,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "000b00000012020a140a032828050100080020000000e405"
+    },
+    {
+      "name": "DataStg/Strm_19",
+      "size": 31,
+      "crc_ok": false,
+      "ascii": [
+        "ID: ",
+        "EM: ",
+        "CA: "
+      ],
+      "decrypted_hex": "004800000019000000050003000349443a2000454d3a200043413a200041cc"
+    },
+    {
+      "name": "DataStg/Strm_2",
+      "size": 76,
+      "crc_ok": false,
+      "ascii": [
+        "205CFR2930",
+        "H46UCF9PW6AN"
+      ],
+      "decrypted_hex": "1004000000460212323035434652323933300048343655434639505736414e000000000000030005000100000000000000000000050829010001000e03010c06"
+    },
+    {
+      "name": "DataStg/Strm_20",
+      "size": 166,
+      "crc_ok": false,
+      "ascii": [
+        "7F32"
+      ],
+      "decrypted_hex": "000a000000a0135496aa17101562000204082805030a06040e05030e0503280900000001820100010000000000c800000000040000004c0c04000000908b960a"
+    },
+    {
+      "name": "DataStg/Strm_21",
+      "size": 282,
+      "crc_ok": false,
+      "ascii": [
+        "01234567"
+      ],
+      "decrypted_hex": "000c000001140100010c000000000000000000000000000000000000000000000000010001000000000000000000000000005887000000000000000000000000"
+    },
+    {
+      "name": "DataStg/Strm_22",
+      "size": 84,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ffd0000004e0000000000020fe40000010000000000000000000000000000000000000000000000000000000000000fe4000001000000000000000000000000"
+    },
+    {
+      "name": "DataStg/Strm_23",
+      "size": 84,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ffd0001004e0000000000020ffb0001322f0293029302930a2849d40a2849d40a2849d400000080000000000000010ffb0000642a0293029302930a2b57140a"
+    },
+    {
+      "name": "DataStg/Strm_24",
+      "size": 23,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ffc000000110001002300ff000a0ffd0000000001a911"
+    },
+    {
+      "name": "DataStg/Strm_25",
+      "size": 23,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ffc000100110001002300ff000a0ffd0001000001dfa5"
+    },
+    {
+      "name": "DataStg/Strm_26",
+      "size": 50,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "000d0000002c00000011003200025a310000000000000000000000000000005a320000000000000000000000000000009f0c"
+    },
+    {
+      "name": "DataStg/Strm_27",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ffe0000000e0001001100ff00140fff00005334"
+    },
+    {
+      "name": "DataStg/Strm_28",
+      "size": 48,
+      "crc_ok": false,
+      "ascii": [
+        "CHAN 1",
+        "CHAN 2"
+      ],
+      "decrypted_hex": "0fff0000002a0000000000024348414e203100000000000000000000004348414e203200000000000000000000009181"
+    },
+    {
+      "name": "DataStg/Strm_29",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ffe0001000e0001001100ff00140fff00014315"
+    },
+    {
+      "name": "DataStg/Strm_3",
+      "size": 32,
+      "crc_ok": false,
+      "ascii": [
+        "000008-002410-2"
+      ],
+      "decrypted_hex": "10060000001a00000010000100013030303030382d3030323431302d3200acf0"
+    },
+    {
+      "name": "DataStg/Strm_30",
+      "size": 48,
+      "crc_ok": false,
+      "ascii": [
+        "CHAN 1",
+        "CHAN 2"
+      ],
+      "decrypted_hex": "0fff0001002a0000000000024348414e203100000000000000000000004348414e203200000000000000000000009181"
+    },
+    {
+      "name": "DataStg/Strm_31",
+      "size": 24,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00540000001200000008001000010000000000000000b544"
+    },
+    {
+      "name": "DataStg/Strm_32",
+      "size": 16,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00300000000a0000000800100000414e"
+    },
+    {
+      "name": "DataStg/Strm_33",
+      "size": 16,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "002f0000000a0000000800100000414e"
+    },
+    {
+      "name": "DataStg/Strm_34",
+      "size": 16,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00320000000a0000000800100000414e"
+    },
+    {
+      "name": "DataStg/Strm_35",
+      "size": 16,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00310000000a0000000500200000a591"
+    },
+    {
+      "name": "DataStg/Strm_36",
+      "size": 16,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00330000000a0000000500200000a591"
+    },
+    {
+      "name": "DataStg/Strm_37",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "004b0000000e00000004001000010a3e1200d2db"
+    },
+    {
+      "name": "DataStg/Strm_38",
+      "size": 22,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fc20000001000000000000801020304050607085f53"
+    },
+    {
+      "name": "DataStg/Strm_39",
+      "size": 21,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00580000000f00010001001000100fc20000007035"
+    },
+    {
+      "name": "DataStg/Strm_4",
+      "size": 24,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "003400000012400314060000070c230b0a06015700035ce2"
+    },
+    {
+      "name": "DataStg/Strm_40",
+      "size": 152,
+      "crc_ok": false,
+      "ascii": [
+        "STATUS  1",
+        "STATUS  2",
+        "STATUS  3",
+        "STATUS  4",
+        "STATUS  5",
+        "STATUS  6",
+        "STATUS  7",
+        "STATUS  8"
+      ],
+      "decrypted_hex": "00590000009200000011001000085354415455532020310000000000000000535441545553202032000000000000000053544154555320203300000000000000"
+    },
+    {
+      "name": "DataStg/Strm_41",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "005a0000000e00010001001000100fc10000c562"
+    },
+    {
+      "name": "DataStg/Strm_42",
+      "size": 30,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fc1000000180000000000100102030405060708090a0b0c0d0e0f107be4"
+    },
+    {
+      "name": "DataStg/Strm_43",
+      "size": 288,
+      "crc_ok": false,
+      "ascii": [
+        "MESSAGE 1",
+        "MESSAGE 2",
+        "MESSAGE 3",
+        "MESSAGE 4",
+        "MESSAGE 5",
+        "MESSAGE 6",
+        "MESSAGE 7",
+        "MESSAGE 8"
+      ],
+      "decrypted_hex": "005b0000011a00000011001000104d455353414745203100000000000000004d455353414745203200000000000000004d455353414745203300000000000000"
+    },
+    {
+      "name": "DataStg/Strm_44",
+      "size": 13,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00190000000701002000002c97"
+    },
+    {
+      "name": "DataStg/Strm_45",
+      "size": 23,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00160000001100000001001000071e2136371c1a8e33f3"
+    },
+    {
+      "name": "DataStg/Strm_46",
+      "size": 30,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0020000000180000000200070007031f041d601861196225941f86235178"
+    },
+    {
+      "name": "DataStg/Strm_47",
+      "size": 40,
+      "crc_ok": false,
+      "ascii": [
+        "&H&&&",
+        "&&&&&",
+        "&&&&&"
+      ],
+      "decrypted_hex": "0014000000220000000600040004031e1e1e26260226482626260026262626260026262626261e6b"
+    },
+    {
+      "name": "DataStg/Strm_48",
+      "size": 18,
+      "crc_ok": false,
+      "ascii": [
+        "&&&&P"
+      ],
+      "decrypted_hex": "00260000000c440b00142626262650007aff"
+    },
+    {
+      "name": "DataStg/Strm_49",
+      "size": 83,
+      "crc_ok": false,
+      "ascii": [
+        "&&&&"
+      ],
+      "decrypted_hex": "0ffb0000004d000fcd000040748000001c000000000102000122200001000003801000000fbe00000000000001010101000ffa00000ff30000000000000ff700"
+    },
+    {
+      "name": "DataStg/Strm_5",
+      "size": 59,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ff00000003500000000000f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007de1"
+    },
+    {
+      "name": "DataStg/Strm_50",
+      "size": 83,
+      "crc_ok": false,
+      "ascii": [
+        "&&&&"
+      ],
+      "decrypted_hex": "0ffb0001004d000fcd00014074b000001c000000000102000122200001000003801000000fbe00000000000001010101000ffa00000ff30000000000000ff700"
+    },
+    {
+      "name": "DataStg/Strm_51",
+      "size": 18,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fcd0000000c000000000000000000000000"
+    },
+    {
+      "name": "DataStg/Strm_52",
+      "size": 18,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fcd0001000c000000000000000000000000"
+    },
+    {
+      "name": "DataStg/Strm_53",
+      "size": 71,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "002700000041ff0028000040740000010d0000000000010001302000010040038000010100000000000000000101010140000000000000000000000000000000"
+    },
+    {
+      "name": "DataStg/Strm_54",
+      "size": 17,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00280000000b20930000000c0500000b7e"
+    },
+    {
+      "name": "DataStg/Strm_55",
+      "size": 32,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00400000001a6402029302930293098c7540098c7540098c754001010100067f"
+    },
+    {
+      "name": "DataStg/Strm_56",
+      "size": 88,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00290000005200000008000e0009091b94c4091bbbd4092ad704092afe140940203c093ff92c097722440a253c9409a4e9040a40b3d409d29c3c0a5ed6ac0a25"
+    },
+    {
+      "name": "DataStg/Strm_57",
+      "size": 53,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "002c0000002f0000000000000f281401020004210e98968098968098968098968098968098968098968098968090000a0000007a0e"
+    },
+    {
+      "name": "DataStg/Strm_58",
+      "size": 13,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "002a00000007fefefefe404db0"
+    },
+    {
+      "name": "DataStg/Strm_59",
+      "size": 41,
+      "crc_ok": false,
+      "ascii": [
+        "        ",
+        "                    "
+      ],
+      "decrypted_hex": "002d0000002308202020202020202081fa142020202020202020202020202020202020202020000821"
+    },
+    {
+      "name": "DataStg/Strm_6",
+      "size": 38,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ff10000002000010003000f000f0ff0000000ffffff000fe7000000000000000000000a9c67"
+    },
+    {
+      "name": "DataStg/Strm_60",
+      "size": 22,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ff9000000100100010001010001010001f510106ee7"
+    },
+    {
+      "name": "DataStg/Strm_61",
+      "size": 68,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ffa0000003e50020000010001000003000ff90000060a0a05350a0000061900000000000000000000000000001e0f1000010001000102060403000100010500"
+    },
+    {
+      "name": "DataStg/Strm_62",
+      "size": 18,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ff60000000c00000000000100000000aa51"
+    },
+    {
+      "name": "DataStg/Strm_63",
+      "size": 32,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ff70000001a00010004003200320ff600000ff50000000000000000000057ae"
+    },
+    {
+      "name": "DataStg/Strm_64",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ff50000000e00010011003200140ff400003fda"
+    },
+    {
+      "name": "DataStg/Strm_65",
+      "size": 31,
+      "crc_ok": false,
+      "ascii": [
+        "CALL 1"
+      ],
+      "decrypted_hex": "0ff40000001900000000000143414c4c20310000000000000000000000417d"
+    },
+    {
+      "name": "DataStg/Strm_66",
+      "size": 33,
+      "crc_ok": false,
+      "ascii": [
+        "LIST 1"
+      ],
+      "decrypted_hex": "004c0000001b00000011003200014c495354203100000000000000000000009f8f"
+    },
+    {
+      "name": "DataStg/Strm_67",
+      "size": 19,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ff20000000d000000000001000280000183b3"
+    },
+    {
+      "name": "DataStg/Strm_68",
+      "size": 31,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0ff30000001900010005001000100ff200000001010ff8000000000000302a"
+    },
+    {
+      "name": "DataStg/Strm_69",
+      "size": 33,
+      "crc_ok": false,
+      "ascii": [
+        "TG 00002"
+      ],
+      "decrypted_hex": "0ff80000001b00000011001000015447203030303032000000000000000000a290"
+    },
+    {
+      "name": "DataStg/Strm_7",
+      "size": 13,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00180000000701001b000019c3"
+    },
+    {
+      "name": "DataStg/Strm_70",
+      "size": 41,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fcc0000002380b50a0a02240000000000003c0305151509050101013c0fcb0000250100000000a87e"
+    },
+    {
+      "name": "DataStg/Strm_71",
+      "size": 23,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fcb000000110100010001010001010001f5100a0a279a"
+    },
+    {
+      "name": "DataStg/Strm_72",
+      "size": 16,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fc90000000a00000000000100003730"
+    },
+    {
+      "name": "DataStg/Strm_73",
+      "size": 27,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fca0000001500010002003200320fc900000fc800000000004330"
+    },
+    {
+      "name": "DataStg/Strm_74",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fc80000000e00010011003200140fc70000a32f"
+    },
+    {
+      "name": "DataStg/Strm_75",
+      "size": 31,
+      "crc_ok": false,
+      "ascii": [
+        "CALL 1"
+      ],
+      "decrypted_hex": "0fc70000001900000000000143414c4c20310000000000000000000000417d"
+    },
+    {
+      "name": "DataStg/Strm_76",
+      "size": 33,
+      "crc_ok": false,
+      "ascii": [
+        "LIST 1"
+      ],
+      "decrypted_hex": "004f0000001b00000011003200014c495354203100000000000000000000009f8f"
+    },
+    {
+      "name": "DataStg/Strm_77",
+      "size": 21,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fb40000000f6005090e0223480b450b450a3c00da"
+    },
+    {
+      "name": "DataStg/Strm_78",
+      "size": 19,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fae0000000d0000000000010035071d2990f8"
+    },
+    {
+      "name": "DataStg/Strm_79",
+      "size": 24,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0faf0000001200010005003200320fae00000fad000086c5"
+    },
+    {
+      "name": "DataStg/Strm_8",
+      "size": 356,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fcf0000015e000000000013ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    {
+      "name": "DataStg/Strm_80",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fad0000000e00010011003200140fac0000c8b5"
+    },
+    {
+      "name": "DataStg/Strm_81",
+      "size": 31,
+      "crc_ok": false,
+      "ascii": [
+        "CALL 1"
+      ],
+      "decrypted_hex": "0fac0000001900000000000143414c4c20310000000000000000000000417d"
+    },
+    {
+      "name": "DataStg/Strm_82",
+      "size": 33,
+      "crc_ok": false,
+      "ascii": [
+        "LIST 1"
+      ],
+      "decrypted_hex": "006e0000001b00000011003200014c495354203100000000000000000000009f8f"
+    },
+    {
+      "name": "DataStg/Strm_83",
+      "size": 26,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fb500000014a012345678111111112a050a00641203013cf8a7"
+    },
+    {
+      "name": "DataStg/Strm_84",
+      "size": 33,
+      "crc_ok": false,
+      "ascii": [
+        "LIST 1"
+      ],
+      "decrypted_hex": "006c0000001b00000011003200014c495354203100000000000000000000009f8f"
+    },
+    {
+      "name": "DataStg/Strm_85",
+      "size": 29,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fb30000001700010004003200320fb200000fb1000000ffffffff8465"
+    },
+    {
+      "name": "DataStg/Strm_86",
+      "size": 18,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fb20000000c000000000001123456781e7d"
+    },
+    {
+      "name": "DataStg/Strm_87",
+      "size": 20,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fb10000000e00010011003200140fb00000feb7"
+    },
+    {
+      "name": "DataStg/Strm_88",
+      "size": 31,
+      "crc_ok": false,
+      "ascii": [
+        "CALL 1"
+      ],
+      "decrypted_hex": "0fb00000001900000000000143414c4c20310000000000000000000000417d"
+    },
+    {
+      "name": "DataStg/Strm_89",
+      "size": 18,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00500000000c0000000200100001000143a8"
+    },
+    {
+      "name": "DataStg/Strm_9",
+      "size": 39,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00490000002100010012003200140fcf000000ffffffffffffffffffffffffffffffffffff02e3"
+    },
+    {
+      "name": "DataStg/Strm_90",
+      "size": 11,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fbe000000050a14033815"
+    },
+    {
+      "name": "DataStg/Strm_91",
+      "size": 18,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "005f0000000c00000002001000010bb8a9a0"
+    },
+    {
+      "name": "DataStg/Strm_92",
+      "size": 13,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "001a00000007010022000042f7"
+    },
+    {
+      "name": "DataStg/Strm_93",
+      "size": 22,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "00170000001000000001001000061e2136371c8e6f4d"
+    },
+    {
+      "name": "DataStg/Strm_94",
+      "size": 30,
+      "crc_ok": false,
+      "ascii": [
+        "a8b)"
+      ],
+      "decrypted_hex": "00220000001800000002000700070323041d60186138622994238623892b"
+    },
+    {
+      "name": "DataStg/Strm_95",
+      "size": 40,
+      "crc_ok": false,
+      "ascii": [
+        "&H&&&",
+        "&&&&&",
+        "&&&&&"
+      ],
+      "decrypted_hex": "0015000000220000000600040004031e1e1e26260226482626260026262626260026262626261e6b"
+    },
+    {
+      "name": "DataStg/Strm_96",
+      "size": 37,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "003e0000001f0affc00165300a95804a3c141438873d1e000400210e28144d000f0100f2ea"
+    },
+    {
+      "name": "DataStg/Strm_97",
+      "size": 27,
+      "crc_ok": false,
+      "ascii": [
+        "4@FPxP",
+        "#(Jf"
+      ],
+      "decrypted_hex": "003f00000015344046507850ff0807061e23284a660a0a4d00b3bd"
+    },
+    {
+      "name": "DataStg/Strm_98",
+      "size": 23,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fdd000000110000000000010001000000000000002896"
+    },
+    {
+      "name": "DataStg/Strm_99",
+      "size": 24,
+      "crc_ok": false,
+      "ascii": [],
+      "decrypted_hex": "0fde0000001200010009003200320fdd00000fdc00003be9"
+    }
+  ],
+  "note": "Structural dump. Field->channel mapping needs a sample to calibrate; if every crc is bad the stream crypto differs from plain RC4 (see docs/CPG_FILE_FORMAT.md)."
+}

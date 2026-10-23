@@ -1,0 +1,109 @@
+{
+  "backup_timestamp": "2026-10-18T06:55:00-07:00",
+  "radio_identity": {
+    "radio_family": "XTS 2500",
+    "hardware_type": "XTS 2500 REVE",
+    "model_number": "H46UCF9PW6BN",
+    "serial_number": "205CMB2249",
+    "bandsplit": "700/800 MHz (764-870 MHz)",
+    "system_release": "Motorola System Release 6.0 Radio",
+    "host_version": "R15.00.00",
+    "dsp_version": "R15.00.00",
+    "dsp_irom_version": "R01.00.02",
+    "boot_code_version": "R03.50.00",
+    "division": "Motorola CGISS",
+    "usb_vid_pid": "0CAD:1001",
+    "port_mode": "SIDE CONNECTOR AS USB",
+    "secure_version": "R000000",
+    "hardware_ucm_present": false,
+    "ppp_ip_address": "192.168.128.1",
+    "snmp_sys_name": "PatRadio",
+    "snmp_sys_object_id": "1.3.6.1.4.1.161.3.4.30.1.1",
+    "initial_boot_state": "OUT OF BAND (VCO unlocked on legacy programmed channel)"
+  },
+  "raw_at_queries": {
+    "ATI0": "33002",
+    "ATI1": "Motorola System Release 6.0 Radio",
+    "ATI2": "Host Version: R15.00.00",
+    "ATI3": "DSP Version: R15.00.00",
+    "ATI4": "Motorola CGISS",
+    "AT&V": [
+      "CARRIER:9600",
+      "PROTOCOL:ALT",
+      "COMPRESSION:NONE",
+      "FLOW:K3",
+      "WV304:192.168.128.1",
+      "RADIO:XTS 2500",
+      "MODEL:H46UCF9PW6BN",
+      "SERIAL:205CMB2249",
+      "PORT:SIDE CONNECTOR AS USB",
+      "SECURE:R000000",
+      "CPS:HARDWARE FLOW CONTROL"
+    ],
+    "AT+IPR=?": "IPR:(9600,19200,38400,57600,115200)"
+  },
+  "discovered_network_services": {
+    "interfaces": [
+      {"index": 1, "name": "I8250", "type": 23, "mtu": 1500},
+      {"index": 2, "name": "I8250", "type": 23, "mtu": 1500},
+      {"index": 3, "name": "cai1", "type": 0, "mtu": 1500}
+    ],
+    "tcp_listening_ports": [
+      {"port": 8002, "service": "Motorola ASTRO 25 Control & Programming"},
+      {
+        "port": 8010,
+        "service": "Radio Debugger (TCP/IP)",
+        "banner": "\\r\\nWelcome to Radio Debugger (TCP/IP)\\r\\n\\r\\n",
+        "commands_discovered": [
+          "VER",
+          "HELP",
+          "DSP:DUMP:<NUM_MSGS>",
+          "DSP:FILTER:VIEW",
+          "DSP:FILTER:ADD:<OPCODE>",
+          "DSP:FILTER:REMOVE:<OPCODE>",
+          "DSP:SEND:<DATA>",
+          "DSP:RX:<DATA>",
+          "SPI:DUMP:<NUM_MSGS>",
+          "DUMP:DSP",
+          "DUMP:GPIO",
+          "DUMP:SB9600",
+          "DUMP:XLTIN",
+          "MDCCALLID:READ:<INDEX>",
+          "MDCCALLID:WRITE:<CALL_ID_STR>",
+          "MDCCALLID:WRITELASTRXTX:<CALL_ID_STR>",
+          "MDCCALLID:READCALLTEXT:<CALL_ID_STR>",
+          "TSBK:RX:<20-digit TSBK>",
+          "VRIS:SYSTOD",
+          "VRIS:DEVICE",
+          "DVRS:PSULIST",
+          "ERGO:<COMPONENT>:<VALUE> (UIT:DBS/ISTACK/IMSTACK/TDLOG/INFO, EMT:ACBL/XLTIN, APP:<AppID>, HEB)"
+        ]
+      }
+    ],
+    "udp_listening_ports": [
+      {"port": 161, "bind": "192.168.128.1", "service": "SNMPv1 Agent (community: public)"},
+      {"port": 4011, "bind": "0.0.0.0", "probe_reply_hex": "0003ffff01"},
+      {"port": 4012, "bind": "0.0.0.0"},
+      {"port": 4054, "bind": "0.0.0.0"},
+      {"port": 49165, "bind": "0.0.0.0", "service": "P25 LLA / SoftwareAuthKeyLoader", "probe_reply_hex": "000080000000000000000000000016000900ffffffffffff0005"}
+    ],
+    "motorola_enterprise_mib_161_3_6_30": {
+      "1.3.6.1.4.1.161.3.6.30.1.1.1.0": 1,
+      "1.3.6.1.4.1.161.3.6.30.1.1.2.0": 1,
+      "1.3.6.1.4.1.161.3.6.30.1.1.3.0": 1,
+      "1.3.6.1.4.1.161.3.6.30.1.2.1.0": 1,
+      "1.3.6.1.4.1.161.3.6.30.1.2.2.1.1.1": 1,
+      "1.3.6.1.4.1.161.3.6.30.1.2.2.1.7.1": 0,
+      "1.3.6.1.4.1.161.3.6.30.1.3.1.1.0": "99:99:99:999",
+      "1.3.6.1.4.1.161.3.6.30.1.3.1.2.0": 13,
+      "1.3.6.1.4.1.161.3.6.30.1.4.1.8.0": 1,
+      "1.3.6.1.4.1.161.3.6.30.1.4.1.9.0": 1,
+      "1.3.6.1.4.1.161.3.6.30.1.4.1.10.0": -1,
+      "1.3.6.1.4.1.161.3.6.30.1.4.1.11.0": -1,
+      "1.3.6.1.4.1.161.3.6.30.1.4.1.12.0": 1,
+      "1.3.6.1.4.1.161.3.6.30.1.4.3.1.1.0": 1,
+      "1.3.6.1.4.1.161.3.6.30.1.5.1.1.0": 0,
+      "1.3.6.1.4.1.161.3.6.30.1.5.1.2.0": 10
+    }
+  }
+}

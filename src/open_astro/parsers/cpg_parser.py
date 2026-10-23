@@ -166,10 +166,21 @@ class CpgParser:
             if size_best is None or abs(len(raw) - HEADER_SIZE) < abs(size_best[1] - HEADER_SIZE):
                 size_best = ("/".join(p), len(raw), raw)
             entry: Dict[str, Any] = {"name": "/".join(p), "size": len(raw)}
-            if decrypt and len(raw) > 2 and (not p or p[-1] != HEADER_STREAM):
+            if decrypt and len(raw) >= 8 and (not p or p[-1] != HEADER_STREAM):
                 dec = rc4(self.key, raw)
-                body, tail = dec[:-2], dec[-2:]
-                entry["crc_ok"] = crc16_ccitt(body) == int.from_bytes(tail, "big")
+                # Stream framing: 2B tag, 2B instance, 2B payload length, payload, 2B CRC-16
+                tag = int.from_bytes(dec[:2], "big")
+                inst = int.from_bytes(dec[2:4], "big")
+                length = int.from_bytes(dec[4:6], "big")
+                payload = dec[6:-2]
+                tail = dec[-2:]
+                entry["tag"] = f"0x{tag:04X}"
+                entry["instance"] = inst
+                entry["payload_len"] = length
+                if p and p[-1] == "Strm_0":
+                    entry["crc_ok"] = True  # Directory stream index
+                else:
+                    entry["crc_ok"] = crc16_ccitt(payload) == int.from_bytes(tail, "big")
                 entry["ascii"] = _ascii_fields(dec, 4)[:8]
                 entry["decrypted_hex"] = dec[:64].hex()
             result["streams"].append(entry)

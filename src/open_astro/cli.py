@@ -134,9 +134,15 @@ def cmd_probe(args):
                 print("[+] Radio responded OK to AT -- link established.")
                 info = at_interface.get_radio_identity(link.connection)
                 banner = at_interface.get_firmware_banner(link.connection)
+                host_ver = at_interface.get_host_version(link.connection)
+                dsp_ver = at_interface.get_dsp_version(link.connection)
                 print(f"[+] Radio Identity (AT&V):")
                 if banner:
                     print(f"    Firmware: {banner}")
+                if host_ver:
+                    print(f"    {host_ver}")
+                if dsp_ver:
+                    print(f"    {dsp_ver}")
                 for k, v in info.items():
                     print(f"    {k}: {v}")
                 return

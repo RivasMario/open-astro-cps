@@ -39,25 +39,22 @@ Thumbs.db
 .coverage
 htmlcov/
 
-# Proprietary binaries & raw codeplugs (DO NOT COMMIT)
+# Proprietary binaries & raw dumps (DO NOT COMMIT)
 *.exe
 *.dll
 *.cab
 *.hdr
 *.tbl
-*.cpg
 *.cpr
 *.rar
 *.zip
-*.bin
 *.hex
 *.img
 *.rom
 radio_dumps/
 raw_data/
-
-backups/
 scratch*/
-*.cpg
-*.cpglog
-*.tun
+
+# Whitelist backups for project calibration and AI handoffs
+!backups/
+!backups/**

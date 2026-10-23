@@ -11,7 +11,7 @@ nothing but plain pyserial. See docs/AT_INTERFACE_DISCOVERY.md for the full
 transcript and reasoning.
 
 Only read-only, universally-standard query commands are implemented here
-(AT, ATI0, ATI1, AT&V). Nothing that writes configuration, resets the radio,
+(AT, ATI0, ATI1, ATI2, ATI3, ATI4, AT&V). Nothing that writes configuration, resets the radio,
 or changes state (ATZ, AT&F, AT&W, AT+IPR, ...) is implemented, and none
 should be added without a specific, verified reason to believe it's safe --
 see the safety note in docs/AT_INTERFACE_DISCOVERY.md.
@@ -88,6 +88,30 @@ def get_firmware_banner(connection) -> Optional[str]:
     "Motorola System Release 6.0 Radio" on a real XTS 2500). Returns None if
     the radio doesn't answer OK."""
     resp = _send_and_read(connection, "ATI1")
+    if "OK" not in resp:
+        return None
+    for line in resp.splitlines():
+        line = line.strip()
+        if line and line != "OK":
+            return line
+    return None
+
+
+def get_host_version(connection) -> Optional[str]:
+    """Sends ATI2, which returns host processor firmware version (e.g., 'Host Version: R09.00.41')."""
+    resp = _send_and_read(connection, "ATI2")
+    if "OK" not in resp:
+        return None
+    for line in resp.splitlines():
+        line = line.strip()
+        if line and line != "OK":
+            return line
+    return None
+
+
+def get_dsp_version(connection) -> Optional[str]:
+    """Sends ATI3, which returns DSP firmware version (e.g., 'DSP Version: R16.00.01')."""
+    resp = _send_and_read(connection, "ATI3")
     if "OK" not in resp:
         return None
     for line in resp.splitlines():
