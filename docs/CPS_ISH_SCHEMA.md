@@ -80,3 +80,26 @@ field-layout calls (2,349 `CcgIshNumFieldLayout`, 64 `Str`, 43 `Name`, 91
 `List`, 33 `Union`, 1 `Char`) with offsets/sizes as arguments. Extracting them
 per builder (now that every builder is known) gives an authoritative per-object
 field schema for the decoder (open item #4).
+
+## Write path: who builds the RCMP session (2026-10-23)
+
+- `UdcDrIsh10c.dll` is CPS's device read/write layer (`CudcDrIshDoc`):
+  `OpenRadio`, `AppCanWriteToDevice`, `OkayToWriteImageToDevice`,
+  `GetDataToBeWritten`, `WriteToDevice`, `RetryOnWriteFailure`,
+  `AppEndOfWriteToDevice`, `GetCodeplugFromDevice`.
+- `WriteToDevice` packs the **entire codeplug image into one SAFEARRAY of
+  bytes** and makes a single COM call: `IVirtualRadio::WriteCodeplug`
+  (vtable `+0x28`). CPS itself never issues RCMP records.
+- `IVirtualRadio` is implemented by `NextGen10.dll` (type library `NEXTGENLib`).
+  The session (program mode, unlock, write list, commit) is assembled there by
+  `IRcmpBundler`, whose methods include `EnterProgramMode`,
+  `UnlockIshPartition`, `WriteIshList`, `ReadIshList`, `readIshIDSet`,
+  `DelIshItem`, `DelIshTypes`, `ClearHostMarker`, `WriteMarkers`,
+  `RestoreHostMarker`, `GetRadioUUID`, `ResetRadio`, `ReadSoftPotValues`,
+  `WriteSoftPotValues`.
+- `WritePartitionToDevice` is an unfinished stub in the shipped build: it logs
+  "Waiting on Virtual Radio APIs from Earl..." instead of writing.
+
+The exact call order inside `NextGen10`'s `WriteCodeplug` was not extracted.
+The practical source of truth for the record-level sequence is the captured CPS
+write session (home PC pcap), whose shape is in docs/RCMP_WIRE_PROTOCOL.md.
