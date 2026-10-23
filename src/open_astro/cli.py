@@ -429,6 +429,46 @@ def cmd_rcmp_read(args):
         client.close()
 
 
+def cmd_rcmp_dump(args):
+    """Live READ-ONLY full codeplug read -> typed RadioCodeplug JSON."""
+    from .protocol.rcmp_transport import RcmpReadClient, RcmpError
+    from .parsers.cpg_decode import CpgDecoder
+    try:
+        if args.serial:
+            from .protocol.ppp_link import PppTcpConn, PppError
+            try:
+                conn = PppTcpConn(args.serial, dport=args.port, timeout=args.timeout)
+            except PppError as e:
+                print(f"[-] PPP bring-up failed on {args.serial}: {e}")
+                sys.exit(1)
+            client = RcmpReadClient(conn, timeout=args.timeout)
+        else:
+            client = RcmpReadClient.connect(host=args.host, port=args.port,
+                                            timeout=args.timeout)
+    except RcmpError as e:
+        print(f"[-] {e}")
+        sys.exit(1)
+    try:
+        client.open_session()
+        streams = client.read_streams(verbose=True)
+    except RcmpError as e:
+        print(f"[-] live read failed: {e}")
+        sys.exit(1)
+    finally:
+        client.close()
+
+    if not streams:
+        print("[-] no objects read -- PPP link likely dropped; reset the radio and retry")
+        sys.exit(1)
+    print(f"[+] read {len(streams)} objects from the radio")
+    codeplug = CpgDecoder.build_from_streams(streams, model=args.model,
+                                             serial=args.serial_number)
+    JsonParser.save_file(codeplug, args.output)
+    print(f"[+] decoded {len(codeplug.zones)} zones / {codeplug.total_channels()} "
+          f"channels, bandsplit {codeplug.bandsplit}")
+    print(f"[+] wrote typed codeplug JSON: {args.output}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpenAstro: Open Source Motorola ASTRO 25 Codeplug Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -527,6 +567,18 @@ def main():
     p_rcmp.add_argument("--length", type=lambda s: int(s, 0), default=0x10, help="Bytes to read")
     p_rcmp.add_argument("--timeout", type=float, default=5.0, help="Socket timeout seconds")
     p_rcmp.set_defaults(func=cmd_rcmp_read)
+
+    # rcmp-dump (live, read-only full codeplug read)
+    p_dump = subparsers.add_parser("rcmp-dump",
+        help="Live READ-ONLY full codeplug read into a typed RadioCodeplug JSON")
+    p_dump.add_argument("--serial", help="Bring up PPP over this COM/tty port (e.g. COM7)")
+    p_dump.add_argument("--host", default="192.168.128.1", help="Radio PPP IP")
+    p_dump.add_argument("--port", type=int, default=8002, help="RCMP TCP port")
+    p_dump.add_argument("--timeout", type=float, default=5.0, help="Timeout seconds")
+    p_dump.add_argument("-o", "--output", default="live_codeplug.json", help="Output JSON path")
+    p_dump.add_argument("--model", default="Motorola XTS 2500", help="Model string for the output")
+    p_dump.add_argument("--serial-number", default="UNKNOWN", help="Serial for the output")
+    p_dump.set_defaults(func=cmd_rcmp_dump)
 
     args = parser.parse_args()
     args.func(args)

@@ -29,6 +29,14 @@ LOCAL_PPP_IP = "192.168.128.2"
 ACK_HEADER_LEN = 12    # read-ack echoes a 12-byte request header before data
 ACK_CRC_LEN = 2        # ...and a 2-byte CRC-16 trailer after the object bytes
 
+# Object tags the codeplug decoder consumes (== .cpg OLE stream tags): channel
+# names, conventional freq/NAC, channel->personality refs, talkgroups, sites,
+# and scan-list tables. read_streams() probes instances of each.
+CODEPLUG_OBJECT_TAGS = [
+    0x0FFF, 0x0FFD, 0x0FFC, 0x0FF8, 0x0FDC,
+    0x004C, 0x004D, 0x004F, 0x006C, 0x006E,
+]
+
 
 class _Conn(Protocol):
     """Minimal socket-like interface so tests can inject a fake transport."""
@@ -144,6 +152,37 @@ class RcmpReadClient:
         return body[ACK_HEADER_LEN:-ACK_CRC_LEN]
 
     # -- lifecycle -------------------------------------------------------
+    def read_streams(self, tags=None, max_inst: int = 32, block: int = 0x0370,
+                     verbose: bool = False):
+        """Read a full codeplug as (tag, instance, payload) records.
+
+        For each object tag, reads instances 0,1,2... until the radio returns
+        empty or errors, which self-adapts to radios with more zones than any
+        single captured plan. Returns the list the CpgDecoder consumes via
+        build_from_streams(). Read-only."""
+        if tags is None:
+            tags = CODEPLUG_OBJECT_TAGS
+        import sys as _sys
+        out = []
+        for tag in tags:
+            for inst in range(max_inst):
+                try:
+                    data = self.read_object(rcmp.PART_CODEPLUG, tag, block, inst)
+                except Exception as e:
+                    # A missing instance (or a transient) ends this tag; never
+                    # let one object abort the whole dump -- return what we got.
+                    if verbose:
+                        print(f"    0x{tag:04x} inst {inst}: stop ({e})", file=_sys.stderr)
+                    break
+                if not data:
+                    if verbose:
+                        print(f"    0x{tag:04x} inst {inst}: stop (empty)", file=_sys.stderr)
+                    break
+                if verbose:
+                    print(f"    0x{tag:04x} inst {inst}: {len(data)} bytes", file=_sys.stderr)
+                out.append((tag, inst, data))
+        return out
+
     def close(self) -> None:
         try:
             self._conn.close()

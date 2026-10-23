@@ -342,7 +342,20 @@ class CpgDecoder:
     # -- public ----------------------------------------------------------
     def decode(self) -> RadioCodeplug:
         streams = self._decoded_streams()
+        model = self._header.get("model") or "Motorola XTS 2500"
+        serial = self._header.get("serial") or "UNKNOWN"
+        return self.build_from_streams(streams, model, serial)
 
+    @classmethod
+    def build_from_streams(cls, streams: List[Tuple[int, int, bytes]],
+                           model: str = "Motorola XTS 2500",
+                           serial: str = "UNKNOWN") -> RadioCodeplug:
+        """Build a RadioCodeplug from decoded (tag, instance, payload) records.
+
+        Shared by the offline .cpg path (decode) and the live RCMP path, where
+        each RCMP object id == stream tag and read_object() returns the same
+        payload the OLE reader yields. Verified: live 0x0fff payload is
+        byte-identical to the backup's decrypted 0x0fff stream."""
         # One zone per 0x0FFF instance (instance index == zone index). Keep
         # instance order; drop exact-duplicate tables (some codeplugs store a
         # mirror copy under a second instance).
@@ -350,7 +363,7 @@ class CpgDecoder:
         for _inst, payload in sorted(
             ((i, pl) for tag, i, pl in streams if tag == TAG_CHANNEL_NAMES)
         ):
-            names = self._name_table(payload)
+            names = cls._name_table(payload)
             if any(n for n in names) and names not in zone_tables:
                 zone_tables.append(names)
 
@@ -363,12 +376,12 @@ class CpgDecoder:
         for tag, inst, payload in streams:
             if tag != TAG_CHANNEL_FREQS:
                 continue
-            freq_tables[inst] = [d for d in (self._decode_freq_rec(r)
-                                             for r in self._freq_records(payload)) if d]
+            freq_tables[inst] = [d for d in (cls._decode_freq_rec(r)
+                                             for r in cls._freq_records(payload)) if d]
 
         # Conventional channel->personality references (0x0FFC), in zone order.
         # Each record's ref_inst is the FIRST 0x0FFD instance for that zone.
-        zone_refs = [self._channel_ref(pl) for _t, _i, pl in
+        zone_refs = [cls._channel_ref(pl) for _t, _i, pl in
                      sorted(((t, i, pl) for t, i, pl in streams
                              if t == TAG_CHANNEL_REF), key=lambda x: x[1])]
         zone_start_inst = [r["ref_inst"] for r in zone_refs if r]
@@ -419,19 +432,17 @@ class CpgDecoder:
         seen_scan: set = set()
         for tag, _inst, payload in streams:
             if tag == TAG_TALKGROUPS:
-                for n in self._ish_name_list(payload):
+                for n in cls._ish_name_list(payload):
                     m = re.search(r"(\d+)", n)
                     talkgroups.append(Talkgroup(tg_id=int(m.group(1)) if m else None, name=n))
             elif tag == TAG_SITES:
-                sites.extend(self._ish_name_list(payload))
+                sites.extend(cls._ish_name_list(payload))
             elif tag in TAG_SCAN_LISTS:
-                for n in self._ish_name_list(payload):
+                for n in cls._ish_name_list(payload):
                     if n not in seen_scan:
                         seen_scan.add(n)
                         scan_lists.append(ScanList(name=n))
 
-        model = self._header.get("model") or "Motorola XTS 2500"
-        serial = self._header.get("serial") or "UNKNOWN"
         decoded_freqs = [c.rx_frequency for z in zones for c in z.channels
                          if c.rx_frequency and _is_band(c.rx_frequency)]
         return RadioCodeplug(

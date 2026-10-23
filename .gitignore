@@ -67,3 +67,8 @@ codeplug.json
 backups/*_Trivial.*
 backups/USB*.cpglog
 backups/USBDevice*.cpglog
+
+# Transient live/offline decode outputs
+captures/live_*.json
+captures/backup_*.json
+live_codeplug.json
