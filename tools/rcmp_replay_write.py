@@ -115,9 +115,17 @@ def main() -> int:
 
     transport_selected = bool(args.serial) or bool(args.socket)
     if not (args.confirm and transport_selected):
-        print("[i] DRY RUN -- not transmitting. Add --socket --confirm (RAS link up) "
-              "or --serial COMx --confirm to write.")
+        print("[i] DRY RUN -- not transmitting. Add --socket --confirm (RAS link up).")
         return 0
+
+    # Writes over the userspace PPP (--serial) cannot sustain the record burst;
+    # it desyncs and the radio watchdog-reboots mid-write, corrupting the
+    # codeplug (observed on 205CFR2930). Writes MUST go over the OS TCP stack.
+    if args.confirm and args.serial and not args.socket:
+        raise SystemExit(
+            "[-] refusing to WRITE over userspace PPP (--serial): it desyncs on "
+            "the record burst and corrupts the codeplug. Use --socket with the "
+            "RAS/pppd PPP link up instead.")
 
     if args.expect_serial:
         bk = glob.glob(os.path.join(REPO, "backups", f"*{args.expect_serial}*.cpg"))
@@ -128,11 +136,9 @@ def main() -> int:
     from open_astro.protocol.rcmp_write import RcmpWriteClient
 
     def _open_client():
-        if args.socket:
-            # OS TCP stack over an already-up RAS/pppd PPP link (robust).
-            return RcmpWriteClient.connect(host=args.host, allow_write=True)
-        from open_astro.protocol.ppp_link import PppTcpConn
-        return RcmpWriteClient(PppTcpConn(args.serial), allow_write=True)
+        # Writes always go over the OS TCP stack (RAS/pppd link); the userspace
+        # --serial path is blocked above for writes.
+        return RcmpWriteClient.connect(host=args.host, allow_write=True)
 
     # Full-session retry: on any drop, reconnect and replay the WHOLE session
     # from the start (identical data, so restarting is safe and only a fully
