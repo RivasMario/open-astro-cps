@@ -1,0 +1,68 @@
+{
+  "OUT host->radio": {
+    "bytes_total": 48,
+    "at_text": "",
+    "ppp_frame_count": 3,
+    "ppp_proto_histogram": {
+      "LCP": 3
+    },
+    "rcmp_segments": [],
+    "rcmp_stream_hex": "",
+    "frames": [
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "0a01000854788700"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "0a010008e38b8700"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "0a010008789f8700"
+      }
+    ]
+  },
+  "IN radio->host": {
+    "bytes_total": 48,
+    "at_text": "",
+    "ppp_frame_count": 3,
+    "ppp_proto_histogram": {
+      "LCP": 3
+    },
+    "rcmp_segments": [],
+    "rcmp_stream_hex": "",
+    "frames": [
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "09010008000034ee"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "09010008000034ee"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "09010008000034ee"
+      }
+    ]
+  }
+}

@@ -13,6 +13,9 @@ from open_astro.parsers.cpg_decode import (
     TAG_CHANNEL_NAMES,
     TAG_CHANNEL_FREQS,
     FREQ_REC_LEN,
+    _band_from_model,
+    _band_from_freqs,
+    _resolve_bandsplit,
 )
 
 BACKUP = os.path.join(
@@ -101,3 +104,69 @@ def test_decode_real_backup_205cfr2930():
     assert all(c.rx_nac == "$293" for c in ch)
     # ISH name-list tables: 205CFR2930 has one talkgroup "TG 00002".
     assert any(t.name == "TG 00002" and t.tg_id == 2 for t in cp.talkgroups)
+
+
+def test_band_from_model_letter():
+    # XTS 2500 band letter at model index 3: K/Q/S/U/W.
+    assert _band_from_model("H46KDF9PW6BN")[0] == "VHF (136-174 MHz)"
+    assert _band_from_model("H46QDH9PW7BN")[0] == "UHF Range 1 (380-470 MHz)"
+    assert _band_from_model("H46SDC9PW5AN")[0] == "UHF Range 2 (450-520 MHz)"
+    assert _band_from_model("H46UCF9PW6BN")[0] == "700/800 MHz (764-870 MHz)"
+    assert _band_from_model("H46WCD9PW5BN")[0] == "900 MHz (896-941 MHz)"
+
+
+def test_band_from_model_rejects_unknown():
+    assert _band_from_model("") is None
+    assert _band_from_model("XYZ123") is None
+    assert _band_from_model("H46ZDC9PW5AN") is None  # no 'Z' band
+
+
+def test_band_from_freqs_fallback():
+    assert _band_from_freqs([154.4, 155.58, 158.94])[0] == "VHF (136-174 MHz)"
+    assert _band_from_freqs([852.0625, 853.0625])[0] == "700/800 MHz (764-870 MHz)"
+    assert _band_from_freqs([]) is None
+
+
+def test_resolve_bandsplit_prefers_model_over_freqs():
+    # Model letter wins even if a stray decoded freq lands in another band.
+    assert _resolve_bandsplit("H46KDF9PW6BN", [764.0]) == "VHF (136-174 MHz)"
+    # No model -> fall back to frequencies.
+    assert _resolve_bandsplit("", [852.0625]) == "700/800 MHz (764-870 MHz)"
+    # Neither -> Unknown, never a wrong hardcoded default.
+    assert _resolve_bandsplit("", []) == "Unknown"
+
+
+BACKUP_407 = os.path.join(os.path.dirname(__file__), "..", "backups", "407CHT0214.cpg")
+
+
+@pytest.mark.skipif(not os.path.exists(BACKUP_407), reason="407CHT0214 backup not present")
+def test_decode_all_channels_407():
+    try:
+        import olefile  # noqa: F401
+    except ImportError:
+        pytest.skip("olefile not installed")
+    with CpgDecoder(BACKUP_407) as dec:
+        cp = dec.decode()
+    assert cp.serial_number == "407CHT0214"
+    assert cp.bandsplit == "VHF (136-174 MHz)"
+    # Every one of the 48 channels now resolves a frequency (was 3 before).
+    chans = [c for z in cp.zones for c in z.channels]
+    assert len(chans) == 48
+    assert all(c.rx_frequency for c in chans)
+    # Spot-check against published NIFOG national VHF interop frequencies.
+    by_name = {c.name: c for z in cp.zones for c in z.channels}
+    assert by_name["V FIRE 23"].rx_frequency == 154.295
+    assert by_name["V MED 29"].rx_frequency == 155.3475
+    assert by_name["V LAW 31"].rx_frequency == 155.475
+    assert by_name["MARINE 16"].rx_frequency == 156.8
+    # Repeater pair keeps split rx/tx; LAW is 158.940 / 154.400.
+    assert by_name["LAW"].rx_frequency == 158.94 and by_name["LAW"].tx_frequency == 154.4
+    # CTCSS: NIFOG national interop channels carry 156.7 Hz PL (validated).
+    assert by_name["V TAC 11"].rx_pl_tone == 156.7
+    assert by_name["V FIRE 23"].tx_pl_tone == 156.7
+    assert by_name["LAW"].rx_pl_tone == 210.7  # local repeater, different PL
+    # DPL channels have no CTCSS tone but a (best-effort) DPL code.
+    assert by_name["OPS 5"].rx_pl_tone is None and by_name["OPS 5"].rx_dpl_code is not None
+    # Carrier-squelch channels: no tone, modulation left Unknown (not "digital").
+    assert by_name["MRA"].rx_pl_tone is None and by_name["MRA"].voice_type == "Unknown"
+    assert by_name["V TAC 11"].voice_type == "Analog"

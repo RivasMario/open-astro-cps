@@ -385,6 +385,50 @@ def cmd_decode_cpg(args):
           "and key material not yet mapped -- use read-cpg for the full dump)")
 
 
+def cmd_rcmp_read(args):
+    """Live READ-ONLY probe over the verified RCMP codec.
+
+    Two transports: --serial COMx brings up PPP ourselves over the port (no
+    Windows RAS entry, no re-dialing); otherwise connect to an already-up PPP
+    link via TCP socket."""
+    from .protocol.rcmp_transport import RcmpReadClient, RcmpError
+    from .protocol import rcmp
+    try:
+        if args.serial:
+            from .protocol.ppp_link import PppTcpConn, PppError
+            try:
+                conn = PppTcpConn(args.serial, dport=args.port, timeout=args.timeout)
+            except PppError as e:
+                print(f"[-] PPP bring-up failed on {args.serial}: {e}")
+                sys.exit(1)
+            client = RcmpReadClient(conn, timeout=args.timeout)
+        else:
+            client = RcmpReadClient.connect(host=args.host, port=args.port,
+                                            timeout=args.timeout)
+    except RcmpError as e:
+        print(f"[-] {e}")
+        sys.exit(1)
+    try:
+        ack = client.open_session()
+        print(f"[+] session open ({ack['op']}) to {args.host}:{args.port}")
+        part = int(args.partition, 0)
+        # Read every object in ONE session; the radio drops PPP when the session
+        # closes, so batching avoids a re-dial between objects.
+        for obj_str in str(args.object).split(","):
+            obj = int(obj_str.strip(), 0)
+            data = client.read_object(part, obj, args.length)
+            ascii_peek = "".join(chr(b) if 32 <= b < 127 else "." for b in data)
+            print(f"[+] READ part=0x{part:02x} obj=0x{obj:04x} len={args.length} "
+                  f"-> {len(data)} bytes")
+            print(f"    hex: {data.hex()}")
+            print(f"    txt: {ascii_peek}")
+    except RcmpError as e:
+        print(f"[-] {e}")
+        sys.exit(1)
+    finally:
+        client.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpenAstro: Open Source Motorola ASTRO 25 Codeplug Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -471,6 +515,18 @@ def main():
                               help="Output typed JSON codeplug (default: codeplug.json)")
     p_decode_cpg.add_argument("--csv", help="Also export channels to this CSV file")
     p_decode_cpg.set_defaults(func=cmd_decode_cpg)
+
+    # rcmp-read (live, read-only)
+    p_rcmp = subparsers.add_parser("rcmp-read",
+        help="Live READ-ONLY object read over the verified RCMP codec (needs PPP link up)")
+    p_rcmp.add_argument("--serial", help="Bring up PPP ourselves over this COM/tty port (e.g. COM7); no RAS entry needed")
+    p_rcmp.add_argument("--host", default="192.168.128.1", help="Radio PPP IP (default 192.168.128.1)")
+    p_rcmp.add_argument("--port", type=int, default=8002, help="RCMP TCP port (default 8002)")
+    p_rcmp.add_argument("--partition", default="0x80", help="Partition selector (0x80 codeplug, 0x82 tuning)")
+    p_rcmp.add_argument("--object", default="0x0047", help="Object id, e.g. 0x0047")
+    p_rcmp.add_argument("--length", type=lambda s: int(s, 0), default=0x10, help="Bytes to read")
+    p_rcmp.add_argument("--timeout", type=float, default=5.0, help="Socket timeout seconds")
+    p_rcmp.set_defaults(func=cmd_rcmp_read)
 
     args = parser.parse_args()
     args.func(args)

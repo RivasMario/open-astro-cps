@@ -58,3 +58,12 @@ scratch*/
 # Whitelist backups for project calibration and AI handoffs
 !backups/
 !backups/**
+
+# Live USB captures: large binary pcaps stay out (decoded .json kept as ground truth)
+captures/*.pcap
+# Transient decode scratch output
+codeplug.json
+# CPS write-test junk (real backups are whitelisted above; these are not)
+backups/*_Trivial.*
+backups/USB*.cpglog
+backups/USBDevice*.cpglog

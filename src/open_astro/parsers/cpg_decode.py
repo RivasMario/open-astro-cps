@@ -13,16 +13,37 @@ Calibration (from backups/205CFR2930.cpg and Radio1_205CMB2249_codeplug.cpg):
         there are 10 instances, each a 16-slot table (VC KNT..., KC CALL...).
         payload = 00 00 00 00 | count(u16_be) | count * NAME_SLOT bytes
         each NAME_SLOT is a null-padded ASCII channel label (empty = unused).
-  * tag 0x0FFD  = conventional personality (freq + NAC) table, overlaid
-        positionally onto the first zone's channels. The real data lives in
-        the instance whose records carry non-zero frequencies.
+  * tag 0x0FFD  = conventional personality (freq + NAC) table. A zone's
+        channels span one OR MORE consecutive instances: on 407CHT0214 each
+        16-channel zone is stored as a count-10 table immediately followed by
+        a count-6 table. Records are overlaid positionally (slot index -> name
+        slot) onto each zone, starting at the instance named by that zone's
+        0x0FFC reference (ref_inst) and walking consecutive instances until the
+        zone's channels are covered.
         payload = 00 00 00 00 | count(u16_be) | count * FREQ_REC bytes
         each FREQ_REC (35 bytes):
             owner(u16) link(u16) field(u16)
             nac_rx(u16) nac_tx(u16) nac3(u16)
             freq_rx(u32) freq_tx(u32) freq3(u32)
-            flags(u32) ... tail
-        frequency = u32_be * 5 Hz  (docs/CPG_FILE_FORMAT.md).
+            options(3 bytes squelch/PL-DPL code) flags(u8) ... tail
+        frequency = u32_be * 5 Hz  (docs/CPG_FILE_FORMAT.md). Full extraction
+        verified against 407CHT0214: the NIFOG VTAC/VFIRE/VMED/VLAW/VCALL and
+        MARINE 16 channels decode to their published national frequencies.
+
+  * squelch / tones: rec[24] = RX squelch byte, rec[26] = TX squelch byte,
+        rec[27] bit 0x80 = simplex/direct. Each squelch byte: 0 = carrier
+        squelch (CSQ); 1..42 = CTCSS index into the standard EIA tone table
+        (VALIDATED: 0x1a == 156.7 Hz, the NIFOG national interop PL on every
+        V* channel of 407CHT0214); >42 (high bit set) = DPL, low 7 bits index
+        the Motorola DPL list (octal mapping UNVERIFIED -- no ground-truth DPL
+        channel was available). rec[25] is a squelch-mode byte, not yet
+        resolved. See CTCSS_EIA / DPL_CODES / _decode_squelch.
+
+  * modulation is NOT a decoded flag. A CTCSS or DPL tone proves the channel
+        is analog FM; CSQ is ambiguous (analog carrier squelch OR a P25 channel
+        squelching on NAC), so voice_type is "Analog" when a tone is present
+        and "Unknown" for CSQ -- never a fabricated "digital". (An earlier
+        "zero squelch => digital" guess was wrong: zero is carrier squelch.)
 
 Everything the mapping does not yet cover (trunked talkgroups, scan lists, key
 material) is left at model defaults; use `open-astro read-cpg` for the full
@@ -63,6 +84,13 @@ OFF_NAC_RX = 6
 OFF_NAC_TX = 8
 OFF_FREQ_RX = 12
 OFF_FREQ_TX = 16
+# Per-channel option field. Confirmed against 407CHT0214 (VHF), 205CFR2930
+# (800 P25) and Radio1 (700/800): rec[24:27] is a squelch/PL-DPL code and
+# rec[27] bit 0x80 flags simplex/direct (rx==tx). The three P25 channels we
+# can ground-truth (205CFR2930 800 MHz) carry 00 00 00 here, while analog VHF
+# interop channels (NIFOG VTAC/MARINE on 407CHT0214) carry nonzero codes.
+OFF_OPTIONS = 24
+SIMPLEX_BIT = 0x80  # set in rec[27] when rx==tx (direct/talkaround)
 
 
 def _freq_mhz(raw32: int) -> float:
@@ -70,14 +98,111 @@ def _freq_mhz(raw32: int) -> float:
     return round(raw32 * 5 / 1_000_000, 5)
 
 
+# XTS 2500 bandsplits. The band is encoded as the model-number letter at index 3
+# (right after the "H46" family prefix), confirmed against the RadioReference
+# Motorola model-number table and the Motorola XTS 2500 spec sheet:
+#   K=VHF  Q=UHF R1  S=UHF R2  U=700/800  W=900
+# Each entry: (CPS-style label, low MHz, high MHz).
+BANDS: List[Tuple[str, float, float]] = [
+    ("VHF (136-174 MHz)", 136.0, 174.0),
+    ("UHF Range 1 (380-470 MHz)", 380.0, 470.0),
+    ("UHF Range 2 (450-520 MHz)", 450.0, 520.0),
+    ("700/800 MHz (764-870 MHz)", 764.0, 870.0),
+    ("900 MHz (896-941 MHz)", 896.0, 941.0),
+]
+BAND_BY_MODEL_LETTER: Dict[str, Tuple[str, float, float]] = {
+    "K": BANDS[0],
+    "Q": BANDS[1],
+    "S": BANDS[2],
+    "U": BANDS[3],
+    "W": BANDS[4],
+}
+
+
 def _is_band(mhz: float) -> bool:
     # Sanity gate so a zeroed/placeholder record is not read as a 0 MHz channel.
     return 25.0 <= mhz <= 1000.0
 
 
+def _band_from_model(model: str) -> Optional[Tuple[str, float, float]]:
+    """Map an XTS 2500 model number to its bandsplit via the index-3 letter."""
+    if model and len(model) >= 4 and model[:3].upper() == "H46":
+        return BAND_BY_MODEL_LETTER.get(model[3].upper())
+    return None
+
+
+def _band_from_freqs(freqs: List[float]) -> Optional[Tuple[str, float, float]]:
+    """Fallback: pick the bandsplit whose range holds the most decoded freqs.
+
+    Ranges overlap (UHF R1/R2 share 450-470), so this is a best-effort hint
+    used only when the model number does not resolve a band."""
+    if not freqs:
+        return None
+    best, best_hits = None, 0
+    for band in BANDS:
+        _label, lo, hi = band
+        hits = sum(1 for f in freqs if lo <= f <= hi)
+        if hits > best_hits:
+            best, best_hits = band, hits
+    return best
+
+
+def _resolve_bandsplit(model: str, freqs: List[float]) -> str:
+    """Bandsplit label: model letter first (authoritative), freqs as fallback."""
+    band = _band_from_model(model) or _band_from_freqs(freqs)
+    return band[0] if band else "Unknown"
+
+
 def _nac(raw16: int) -> str:
     """P25 Network Access Code as the CPS "$NNN" hex notation."""
     return f"${raw16:03X}"
+
+
+# Standard 42-tone EIA/TIA CTCSS table, in the order Motorola indexes it
+# (1-based: index 1 = 67.0 Hz). The per-channel squelch byte stores this index.
+# VALIDATED against 407CHT0214: every NIFOG national interop channel stores
+# 0x1a (26) == 156.7 Hz, the correct national PL.
+CTCSS_EIA = [
+    67.0, 69.3, 71.9, 74.4, 77.0, 79.7, 82.5, 85.4, 88.5, 91.5,
+    94.8, 97.4, 100.0, 103.5, 107.2, 110.9, 114.8, 118.8, 123.0, 127.3,
+    131.8, 136.5, 141.3, 146.2, 151.4, 156.7, 162.2, 167.9, 173.8, 179.9,
+    186.2, 192.8, 203.5, 206.5, 210.7, 218.1, 225.7, 229.1, 233.6, 241.8,
+    250.3, 254.1,
+]
+
+# Standard Motorola DPL (Digital Private Line) code list, octal, in index order.
+# NOTE: UNVERIFIED for the byte->code mapping -- no ground-truth DPL channel was
+# available in the sample codeplugs (all validated channels are CTCSS or CSQ).
+# The squelch byte for DPL has its high bit set; we index this list by the low
+# 7 bits. Treat the resulting octal code as best-effort until confirmed in CPS.
+DPL_CODES = [
+    23, 25, 26, 31, 32, 36, 43, 47, 51, 53, 54, 65, 71, 72, 73, 74,
+    114, 115, 116, 122, 125, 131, 132, 134, 143, 145, 152, 155, 156, 162,
+    165, 172, 174, 205, 212, 223, 225, 226, 243, 244, 245, 246, 251, 252,
+    255, 261, 263, 265, 266, 271, 274, 306, 311, 315, 325, 331, 332, 343,
+    346, 351, 356, 364, 365, 371, 411, 412, 413, 423, 431, 432, 445, 446,
+    452, 454, 455, 462, 464, 465, 466, 503, 506, 516, 523, 526, 532, 546,
+    565, 606, 612, 624, 627, 631, 632, 654, 662, 664, 703, 712, 723, 731,
+    732, 734, 743, 754,
+]
+
+CTCSS_MAX_INDEX = len(CTCSS_EIA)  # bytes 1..42 are CTCSS; 0 = CSQ; >42 = DPL
+
+
+def _decode_squelch(byte: int) -> Dict[str, Any]:
+    """Decode one per-channel squelch byte into {kind, pl_tone, dpl_code}.
+
+    kind is 'CSQ' (carrier squelch, no tone), 'CTCSS' (analog tone, pl_tone in
+    Hz) or 'DPL' (digital PL, dpl_code octal -- UNVERIFIED mapping). A CTCSS or
+    DPL value proves the channel is analog; CSQ is ambiguous (analog carrier
+    squelch OR a P25 channel that squelches on NAC)."""
+    if byte == 0:
+        return {"kind": "CSQ", "pl_tone": None, "dpl_code": None}
+    if 1 <= byte <= CTCSS_MAX_INDEX:
+        return {"kind": "CTCSS", "pl_tone": CTCSS_EIA[byte - 1], "dpl_code": None}
+    idx = byte & 0x7F
+    code = DPL_CODES[idx] if idx < len(DPL_CODES) else None
+    return {"kind": "DPL", "pl_tone": None, "dpl_code": code}
 
 
 class CpgDecoder:
@@ -183,11 +308,35 @@ class CpgDecoder:
             return None
         if not _is_band(tx):
             tx = rx
+
+        # Option field: rec[24]=RX squelch byte, rec[26]=TX squelch byte,
+        # rec[27] bit 0x80 = simplex/direct (rx==tx). rec[25] is a squelch
+        # mode byte that is not yet fully resolved (it mirrors the tone on some
+        # channels and is 0 on others) -- left undecoded.
+        opt = rec[OFF_OPTIONS:OFF_OPTIONS + 4] if len(rec) >= OFF_OPTIONS + 4 else b"\x00\x00\x00\x00"
+        rx_sq = _decode_squelch(opt[0])
+        tx_sq = _decode_squelch(opt[2])
+        simplex = bool(opt[3] & SIMPLEX_BIT) if len(opt) >= 4 else (abs(rx - tx) < 1e-6)
+
+        # Modulation: a CTCSS or DPL squelch code proves analog FM. CSQ is
+        # ambiguous (analog carrier squelch OR a P25 channel squelching on NAC),
+        # so we do NOT claim digital -- that stays "Unknown" until a real
+        # per-channel modulation field is found. (The earlier "zero => digital"
+        # guess was wrong: zero means carrier squelch, which is analog.)
+        has_tone = rx_sq["kind"] != "CSQ" or tx_sq["kind"] != "CSQ"
+        voice_type = "Analog" if has_tone else "Unknown"
+
         return {
             "rx_frequency": rx,
             "tx_frequency": tx,
             "rx_nac": _nac(int.from_bytes(rec[OFF_NAC_RX:OFF_NAC_RX + 2], "big")),
             "tx_nac": _nac(int.from_bytes(rec[OFF_NAC_TX:OFF_NAC_TX + 2], "big")),
+            "voice_type": voice_type,
+            "rx_pl_tone": rx_sq["pl_tone"],
+            "tx_pl_tone": tx_sq["pl_tone"],
+            "rx_dpl_code": rx_sq["dpl_code"],
+            "tx_dpl_code": tx_sq["dpl_code"],
+            "simplex": simplex,
         }
 
     # -- public ----------------------------------------------------------
@@ -205,32 +354,40 @@ class CpgDecoder:
             if any(n for n in names) and names not in zone_tables:
                 zone_tables.append(names)
 
-        # Conventional freq/NAC records, overlaid positionally onto zone 0.
-        conv_recs: List[Dict[str, Any]] = []
-        for tag, _inst, payload in streams:
+        # Conventional freq/NAC personality records, decoded per 0x0FFD
+        # instance. A zone's channels span one or more consecutive instances
+        # (e.g. 407CHT0214 stores each 16-channel zone as a count-10 table
+        # followed by a count-6 table), so keep them keyed by instance and
+        # concatenate per zone below.
+        freq_tables: Dict[int, List[Dict[str, Any]]] = {}
+        for tag, inst, payload in streams:
             if tag != TAG_CHANNEL_FREQS:
                 continue
-            decoded = [d for d in (self._decode_freq_rec(r)
-                                   for r in self._freq_records(payload)) if d]
-            if len(decoded) > len(conv_recs):
-                conv_recs = decoded
+            freq_tables[inst] = [d for d in (self._decode_freq_rec(r)
+                                             for r in self._freq_records(payload)) if d]
 
-        # Conventional channel->personality references (0x0FFC), in channel
-        # order. These confirm the conventional-channel count/order; trunked
-        # zones have no equivalent per-channel personality record in these
-        # samples, so their talkgroup IDs are not resolvable here.
-        channel_refs = [self._channel_ref(pl) for tag, _i, pl in
-                        sorted(((t, i, pl) for t, i, pl in streams
-                                if t == TAG_CHANNEL_REF), key=lambda x: x[1])]
-        channel_refs = [r for r in channel_refs if r]
+        # Conventional channel->personality references (0x0FFC), in zone order.
+        # Each record's ref_inst is the FIRST 0x0FFD instance for that zone.
+        zone_refs = [self._channel_ref(pl) for _t, _i, pl in
+                     sorted(((t, i, pl) for t, i, pl in streams
+                             if t == TAG_CHANNEL_REF), key=lambda x: x[1])]
+        zone_start_inst = [r["ref_inst"] for r in zone_refs if r]
 
-        # Overlay conventional freq/NAC only onto as many zone-0 channels as the
-        # 0x0FFC reference records vouch for (falls back to the freq-record count
-        # when no reference records are present).
-        conv_count = min(len(conv_recs), len(channel_refs)) if channel_refs else len(conv_recs)
+        def _zone_records(zi: int, needed: int) -> List[Dict[str, Any]]:
+            """Freq records for zone zi: start at its 0x0FFC-referenced instance
+            and walk consecutive instances until `needed` channels are covered.
+            Falls back to instance == zi when no reference records exist."""
+            start = zone_start_inst[zi] if zi < len(zone_start_inst) else zi
+            out: List[Dict[str, Any]] = []
+            inst = start
+            while len(out) < needed and inst in freq_tables:
+                out.extend(freq_tables[inst])
+                inst += 1
+            return out
 
         zones: List[Zone] = []
         for zi, names in enumerate(zone_tables):
+            recs = _zone_records(zi, len(names))  # positional: slot index -> record
             channels: List[Channel] = []
             cn = 0
             for si, raw_name in enumerate(names):
@@ -238,13 +395,17 @@ class CpgDecoder:
                 if not name:
                     continue
                 cn += 1
-                rec = conv_recs[si] if (zi == 0 and si < conv_count) else None
+                rec = recs[si] if si < len(recs) else None
                 channels.append(Channel(
                     channel_number=cn,
                     name=name[:14],
                     rx_frequency=rec["rx_frequency"] if rec else 0.0,
                     tx_frequency=rec["tx_frequency"] if rec else 0.0,
-                    voice_type="ASTRO P25",
+                    voice_type=rec["voice_type"] if rec else "Unknown",
+                    rx_pl_tone=rec["rx_pl_tone"] if rec else None,
+                    tx_pl_tone=rec["tx_pl_tone"] if rec else None,
+                    rx_dpl_code=rec["rx_dpl_code"] if rec else None,
+                    tx_dpl_code=rec["tx_dpl_code"] if rec else None,
                     rx_nac=rec["rx_nac"] if rec else "$293",
                     tx_nac=rec["tx_nac"] if rec else "$293",
                 ))
@@ -271,9 +432,11 @@ class CpgDecoder:
 
         model = self._header.get("model") or "Motorola XTS 2500"
         serial = self._header.get("serial") or "UNKNOWN"
+        decoded_freqs = [c.rx_frequency for z in zones for c in z.channels
+                         if c.rx_frequency and _is_band(c.rx_frequency)]
         return RadioCodeplug(
             radio_model=model,
-            bandsplit="700/800 MHz (764-870 MHz)",
+            bandsplit=_resolve_bandsplit(model, decoded_freqs),
             serial_number=serial,
             flashcode="",
             zones=zones,

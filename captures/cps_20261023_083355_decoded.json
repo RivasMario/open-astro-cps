@@ -1,0 +1,690 @@
+{
+  "OUT host->radio": {
+    "bytes_total": 613,
+    "at_text": "CLIENT",
+    "ppp_frame_count": 31,
+    "ppp_proto_histogram": {
+      "LCP": 5,
+      "IPCP": 3,
+      "IP": 1,
+      "0x002f": 1,
+      "0x002d": 21
+    },
+    "rcmp_segments": [
+      {
+        "sport": 8001,
+        "dport": 8002,
+        "rcmp_hex": ""
+      },
+      {
+        "sport": 8001,
+        "dport": 8002,
+        "rcmp_hex": ""
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "00020012"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0002000c"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003001000"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003001100"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003000f00"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003000f10"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003000f20"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003000f40"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000b0100821079000003e80000"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000400010300"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003000600"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "01"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003000601"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "01"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003000603"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "01"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000400010302"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000400010303"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000400010305"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000400010308"
+      }
+    ],
+    "rcmp_stream_hex": "000200120002000c000300100000030011000003000f000003000f100003000f200003000f40000b0100821079000003e80000000400010300000300060001000300060101000300060301000400010302000400010303000400010305000400010308",
+    "frames": [
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 20,
+        "fcs_ok": true,
+        "payload_hex": "0101001402060000000005061805850007020802"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 20,
+        "fcs_ok": true,
+        "payload_hex": "020100140206000000000506000034ee07020802"
+      },
+      {
+        "proto": 32801,
+        "proto_name": "IPCP",
+        "len": 16,
+        "fcs_ok": true,
+        "payload_hex": "010100100306000000000206002d0501"
+      },
+      {
+        "proto": 32801,
+        "proto_name": "IPCP",
+        "len": 16,
+        "fcs_ok": true,
+        "payload_hex": "020100100306c0a880010206002d0501"
+      },
+      {
+        "proto": 32801,
+        "proto_name": "IPCP",
+        "len": 16,
+        "fcs_ok": true,
+        "payload_hex": "010200100306c0a880020206002d0501"
+      },
+      {
+        "proto": 33,
+        "proto_name": "IP",
+        "len": 44,
+        "fcs_ok": true,
+        "payload_hex": "4500002c008500004006f8f2c0a88002c0a880011f411f420085053b00000000600216d0bbbe0000020405b4"
+      },
+      {
+        "proto": 47,
+        "proto_name": "0x002f",
+        "len": 40,
+        "fcs_ok": true,
+        "payload_hex": "45000028008600004005f8f5c0a88002c0a880011f411f420085053c0000350f501016d09e5c0000"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 7,
+        "fcs_ok": true,
+        "payload_hex": "009e4400020012"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 9,
+        "fcs_ok": true,
+        "payload_hex": "0c9e3115040002000c"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "0c9e2205040003001000"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "0c9e0616050003001100"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "0c9df310050003000f00"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "0c8ddf0f050003000f10"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "0c7dcb0f050003000f20"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "0c5db90d050003000f40"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 18,
+        "fcs_ok": true,
+        "payload_hex": "0cb9970705000b0100821079000003e80000"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 11,
+        "fcs_ok": true,
+        "payload_hex": "0c9a327a0d000400010300"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "0c9d2009060003000600"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 9,
+        "fcs_ok": true,
+        "payload_hex": "0b9a18000400010301"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "0c9c030d060003000601"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 9,
+        "fcs_ok": true,
+        "payload_hex": "0b99fb000400010301"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "0c99e60d060003000603"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 9,
+        "fcs_ok": true,
+        "payload_hex": "0b99de000400010301"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 11,
+        "fcs_ok": true,
+        "payload_hex": "0c99ca0d06000400010302"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 11,
+        "fcs_ok": true,
+        "payload_hex": "0c99b60d06000400010303"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 11,
+        "fcs_ok": true,
+        "payload_hex": "0c99a10d06000400010305"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 11,
+        "fcs_ok": true,
+        "payload_hex": "0c99851306000400010308"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 5,
+        "fcs_ok": true,
+        "payload_hex": "0c9c8a0806"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "0a010008ce198500"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "0a0100085d2d8500"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "0a010008ee408500"
+      }
+    ]
+  },
+  "IN radio->host": {
+    "bytes_total": 918,
+    "at_text": "CLIENTSERVER",
+    "ppp_frame_count": 31,
+    "ppp_proto_histogram": {
+      "LCP": 5,
+      "IPCP": 3,
+      "IP": 1,
+      "0x002f": 2,
+      "0x002d": 20
+    },
+    "rcmp_segments": [
+      {
+        "sport": 8002,
+        "dport": 8001,
+        "rcmp_hex": ""
+      },
+      {
+        "sport": 8002,
+        "dport": 8001,
+        "rcmp_hex": "0013801200d105add323864e539b513a65076458d3"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003800c00"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "364b444639505736424e0000000000"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000e8011003430374348543032313400"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000d800f005232302e35302e303700"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000d800f005231392e35302e303100"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000b800f005230303030303000"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0005800f00c52e"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "00788100008210790000006a0000006a0000000803e8000c00000008019f44980000000801b194180000000801d6cf580000000801e8d0b800000008020113a8000000080212c6e800000026019f1d880000002601b1bb280000002601d6a8480000002601e8a9a8000000260200ec98000000270212edf83bb9"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000780010003000182"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003800600"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000b80010003014e4e4e505457"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003800600"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000b8001000301323232323232"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0003800600"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000b8001000301302f2f303337"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000b8001000302272823212124"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "000b8001000303282e32353d44"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0011800100030544ff44ff457f445a447f43ff"
+      },
+      {
+        "sport": null,
+        "dport": null,
+        "rcmp_hex": "0006800100030878"
+      },
+      {
+        "sport": 8002,
+        "dport": 8001,
+        "rcmp_hex": "0006800100030878"
+      }
+    ],
+    "rcmp_stream_hex": "0013801200d105add323864e539b513a65076458d30003800c00364b444639505736424e0000000000000e8011003430374348543032313400000d800f005232302e35302e303700000d800f005231392e35302e303100000b800f0052303030303030000005800f00c52e00788100008210790000006a0000006a0000000803e8000c00000008019f44980000000801b194180000000801d6cf580000000801e8d0b800000008020113a8000000080212c6e800000026019f1d880000002601b1bb280000002601d6a8480000002601e8a9a8000000260200ec98000000270212edf83bb90007800100030001820003800600000b80010003014e4e4e5054570003800600000b80010003013232323232320003800600000b8001000301302f2f303337000b8001000302272823212124000b8001000303282e32353d440011800100030544ff44ff457f445a447f43ff00068001000308780006800100030878",
+    "frames": [
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 20,
+        "fcs_ok": true,
+        "payload_hex": "0201001402060000000005061805850007020802"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 20,
+        "fcs_ok": true,
+        "payload_hex": "010100140206000000000506000034ee07020802"
+      },
+      {
+        "proto": 32801,
+        "proto_name": "IPCP",
+        "len": 16,
+        "fcs_ok": true,
+        "payload_hex": "010100100306c0a880010206002d0501"
+      },
+      {
+        "proto": 32801,
+        "proto_name": "IPCP",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "0301000a0306c0a88002"
+      },
+      {
+        "proto": 32801,
+        "proto_name": "IPCP",
+        "len": 16,
+        "fcs_ok": true,
+        "payload_hex": "020200100306c0a880020206002d0501"
+      },
+      {
+        "proto": 33,
+        "proto_name": "IP",
+        "len": 44,
+        "fcs_ok": true,
+        "payload_hex": "4500002c000000004006f977c0a88001c0a880021f421f410000350e0085053c601216d0869f0000020405b4"
+      },
+      {
+        "proto": 47,
+        "proto_name": "0x002f",
+        "len": 61,
+        "fcs_ok": true,
+        "payload_hex": "4500003d000100004005f965c0a88001c0a880021f421f410000350f00850540501816d07cef00000013801200d105add323864e539b513a65076458d3"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 5,
+        "fcs_ok": true,
+        "payload_hex": "0c9e3f0415"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "101e230003800c00"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 25,
+        "fcs_ok": true,
+        "payload_hex": "1b835d00148010004834364b444639505736424e0000000000"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 21,
+        "fcs_ok": true,
+        "payload_hex": "1cefcd0516000e8011003430374348543032313400"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 20,
+        "fcs_ok": true,
+        "payload_hex": "1c5cb50510000d800f005232302e35302e303700"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 20,
+        "fcs_ok": true,
+        "payload_hex": "1c5d9e050f000d800f005231392e35302e303100"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 18,
+        "fcs_ok": true,
+        "payload_hex": "1c8ccb050f000b800f005230303030303000"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 12,
+        "fcs_ok": true,
+        "payload_hex": "1ceee2050d0005800f00c52e"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 127,
+        "fcs_ok": true,
+        "payload_hex": "1c5a5b0d0700788100008210790000006a0000006a0000000803e8000c00000008019f44980000000801b194180000000801d6cf580000000801e8d0b800000008020113a8000000080212c6e800000026019f1d880000002601b1bb280000002601d6a8480000002601e8a9a8000000260200ec98000000270212edf83bb9"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 14,
+        "fcs_ok": true,
+        "payload_hex": "1c9b19067a000780010003000182"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "1c1d1305090003800600"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 18,
+        "fcs_ok": true,
+        "payload_hex": "1c26090605000b80010003014e4e4e505457"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "1c1cf6050d0003800600"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 18,
+        "fcs_ok": true,
+        "payload_hex": "1c85460605000b8001000301323232323232"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 10,
+        "fcs_ok": true,
+        "payload_hex": "1c1cd9050d0003800600"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 18,
+        "fcs_ok": true,
+        "payload_hex": "1c852d0605000b8001000301302f2f303337"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 18,
+        "fcs_ok": true,
+        "payload_hex": "1cad41060d000b8001000302272823212124"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 18,
+        "fcs_ok": true,
+        "payload_hex": "1c7202060d000b8001000303282e32353d44"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 24,
+        "fcs_ok": true,
+        "payload_hex": "1cc0de060d0011800100030544ff44ff457f445a447f43ff"
+      },
+      {
+        "proto": 45,
+        "proto_name": "0x002d",
+        "len": 13,
+        "fcs_ok": true,
+        "payload_hex": "1c140006130006800100030878"
+      },
+      {
+        "proto": 47,
+        "proto_name": "0x002f",
+        "len": 48,
+        "fcs_ok": true,
+        "payload_hex": "45000030001600004005f95dc0a88001c0a880021f421f4100003667008505ae501816d0140000000006800100030878"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "09010008000034ee"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "09010008000034ee"
+      },
+      {
+        "proto": 49185,
+        "proto_name": "LCP",
+        "len": 8,
+        "fcs_ok": true,
+        "payload_hex": "09010008000034ee"
+      }
+    ]
+  }
+}
