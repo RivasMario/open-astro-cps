@@ -108,14 +108,26 @@ read-back.
 
 ## Open work (for the next AI)
 
-1. **Full `.cpg` -> write-session assembler.** Current writes are capture-replay
-   (+ per-object edits). A general writer should build the whole session from a
-   source codeplug: emit every object's wire payload (0x80 plaintext, 0x81 RC4),
-   the 0103 prepare records (confirm whether `0e0b`/`01f4` are size/count fields
-   that vary per codeplug), 0104 unlock, 0102, 0107, and the 0106 01 commit.
-   Validate by rebuilding a captured session byte-exact from its own source.
+1. **Full `.cpg` -> write-session assembler.** PARTIALLY DONE 2026-10-23.
+   `protocol/write_session.py` (`CpgWriteAssembler`) now builds the ordered 0101
+   write records from a source `.cpg`: each `.cpg` stream is self-describing
+   (`<tag><inst><len><payload><crc>`, tag == RCMP object id, cross-checked vs the
+   live read capture), and `rcmp.build_write` reproduces every object's CRC
+   byte-exact. Proven OFFLINE against all 3 backups (`tests/test_write_session.py`,
+   the CRC oracle needs no capture). Partition per object comes from
+   `part_map_from_capture()` (reads carry the same addressing as writes); 0x82 is
+   refused and only an allowed-parts set is emitted. `parsers/cpg_parser.py` got
+   an `objects()` accessor for the full decoded objects.
+   STILL OPEN: the session FRAMING around the writes — the 0103 prepare records
+   (and 0104/0107) whose `0e0b`/`01f4` fields can't be derived without a captured
+   write session. `build_session` takes those verbatim and refuses to synthesize
+   them (pass `allow_without_prepare=True` for offline assembly only). Finish when
+   the write pcap (home PC) is available: supply real prepare records, then
+   rebuild a captured session byte-exact from its own `.cpg` source.
 2. **Read-modify-write without a reference capture**: use `rcmp-dump` to read the
-   live objects, edit, and write back — removes the pcap dependency.
+   live objects, edit, and write back — removes the pcap dependency. The emitter
+   half is done (CpgWriteAssembler / WriteObject); still needs the live read +
+   the prepare framing from #1.
 3. **DPL octal mapping** (cpg_decode DPL_CODES unverified), per-channel modulation
    of CSQ channels, trunked talkgroup linkage, scan-list membership.
 4. **UHF/other-band** `.cpg` decode coverage (only VHF/700-800 samples seen).

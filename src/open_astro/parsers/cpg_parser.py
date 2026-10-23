@@ -143,6 +143,48 @@ class CpgParser:
         with self._ole.openstream(path) as s:
             return s.read()
 
+    def objects(self) -> List[Dict[str, Any]]:
+        """Yield the fully-decoded ISH objects stored in the .cpg.
+
+        Each DataStg/Strm_N stream decrypts (RC4) to the self-describing framing
+        `<tag:u16><instance:u16><len:u16><payload[len]><crc:u16>` where
+        tag == the live RCMP object id, instance == the RCMP instance, and
+        crc == CRC-16-CCITT over payload. This is the raw object the write path
+        sends; it is returned here so a write-session can be assembled from a
+        source codeplug (see protocol/write_session.py). The plaintext header
+        stream and the Strm_0 directory index are skipped.
+
+        Returns a list of dicts: {name, tag, instance, length, payload,
+        stored_crc, crc_ok}. `crc_ok` False means the object did not validate and
+        must not be trusted for a write.
+        """
+        out: List[Dict[str, Any]] = []
+        for p in self._streams():
+            if not p:
+                continue
+            leaf = p[-1]
+            if leaf == HEADER_STREAM or leaf == "Strm_0":
+                continue  # plaintext header / directory index, not an object
+            raw = self._read(p)
+            if len(raw) < 8:
+                continue
+            dec = rc4(self.key, raw)
+            tag = int.from_bytes(dec[0:2], "big")
+            inst = int.from_bytes(dec[2:4], "big")
+            length = int.from_bytes(dec[4:6], "big")
+            payload = dec[6:-2]
+            stored_crc = int.from_bytes(dec[-2:], "big")
+            out.append({
+                "name": "/".join(p),
+                "tag": tag,
+                "instance": inst,
+                "length": length,
+                "payload": payload,
+                "stored_crc": stored_crc,
+                "crc_ok": crc16_ccitt(payload) == stored_crc,
+            })
+        return out
+
     def parse(self, decrypt: bool = True) -> Dict[str, Any]:
         """Return a structural dict: header + per-stream info (decrypted + CRC)."""
         result: Dict[str, Any] = {
