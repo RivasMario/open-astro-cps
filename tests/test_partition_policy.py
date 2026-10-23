@@ -83,3 +83,23 @@ def test_assembler_policy_blocks_tuning_object():
     asm = CpgWriteAssembler([WriteObject(0x82, 4217, 0, b"\x00\x01")], policy=pol)
     with pytest.raises(WriteSessionError, match="0x82"):
         asm.write_records()
+
+
+def test_live_write_client_enforces_allowlist():
+    # Defense in depth: the on-wire write client applies the policy too, so an
+    # out-of-range object is refused before any bytes are sent.
+    from open_astro.protocol.rcmp_write import RcmpWriteClient, RcmpWriteError
+
+    class _NoConn:
+        def sendall(self, data):
+            raise AssertionError("must refuse BEFORE sending any bytes")
+        def recv(self, n):
+            return b""
+        def close(self):
+            pass
+
+    c = RcmpWriteClient(_NoConn(), allow_write=True)   # policy auto-loaded
+    with pytest.raises(RcmpWriteError, match="outside|never observed"):
+        c.write_object(0x80, 9999, b"\x00\x01")        # above 0x80 range
+    with pytest.raises(RcmpWriteError, match="0x82"):
+        c.write_object(0x82, 4217, b"\x00\x01")

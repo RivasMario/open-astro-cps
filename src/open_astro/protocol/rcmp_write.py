@@ -45,7 +45,8 @@ class RcmpWriteDisabled(RcmpWriteError):
 class RcmpWriteClient:
     """Gated RCMP write client over a socket-like conn (sendall/recv/close)."""
 
-    def __init__(self, conn, allow_write: bool = False, timeout: float = 10.0):
+    def __init__(self, conn, allow_write: bool = False, timeout: float = 10.0,
+                 policy=None):
         if allow_write is not True:
             raise RcmpWriteDisabled(
                 "RcmpWriteClient requires allow_write=True. Writing a radio is "
@@ -54,6 +55,17 @@ class RcmpWriteClient:
         self._conn = conn
         self._buf = bytearray()
         self._timeout = timeout
+        # Defense in depth: on top of the per-object 0x82 guard, an optional
+        # CPS-derived PartitionPolicy checks every write record on the wire
+        # (partition writable + object id in CPS's observed range). Loaded lazily
+        # to avoid a hard dependency when no policy is wanted.
+        if policy is None:
+            try:
+                from .write_session import PartitionPolicy
+                policy = PartitionPolicy.load()
+            except Exception:
+                policy = None
+        self._policy = policy
 
     @classmethod
     def connect(cls, host: str = RADIO_PPP_HOST, port: int = RCMP_PORT,
@@ -117,6 +129,15 @@ class RcmpWriteClient:
                 "refusing to write partition 0x82 (tuning/soft-pots): "
                 "unrecoverable if corrupted")
 
+    def _policy_check(self, part: int, obj: int) -> None:
+        """Apply the CPS-derived partition allowlist to a write, if loaded."""
+        if self._policy is None:
+            return
+        try:
+            self._policy.check(part, obj)
+        except Exception as e:
+            raise RcmpWriteError(str(e)) from e
+
     # -- session ---------------------------------------------------------
     def open_session(self) -> dict:
         return self._txn(rcmp.frame(bytes([0x01, 0x06, 0x00])),
@@ -136,6 +157,7 @@ class RcmpWriteClient:
                      inst: int = 0) -> dict:
         """Encode and send one object write; require the 0x8101 write-ack."""
         self._guard_partition(part)
+        self._policy_check(part, obj)
         framed = rcmp.build_write(part, obj, payload, inst)
         return self._txn(framed, rcmp.OP_WRITE | rcmp.RESP_FLAG)
 
@@ -146,6 +168,9 @@ class RcmpWriteClient:
         payload = framed[2:] if len(framed) >= 2 else b""
         if len(payload) >= 3 and payload[:2].hex() in ("0100", "0101"):
             self._guard_partition(payload[2])
+            # Policy applies to writes (0101); reads (0100) are harmless.
+            if payload[:2].hex() == "0101" and len(payload) >= 5:
+                self._policy_check(payload[2], int.from_bytes(payload[3:5], "big"))
         opcode = int.from_bytes(payload[:2], "big") if len(payload) >= 2 else 0
         return self._txn(framed, opcode | rcmp.RESP_FLAG)
 
