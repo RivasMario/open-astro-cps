@@ -7,17 +7,29 @@ its normal state.
 
 Default is a DRY RUN: it extracts and validates the records (every 0101 write
 must re-encode byte-for-byte via rcmp.build_write, no 0x82 tuning target) and
-prints a summary WITHOUT touching a radio. Transmitting requires BOTH --serial
-and --confirm, and a matching backup present in backups/.
+prints a summary WITHOUT touching a radio. Transmitting requires --confirm, a
+transport, and a matching backup present in backups/.
+
+Two write transports:
+  * --socket  : OS TCP over an already-up RAS/pppd PPP link. VERIFIED on
+                hardware (205CFR2930 recovery). Needs the RAS dial-up modem.
+  * --serial COMx --serial-write : our own hardened userspace PPP/TCP straight
+                on the COM port -- NO modem. The TCP retransmits + paces
+                (offline-proven, tests/test_ppp_link_tcp.py) but is UNVERIFIED
+                on a real radio, so it is blocked without the explicit
+                --serial-write opt-in. Clearing it is the one-time on-hardware
+                check in docs/HANDOFF_RCMP_LIVE.md.
 
     # validate only (no radio):
     python tools/rcmp_replay_write.py captures/<restore>.pcap --device 5
-    # transmit (brings up PPP on COM7, replays, read-back verifies):
+    # transmit over the modem (verified path):
+    python tools/rcmp_replay_write.py captures/<restore>.pcap \
+        --socket --confirm --expect-serial 205CFR2930
+    # transmit without the modem (experimental; recoverable radio + backup):
     python tools/rcmp_replay_write.py captures/<restore>.pcap --device 5 \
-        --serial COM7 --confirm
+        --serial COM7 --serial-write --confirm --expect-serial 205CFR2930
 
-Never replays to partition 0x82 (tuning). CPS must be closed and the RAS
-dial-up hung up so COM7 is free.
+Never replays to partition 0x82 (tuning). CPS must be closed so COM7 is free.
 """
 from __future__ import annotations
 
@@ -135,6 +147,13 @@ def main() -> int:
                     help="transmit over the OS TCP stack via an already-up RAS/pppd PPP link "
                          "(robust; recommended for the write burst)")
     ap.add_argument("--host", default="192.168.128.1", help="radio PPP IP for --socket")
+    ap.add_argument("--port", type=int, default=8002, help="RCMP TCP port on the radio")
+    ap.add_argument("--serial-write", action="store_true",
+                    help="EXPERIMENTAL, UNVERIFIED ON HARDWARE: write over the "
+                         "hardened userspace PPP (--serial), no RAS modem. The TCP "
+                         "layer now retransmits + paces (offline-proven), but this "
+                         "has never driven a real write. Required to unblock a "
+                         "--serial write; without it --serial writes stay refused.")
     ap.add_argument("--confirm", action="store_true", help="actually transmit (irreversible)")
     ap.add_argument("--expect-serial", help="radio serial the backup must match, e.g. 205CFR2930")
     ap.add_argument("--delay", type=float, default=0.03,
@@ -153,17 +172,32 @@ def main() -> int:
 
     transport_selected = bool(args.serial) or bool(args.socket)
     if not (args.confirm and transport_selected):
-        print("[i] DRY RUN -- not transmitting. Add --socket --confirm (RAS link up).")
+        print("[i] DRY RUN -- not transmitting.")
+        print("    OS-socket (modem):  --socket --confirm   (RAS/pppd link up)")
+        print("    serial (no modem):  --serial COMx --serial-write --confirm "
+              "(experimental; recoverable radio + backup)")
         return 0
 
-    # Writes over the userspace PPP (--serial) cannot sustain the record burst;
-    # it desyncs and the radio watchdog-reboots mid-write, corrupting the
-    # codeplug (observed on 205CFR2930). Writes MUST go over the OS TCP stack.
-    if args.confirm and args.serial and not args.socket:
+    # The ORIGINAL userspace PPP had a fire-and-forget TCP that desynced on the
+    # write burst and watchdog-rebooted the radio mid-write, corrupting the
+    # codeplug (observed on 205CFR2930). That TCP is now hardened (ACK-tracked
+    # retransmit + send window, offline-proven in tests/test_ppp_link_tcp.py) --
+    # but it has NEVER driven a real write, so a --serial write stays blocked
+    # unless the operator explicitly opts in with --serial-write.
+    serial_write = bool(args.serial) and not args.socket
+    if args.confirm and serial_write and not args.serial_write:
         raise SystemExit(
-            "[-] refusing to WRITE over userspace PPP (--serial): it desyncs on "
-            "the record burst and corrupts the codeplug. Use --socket with the "
-            "RAS/pppd PPP link up instead.")
+            "[-] refusing to WRITE over userspace PPP (--serial): the hardened "
+            "TCP is offline-proven but UNVERIFIED on hardware. If you are at a "
+            "recoverable radio (e.g. 205CFR2930) with a verified backup, re-run "
+            "with --serial-write to opt in. Otherwise use --socket (RAS/pppd).")
+    if args.confirm and serial_write and args.serial_write:
+        print("=" * 70)
+        print("[!] SERIAL WRITE (NO MODEM) -- EXPERIMENTAL, UNVERIFIED ON HARDWARE")
+        print("[!] The hardened userspace TCP has never driven a real write.")
+        print("[!] Proceed ONLY on a recoverable radio with a verified backup.")
+        print("[!] This is the one-time validation that clears serial writes.")
+        print("=" * 70)
 
     if args.expect_serial:
         bk = glob.glob(os.path.join(REPO, "backups", f"*{args.expect_serial}*.cpg"))
@@ -174,9 +208,14 @@ def main() -> int:
     from open_astro.protocol.rcmp_write import RcmpWriteClient
 
     def _open_client():
-        # Writes always go over the OS TCP stack (RAS/pppd link); the userspace
-        # --serial path is blocked above for writes.
-        return RcmpWriteClient.connect(host=args.host, allow_write=True)
+        if serial_write:
+            # No modem: our own hardened PPP/TCP directly on the COM port.
+            from open_astro.protocol.ppp_link import PppTcpConn
+            conn = PppTcpConn(args.serial, dport=args.port, timeout=15.0)
+            return RcmpWriteClient(conn, allow_write=True)
+        # OS TCP stack over an already-up RAS/pppd PPP link.
+        return RcmpWriteClient.connect(host=args.host, port=args.port,
+                                       allow_write=True)
 
     # Full-session retry: on any drop, reconnect and replay the WHOLE session
     # from the start (identical data, so restarting is safe and only a fully
