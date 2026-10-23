@@ -22,13 +22,42 @@ for the wire format; this file is the current status, how-to, and open work.
 
 Two PPP transports exist:
 - **Userspace PPP** (`protocol/ppp_link.py`, `--serial COMx`): our own CLIENT/
-  LCP/IPCP/TCP over the serial port. Fine for READS. **DO NOT WRITE over it** —
-  its minimal TCP (no windowing/retransmit) desyncs on the write burst and the
-  radio watchdog-reboots mid-write (~record 60), corrupting the codeplug. The
-  replay tool now refuses `--serial` writes.
+  LCP/IPCP/TCP over the serial port. Fine for READS.
+  - **2026-10-23: the TCP layer was HARDENED** — outbound data is now ACK-tracked
+    and retransmitted on an RTO timeout (bounded retries → clean `PppError`, no
+    silent desync), and bytes-in-flight are capped by a send window and the
+    radio's advertised receive window, so a write burst can no longer overrun the
+    radio (the exact failure that corrupted a codeplug before). Duplicate inbound
+    segments are re-ACKed. API (`sendall`/`recv`/`close`) unchanged.
+  - Proven OFFLINE only: `tests/test_ppp_link_tcp.py` drives the client against a
+    mock radio (fake serial + PPP/IP/TCP peer) with fault injection — recovers
+    from dropped data segments and withheld ACKs, delivers every byte exactly
+    once, never exceeds the peer window, and raises on a dead radio. 6/6 green.
+  - **NOT yet validated on a real radio.** Until the on-hardware check below
+    passes, `--serial` writes stay BLOCKED by the replay tool. Reads over
+    `--serial` are unaffected and already trusted.
 - **OS TCP via RAS/pppd** (`--socket`): a real OS socket over the Windows RAS
-  dial-up (`OpenAstroRadio`) or Linux pppd. Robust. **Writes MUST use this.**
-  This is how the 205CFR2930 recovery succeeded end-to-end.
+  dial-up (`OpenAstroRadio`) or Linux pppd. Robust. This is how the 205CFR2930
+  recovery succeeded end-to-end. Remains the sanctioned write path **until** the
+  hardened `--serial` path is cleared on hardware — the whole point of the
+  hardening is to retire this RAS dial-up dance.
+
+### Clearing `--serial` for writes (on-hardware, one time)
+
+Goal: stop needing the RAS dial-up entry. When next at a radio:
+1. Verified `.cpg` backup of the target present in `backups/` (205CFR2930 is the
+   designated write-test radio; writing its own normal data is recoverable).
+2. Dry-run the replay over `--serial` (no `--confirm`) to confirm records decode.
+3. Lift the block: in `tools/rcmp_replay_write.py` the refusal at the
+   `args.confirm and args.serial and not args.socket` check (~line 162) is what
+   forbids serial writes; the transmit path (~line 177) must build
+   `RcmpWriteClient(PppTcpConn(args.serial, dport=args.port), allow_write=True)`
+   instead of the OS socket. Gate this behind an explicit `--serial-write` opt-in
+   the first time.
+4. Write 205CFR2930's own normal codeplug over `--serial --confirm`, power-cycle,
+   confirm no `FAIL`, read-back diff. Soft-pots (0x82) stay refused throughout.
+5. Only after a clean pass: make `--serial` the default write transport and
+   delete the RAS setup from this doc.
 
 RAS setup (Windows): create a dial-up entry named `OpenAstroRadio` over the
 "Motorola 1500 and 2500 Series Radio" modem (phone `0`, no creds), and UNTICK
@@ -90,8 +119,10 @@ read-back.
 3. **DPL octal mapping** (cpg_decode DPL_CODES unverified), per-channel modulation
    of CSQ channels, trunked talkgroup linkage, scan-list membership.
 4. **UHF/other-band** `.cpg` decode coverage (only VHF/700-800 samples seen).
-5. Harden `ppp_link` TCP (windowing/retransmit) if a serial-only write path is
-   ever wanted — but OS-socket is the sanctioned write transport.
+5. ~~Harden `ppp_link` TCP (windowing/retransmit) for a serial-only write
+   path.~~ DONE 2026-10-23 (offline-proven; see Transport section). Remaining:
+   the one-time on-hardware validation to clear `--serial` writes and retire the
+   RAS dial-up.
 
 ## Radios (test fleet)
 
