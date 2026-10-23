@@ -10,6 +10,15 @@ class EncryptionKey:
     key_data: str = "A1B2C3D4E5"        # 10 hex characters for ADP (or 64 for AES-256)
 
 @dataclass
+class Talkgroup:
+    tg_id: Optional[int]                # P25 talkgroup ID (parsed from name where present)
+    name: str                           # Alias as stored (e.g., "TG 00002")
+
+@dataclass
+class ScanList:
+    name: str                           # Scan-list alias (e.g., "LIST 1")
+
+@dataclass
 class Zone:
     zone_number: int
     name: str                           # 8 to 16 chars (e.g., "TEAM SECURE", "800 INTEROP")
@@ -32,6 +41,9 @@ class RadioCodeplug:
     flashcode: str = "500008-000488-4"  # Default: Digital P25 + FPP Enabled
     zones: List[Zone] = field(default_factory=list)
     encryption_keys: List[EncryptionKey] = field(default_factory=list)
+    talkgroups: List["Talkgroup"] = field(default_factory=list)
+    sites: List[str] = field(default_factory=list)
+    scan_lists: List["ScanList"] = field(default_factory=list)
 
     def add_zone(self, zone: Zone) -> None:
         self.zones.append(zone)

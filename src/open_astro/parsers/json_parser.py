@@ -1,7 +1,7 @@
 import json
 from dataclasses import asdict
 from typing import Dict, Any
-from ..models import RadioCodeplug, Zone, Channel, EncryptionKey
+from ..models import RadioCodeplug, Zone, Channel, EncryptionKey, Talkgroup, ScanList
 
 class JsonParser:
     @staticmethod
@@ -34,13 +34,19 @@ class JsonParser:
         for k_data in data.get("encryption_keys", []):
             enc_keys.append(EncryptionKey(**k_data))
 
+        talkgroups = [Talkgroup(**t) for t in data.get("talkgroups", [])]
+        scan_lists = [ScanList(**s) for s in data.get("scan_lists", [])]
+
         return RadioCodeplug(
             radio_model=data.get("radio_model", "Motorola XTS 2500"),
             bandsplit=data.get("bandsplit", "700/800 MHz (764-870 MHz)"),
             serial_number=data.get("serial_number", ""),
             flashcode=data.get("flashcode", ""),
             zones=zones,
-            encryption_keys=enc_keys
+            encryption_keys=enc_keys,
+            talkgroups=talkgroups,
+            sites=data.get("sites", []),
+            scan_lists=scan_lists
         )
 
     @staticmethod

@@ -5,7 +5,7 @@ import argparse
 import os
 import sys
 from .models import RadioCodeplug, Zone, Channel, EncryptionKey
-from .parsers import JsonParser, CsvParser, CpgParser
+from .parsers import JsonParser, CsvParser, CpgParser, CpgDecoder
 from .protocol import RadioSerialLink, AstroFlasher
 
 def cmd_new(args):
@@ -361,6 +361,30 @@ def cmd_read_cpg(args):
         print("    (pass -o <file.json> to save the full structural dump)")
 
 
+def cmd_decode_cpg(args):
+    try:
+        decoder = CpgDecoder(args.input)
+    except (RuntimeError, ValueError) as e:
+        print(f"[-] {e}")
+        sys.exit(1)
+    try:
+        codeplug = decoder.decode()
+    finally:
+        decoder.close()
+
+    JsonParser.save_file(codeplug, args.output)
+    print(f"[+] Decoded {len(codeplug.zones)} zones / {codeplug.total_channels()} channels "
+          f"from {codeplug.radio_model} (Serial: {codeplug.serial_number})")
+    print(f"[+] Talkgroups: {len(codeplug.talkgroups)}  "
+          f"Sites: {len(codeplug.sites)}  Scan lists: {len(codeplug.scan_lists)}")
+    print(f"[+] Wrote typed codeplug JSON: {args.output}")
+    if args.csv:
+        CsvParser.export_csv(codeplug, args.csv)
+        print(f"[+] Wrote channel CSV: {args.csv}")
+    print("    (zone 1 carries conventional freq/NAC; channel->talkgroup linkage "
+          "and key material not yet mapped -- use read-cpg for the full dump)")
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpenAstro: Open Source Motorola ASTRO 25 Codeplug Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -438,6 +462,15 @@ def main():
     p_read_cpg.add_argument("-o", "--output", help="Write full structural dump to this JSON file")
     p_read_cpg.add_argument("--raw", action="store_true", help="Do not attempt decryption; dump raw stream sizes only")
     p_read_cpg.set_defaults(func=cmd_read_cpg)
+
+    # decode-cpg
+    p_decode_cpg = subparsers.add_parser("decode-cpg",
+        help="Decode a .cpg into a typed RadioCodeplug JSON (conventional channels)")
+    p_decode_cpg.add_argument("input", help="Path to the .cpg file")
+    p_decode_cpg.add_argument("-o", "--output", default="codeplug.json",
+                              help="Output typed JSON codeplug (default: codeplug.json)")
+    p_decode_cpg.add_argument("--csv", help="Also export channels to this CSV file")
+    p_decode_cpg.set_defaults(func=cmd_decode_cpg)
 
     args = parser.parse_args()
     args.func(args)
