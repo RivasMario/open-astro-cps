@@ -53,14 +53,25 @@ set (`01xx` request -> `81xx` response).
   `0x0ffc`, `0x0ff8`, `0x0fb0`, ...).
 - Codeplug reads used `readlen` `0x0370` (880 B); tuner reads `0x03e8` (1000 B).
 
-### WRITE record
-`01 01 <part:1> <obj:2> <inst:2> <len:2> <inst:2> <payload...> <crc16:2>`
-- Same object/partition addressing as READ. A full codeplug write iterates every
-  object and writes its block, op `01 01`, with a CRC-16 trailer (the same
-  CRC-16-CCITT the offline `.cpg` reader already validates).
-- Observed in `cps_20261023_084833.pcap`: the `0x0fff` channel-name block
-  carrying `TAC 16` (`...5441432031360000...`), `0x0ffd` freq blocks, etc.
-- A write burst is preceded by `01 03` program/erase-prepare records.
+### WRITE record (VERIFIED byte-exact)
+`01 01 <part:1> <obj:2> <inst:2> <len:2> 00 00 <len:2> <payload[len-2]> <crc:2>`
+- `len` counts the payload PLUS the 2-byte CRC (`len == payload_len + 2`); the
+  13-byte header repeats `len` twice around a `00 00` field.
+- `crc` = CRC-16-CCITT, poly 0x1021, **init 0x0000**, non-reflected, big-endian,
+  over the payload only. This is the same CRC the offline `.cpg` reader uses.
+- `rcmp.build_write(part, obj, payload, inst)` reproduces **all 147** write
+  records in the captures byte-for-byte (`tests/test_rcmp.py`), including the
+  `0x0fff` channel-name blocks (`CHAN 2` vs the edited `CHAN 2X`), freq blocks,
+  and the partition-0x81 encrypted streams.
+- Observed partitions written: `0x80` (plaintext codeplug objects) and `0x81`
+  (RC4-encrypted streams). Never `0x82` (tuning).
+
+### Write session flow (captured)
+`session 0106` -> full codeplug READ (`0100` x N) -> `0102` -> program/erase
+PREPARE (`0103` x2: `0103 80 0002 01f4`, `0103 80 0e0b 0fff`) -> WRITE burst
+(`0101` x N) -> (commit/finalize: still being confirmed). The full VJ-compressed
+write session reassembles into cleanly framed records via the exact RFC 1144
+decompressor in `tools/decode_usb_ppp.py`.
 
 ## Partition selector (high-level memory map)
 

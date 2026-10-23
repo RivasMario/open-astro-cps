@@ -93,13 +93,37 @@ def build_session_open() -> bytes:
 
 
 def build_write(part: int, obj: int, data: bytes, inst: int = 0) -> bytes:
-    """EXPERIMENTAL: build a WRITE record. The write sub-framing and CRC are
-    only partially confirmed (docs/RCMP_WIRE_PROTOCOL.md). Provided for offline
-    analysis and tests ONLY; do not transmit to a radio until verified."""
-    body = struct.pack(">BBB", 0x01, 0x01, part) + \
-        struct.pack(">HHH", obj, inst, len(data)) + \
-        struct.pack(">H", inst) + data
-    return frame(body + struct.pack(">H", _crc16(body)))
+    """Build a WRITE record (VERIFIED byte-exact against all 147 write records
+    in the capture). Layout:
+
+        01 01 <part:u8> <obj:u16> <inst:u16> <len:u16> 00 00 <len:u16>
+        <data[len]> <crc:u16>
+
+    where crc = CRC-16-CCITT (poly 0x1021, init 0x0000) over `data` only,
+    big-endian. This is the same CRC the .cpg reader validates.
+
+    `data` is the object PAYLOAD without its CRC. The length field counts the
+    payload plus the 2-byte CRC that follows it (verified: len == payload+2).
+
+    NOTE: building a correct record is NOT permission to transmit. A live write
+    must go through the gated flasher path with a verified backup and read-back;
+    this function is the encoder, not the act of writing."""
+    crc = crc16_ccitt(data)
+    n = len(data) + 2  # length field counts the payload plus its CRC
+    header = struct.pack(">BBBHHH", 0x01, 0x01, part, obj, inst, n) + \
+        b"\x00\x00" + struct.pack(">H", n)
+    return frame(header + data + struct.pack(">H", crc))
+
+
+def crc16_ccitt(data: bytes, init: int = 0x0000) -> int:
+    """CRC-16-CCITT, poly 0x1021, init 0x0000, non-reflected. Verified as the
+    write-record data CRC (147/147 captured writes) and the .cpg stream CRC."""
+    crc = init
+    for b in data:
+        crc ^= b << 8
+        for _ in range(8):
+            crc = ((crc << 1) ^ 0x1021) & 0xFFFF if (crc & 0x8000) else (crc << 1) & 0xFFFF
+    return crc
 
 
 # -- parsing --------------------------------------------------------------

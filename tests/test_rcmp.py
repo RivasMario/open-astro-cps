@@ -54,6 +54,33 @@ def test_response_opcode_naming():
     assert rcmp.op_name(rcmp.OP_WRITE | rcmp.RESP_FLAG) == "WRITE_ACK"
 
 
+# Exact write record captured from CPS writing obj 0x0fff inst 1 (zone 2),
+# channel names "CHAN 1"/"CHAN 2" (framed, incl. 2-byte length prefix).
+_CAP_WRITE_0FFF = bytes.fromhex(
+    "00370101800fff0001002a0000002a000000000002"
+    "4348414e203100000000000000000000004348414e20320000000000000000000000"
+    "9181")
+_PAYLOAD_0FFF = bytes.fromhex(
+    "0000000000024348414e2031000000000000000000000"
+    "04348414e20320000000000000000000000")
+
+
+def test_crc16_ccitt_known_vector():
+    # Verified write-record data CRC (poly 0x1021, init 0x0000) from the capture.
+    assert rcmp.crc16_ccitt(_PAYLOAD_0FFF) == 0x9181
+
+
+def test_build_write_matches_capture_byte_exact():
+    assert rcmp.build_write(0x80, 0x0FFF, _PAYLOAD_0FFF, inst=1) == _CAP_WRITE_0FFF
+
+
+def test_build_write_length_counts_payload_plus_crc():
+    rec = rcmp.build_write(0x80, 0x0FFF, b"\x01\x02\x03\x04")
+    payload_body = rec[2:]            # strip frame length
+    length_field = int.from_bytes(payload_body[7:9], "big")
+    assert length_field == 4 + 2      # payload + CRC
+
+
 def test_round_trip_build_then_parse():
     rec = next(rcmp.iter_records(rcmp.build_read(rcmp.PART_TUNING, 0x1079, 0x03E8)))
     info = rcmp.parse_record(rec)
