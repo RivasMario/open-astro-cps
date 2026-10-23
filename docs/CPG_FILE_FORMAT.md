@@ -95,5 +95,30 @@ An **offline `.cpg` reader** is now buildable without a radio:
 
 **Blocked only by:** a sample `.cpg` to validate against (none on the Drive yet —
 export one from CPS, or save one from a radio read), the exact 800-byte header
-field offsets, and the `cgIsh` block/field schema (separate target). The SDK-crypto
+field offsets, and the `cgIsh` block/field schema (see below). The SDK-crypto
 path also needs dissection if any real file uses it instead of legacy RC4.
+
+## Where the block/field schema actually lives (don't RE the DLLs for it)
+
+Checked this directly: **`cgIsh10c.dll` is only the schema *engine*** —
+`AddBlkLayout` / `AddField` / `AddPartition` / `GetBlkLayoutMap` builders, and
+**zero** block/field name strings (no "channel"/"zone"/"scanlist"/etc.). The
+actual per-model block/field dictionary is **data loaded at runtime**, not a
+table in the DLL. So disassembling `cgIsh` further does not yield the schema.
+
+The model-definition files next to `PatPort.exe` were also checked:
+`patphopt_{a,b,c}.mdf` / `modup.mdf` are **flashcode / model-option tables** —
+their readable content is Motorola option codes (`Q173`, `H869`, `G996`, …),
+i.e. feature/flashcode → option mappings. **Useful ground truth for
+`models/flashcode.py`** (flashcode decoding), but NOT the codeplug field layout.
+
+So the block/field schema has to come from one of:
+1. a **real `.cpg` sample** — decode its OLE streams and infer field positions
+   (cross-check against `FEDORA_RADIO_PROTOCOLS_GUIDE.md` §6's stream table);
+2. a **radio ISH-layout read** at runtime (`OP_READ_ISH_ID_SET 0x104` /
+   `OP_READ_ISH_TYPE_SET 0x105` + the partition layout);
+3. tables compiled into `PatPort.exe` (24 MB) — last resort, large.
+
+Bottom line: the `.cpg` *container + crypto + header* are fully nailed offline;
+turning stream bytes into named channels/zones needs a sample file or the radio,
+not more DLL disassembly.
