@@ -122,6 +122,14 @@ captures are added. (The DLL-schema route -- cgIsh10c.dll in the InstallShield
 .cab -- stays blocked on the work machine: no unshield there; it only extracts
 on Fedora. The capture-derived map is authoritative enough for the write guard.)
 
+UPDATE 2026-10-23: DLL route done (cab unpacked with unshield on Fedora WSL).
+PatPort.exe declares exactly 0x80 ReadWrite, 0x81 ReadWriteLocked, 0x85
+ReadWriteLocked via `AddPartition`; 0x82 is not in the codeplug layout; block
+counts per partition equal the capture's object counts. `schema/patport_layout.json`
+(from `tools/patport_partition_layout.py`) is now a second, independent gate in
+`PartitionPolicy`, which also exposes `requires_unlock()` for locked partitions.
+Details + the open block-type→item-id mapping: docs/CPS_ISH_SCHEMA.md.
+
 ## Open work (for the next AI)
 
 1. **Full `.cpg` -> write-session assembler.** PARTIALLY DONE 2026-10-23.

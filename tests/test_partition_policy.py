@@ -46,7 +46,8 @@ def test_policy_refuses_object_out_of_range():
 
 def test_policy_refuses_unobserved_partition():
     pol = PartitionPolicy.load(MAP)
-    with pytest.raises(WriteSessionError, match="never observed|not writable"):
+    with pytest.raises(WriteSessionError,
+                       match="never observed|not writable|does not declare"):
         pol.check(0x99, 10)
 
 
@@ -103,3 +104,56 @@ def test_live_write_client_enforces_allowlist():
         c.write_object(0x80, 9999, b"\x00\x01")        # above 0x80 range
     with pytest.raises(RcmpWriteError, match="0x82"):
         c.write_object(0x82, 4217, b"\x00\x01")
+
+
+# ---------------------------------------------------------------------------
+# Motorola-declared layout (schema/patport_layout.json, from PatPort.exe /
+# cgIsh10c.dll) cross-validated against the capture-derived map.
+# ---------------------------------------------------------------------------
+LAYOUT = os.path.join(REPO, "schema", "patport_layout.json")
+
+
+def _layout():
+    import json
+    return json.load(open(LAYOUT))
+
+
+def test_patport_layout_enum_and_partitions():
+    lay = _layout()
+    assert lay["access_rights_enum"] == {"0": "ReadOnly", "1": "ReadWrite",
+                                         "2": "ReadWriteLocked"}
+    parts = lay["partitions"]
+    assert set(parts) == {"0x80", "0x81", "0x85"}     # CPS declares exactly these
+    assert "0x82" not in parts                         # tuning is NOT codeplug
+    assert parts["0x80"]["access"] == "ReadWrite"
+    assert parts["0x81"]["access"] == "ReadWriteLocked"
+    assert parts["0x85"]["access"] == "ReadWriteLocked"
+    assert lay["unresolved_block_calls"] == 0
+
+
+def test_two_sources_agree_on_partitions_and_counts():
+    import json
+    cap = json.load(open(MAP))["partitions"]
+    lay = _layout()["partitions"]
+    writable = {p for p, m in cap.items() if m["writable"]}
+    assert writable == set(lay)        # same writable set from both sources
+    for p, m in lay.items():           # one CPS block layout per captured object
+        assert m["block_layouts"] == cap[p]["observed_objs"], p
+
+
+def test_requires_unlock_for_locked_partitions():
+    pol = PartitionPolicy.load(MAP)
+    assert pol.requires_unlock(0x81) and pol.requires_unlock(0x85)
+    assert not pol.requires_unlock(0x80)
+
+
+def test_cps_layout_gate_refuses_undeclared_and_readonly():
+    parts = {0x80: {"writable": True, "obj_min": 0, "obj_max": 9999},
+             0x90: {"writable": True, "obj_min": 0, "obj_max": 9999},
+             0x91: {"writable": True, "obj_min": 0, "obj_max": 9999}}
+    pol = PartitionPolicy(parts, cps_layout={0x80: 1, 0x91: 0})
+    pol.check(0x80, 5)                                  # declared ReadWrite
+    with pytest.raises(WriteSessionError, match="does not declare"):
+        pol.check(0x90, 5)                              # capture says ok, CPS doesn't
+    with pytest.raises(WriteSessionError, match="ReadOnly"):
+        pol.check(0x91, 5)

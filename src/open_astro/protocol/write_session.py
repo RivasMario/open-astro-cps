@@ -52,6 +52,14 @@ PartMap = Dict[Tuple[int, int], int]   # (obj, inst) -> partition
 # tools/derive_partition_map.py.
 _PARTITION_MAP_PATH = os.path.join(
     os.path.dirname(__file__), "..", "..", "..", "schema", "partition_map.json")
+# The partition layout Motorola CPS itself declares (AddPartition + AccessRights),
+# extracted by tools/patport_partition_layout.py.
+_PATPORT_LAYOUT_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "..", "..", "schema", "patport_layout.json")
+
+ACCESS_READ_ONLY = 0          # cgIsh10c AccessRights enum (decoded from the DLL)
+ACCESS_READ_WRITE = 1
+ACCESS_READ_WRITE_LOCKED = 2
 
 
 class WriteSessionError(Exception):
@@ -70,14 +78,37 @@ class PartitionPolicy:
     0x82 is refused either way."""
 
     def __init__(self, partitions: Dict[int, dict], *,
-                 enforce_ranges: bool = True, source: Optional[str] = None):
+                 enforce_ranges: bool = True, source: Optional[str] = None,
+                 cps_layout: Optional[Dict[int, int]] = None):
         self.partitions = partitions           # part -> {role, writable, obj_min, obj_max}
         self.enforce_ranges = enforce_ranges
         self.source = source
+        # part -> AccessRights as declared by CPS (PatPort AddPartition). When
+        # present it is a second, independent gate: a partition CPS does not
+        # declare, or declares ReadOnly, is never writable.
+        self.cps_layout = cps_layout
+
+    @staticmethod
+    def _load_cps_layout(path: str) -> Optional[Dict[int, int]]:
+        try:
+            with open(path, encoding="utf-8") as fh:
+                data = json.load(fh)
+        except (OSError, ValueError):
+            return None
+        return {int(k, 16): int(v["access_rights"])
+                for k, v in data.get("partitions", {}).items()
+                if "access_rights" in v}
+
+    def requires_unlock(self, part: int) -> bool:
+        """True if CPS declares the partition ReadWriteLocked -- a write to it
+        must be preceded by the session's unlock step."""
+        return bool(self.cps_layout) and \
+            self.cps_layout.get(part) == ACCESS_READ_WRITE_LOCKED
 
     @classmethod
     def load(cls, path: str = _PARTITION_MAP_PATH, *,
-             enforce_ranges: bool = True) -> "PartitionPolicy":
+             enforce_ranges: bool = True,
+             layout_path: str = _PATPORT_LAYOUT_PATH) -> "PartitionPolicy":
         try:
             with open(path, encoding="utf-8") as fh:
                 data = json.load(fh)
@@ -87,12 +118,13 @@ class PartitionPolicy:
                          "role": "default"} for p in DEFAULT_ALLOWED_PARTS}
             parts[PART_TUNING] = {"writable": False, "obj_min": None,
                                   "obj_max": None, "role": "tuning"}
-            return cls(parts, enforce_ranges=False, source="(default fallback)")
+            return cls(parts, enforce_ranges=False, source="(default fallback)",
+                       cps_layout=cls._load_cps_layout(layout_path))
         parts = {}
         for key, meta in data.get("partitions", {}).items():
             parts[int(key, 16) if isinstance(key, str) else int(key)] = meta
-        return cls(parts, enforce_ranges=enforce_ranges,
-                   source=path if isinstance(data.get("sources"), list) else path)
+        return cls(parts, enforce_ranges=enforce_ranges, source=path,
+                   cps_layout=cls._load_cps_layout(layout_path))
 
     def check(self, part: int, obj: int) -> None:
         """Raise WriteSessionError if writing (part, obj) is not permitted."""
@@ -100,6 +132,16 @@ class PartitionPolicy:
             raise WriteSessionError(
                 f"object {obj} targets partition 0x82 (tuning/soft-pots): "
                 f"refusing -- unrecoverable if corrupted")
+        if self.cps_layout is not None:
+            rights = self.cps_layout.get(part)
+            if rights is None:
+                raise WriteSessionError(
+                    f"object {obj} targets partition 0x{part:02x}, which CPS's "
+                    f"codeplug layout does not declare; refusing")
+            if rights == ACCESS_READ_ONLY:
+                raise WriteSessionError(
+                    f"object {obj} targets partition 0x{part:02x}, which CPS "
+                    f"declares ReadOnly; refusing")
         meta = self.partitions.get(part)
         if meta is None:
             raise WriteSessionError(
