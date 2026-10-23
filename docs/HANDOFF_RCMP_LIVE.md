@@ -128,7 +128,9 @@ ReadWriteLocked via `AddPartition`; 0x82 is not in the codeplug layout; block
 counts per partition equal the capture's object counts. `schema/patport_layout.json`
 (from `tools/patport_partition_layout.py`) is now a second, independent gate in
 `PartitionPolicy`, which also exposes `requires_unlock()` for locked partitions.
-Details + the open block-type→item-id mapping: docs/CPS_ISH_SCHEMA.md.
+Block type→item id mapping SOLVED (schema/block_type_map.json, all 169 blocks, exact vs capture),
+and the .cpg Strm_0 directory decoded (gives each object's partition, so `from_cpg` needs no
+capture). Details: docs/CPS_ISH_SCHEMA.md. Next: per-block field layouts for the decoder.
 
 ## Open work (for the next AI)
 

@@ -143,6 +143,32 @@ class CpgParser:
         with self._ole.openstream(path) as s:
             return s.read()
 
+    def directory(self) -> List[Dict[str, Any]]:
+        """Decode DataStg/Strm_0, the .cpg object directory (VERIFIED on the
+        3 real backups: every entry matches its stream's tag/instance/CRC).
+
+        Strm_0 decrypts (RC4) to N 10-byte big-endian records
+
+            <item_id:u16> <instance:u16> <partition:u16> <stream_crc:u16> <stream:u16>
+
+        followed by a 2-byte trailer (not a plain CRC-16 of the records; meaning
+        unverified). `stream` is the N in DataStg/Strm_N; `partition` is the RCMP
+        partition the object lives in (0x80 / 0x81 / 0x85) -- so the .cpg itself
+        says where each object is written, no capture needed.
+        """
+        try:
+            raw = self._read(["DataStg", "Strm_0"])
+        except OSError:
+            return []
+        dec = rc4(self.key, raw)
+        out = []
+        for k in range(len(dec) // 10):
+            iid, inst, part, crc, strm = (int.from_bytes(dec[10 * k + o:10 * k + o + 2], "big")
+                                          for o in (0, 2, 4, 6, 8))
+            out.append({"item_id": iid, "instance": inst, "partition": part,
+                        "stream_crc": crc, "stream": strm})
+        return out
+
     def objects(self) -> List[Dict[str, Any]]:
         """Yield the fully-decoded ISH objects stored in the .cpg.
 
@@ -155,9 +181,11 @@ class CpgParser:
         stream and the Strm_0 directory index are skipped.
 
         Returns a list of dicts: {name, tag, instance, length, payload,
-        stored_crc, crc_ok}. `crc_ok` False means the object did not validate and
-        must not be trusted for a write.
+        stored_crc, crc_ok, partition}. `crc_ok` False means the object did not
+        validate and must not be trusted for a write. `partition` comes from the
+        Strm_0 directory (None if the directory has no entry for the stream).
         """
+        part_of = {d["stream"]: d["partition"] for d in self.directory()}
         out: List[Dict[str, Any]] = []
         for p in self._streams():
             if not p:
@@ -182,6 +210,8 @@ class CpgParser:
                 "payload": payload,
                 "stored_crc": stored_crc,
                 "crc_ok": crc16_ccitt(payload) == stored_crc,
+                "partition": part_of.get(int(leaf.split("_")[-1]))
+                             if leaf.startswith("Strm_") else None,
             })
         return out
 

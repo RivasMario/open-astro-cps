@@ -223,7 +223,11 @@ class CpgWriteAssembler:
                         f"{o['name']} (tag {o['tag']}) failed its CRC; refusing "
                         f"to assemble a write from a corrupt object")
                 key = (o["tag"], o["instance"])
-                part = (part_map or {}).get(key, default_part)
+                # Partition precedence: explicit part_map (e.g. from a capture),
+                # then the .cpg's own Strm_0 directory, then default_part.
+                part = (part_map or {}).get(key)
+                if part is None:
+                    part = o.get("partition") if o.get("partition") is not None else default_part
                 objs.append(WriteObject(part, o["tag"], o["instance"], o["payload"]))
         finally:
             parser.close()

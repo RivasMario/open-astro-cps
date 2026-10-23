@@ -81,7 +81,7 @@ Two encryption backends, selected by `EncryptType`:
    * Standard 40-bit RC4: `MD5(A8Z6J9QP5)[:5] + 11 zero bytes`.
 
 2. **SDK Crypto (`CFhAdkSdkCrypto`)**:
-   * Uses `SdkCrypto.dll` when `EncryptType` indicates SDK.
+   * Uses an SDK crypto provider when `EncryptType` indicates SDK (class `CFhAdkSdkCrypto` is real, in fhAdk10c.dll; the DLL name `SdkCrypto.dll` is UNVERIFIED -- no such file ships in the CPS cab).
    * `CryptoEncrypt`, `CryptoDecrypt`.
 
 3. **CRC-16-CCITT (`cgIsh10c.dll:0x100077AA`)**:

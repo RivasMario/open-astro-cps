@@ -43,18 +43,40 @@ Reproduce: `python -P tools/patport_partition_layout.py <PatPort.exe> <cgIsh10c.
 (in the assembler and the live `RcmpWriteClient`) together with the capture
 map `schema/partition_map.json`.
 
-## Block type id ≠ wire object id (OPEN)
+## Block type id → wire item id (SOLVED)
 
-The ids PatPort pushes per block (e.g. `0x2b`, `0x18`, `0xf3`; range 1–300) are
-ISH **block type** ids. The RCMP wire / `.cpg` tag is a different **item id**
-(10–4095, 4100–4102, 4798–4799). Per-partition counts match, and an ordered
-pairing looks plausible (0x85: 238→4798, 239→4799) — but that is unproven, so
-nothing relies on it.
+The ids PatPort pushes per block (1–300) are ISH **block type** ids; the RCMP
+wire / `.cpg` tag is the **item id**. The link is in PatPort's block builders:
+the block lookup (`0x7d6dd8`) dispatches on the type (nested jump tables and
+compare chains) to a builder; most builders hard-code the item id as the first
+argument of `CgIshBlkLayoutAttrib(item_id, 0, 0, 0)` (and validate it is in
+1..0xFFFD), while one shared generic builder (`0xc47ac2`) takes the item id as
+its 4th argument and switches on it.
 
-The mapping (and each block's field layout — names, types, offsets, which is
-what full channel/talkgroup/scan-list decoding needs) lives inside per-type
-builder functions: PatPort's block lookup `0x7d6dd8` dispatches through jump
-tables on `(type >> 3, type & 7)` to a builder per type (`0xd5e14d`,
-`0x839088`, `0x65fffc`, …), each constructing `CcgIshBlkLayout` and its
-`CcgIsh*FieldLayout`s. Walking those builders is the next RE step and would
-give an authoritative field schema for the decoder (open item #4).
+`tools/patport_block_map.py` **emulates** the dispatcher (unicorn) once per
+type, stubs imported calls, stops at the builder call, and reads the item id →
+`schema/block_type_map.json` (169 blocks: 131 from the attribute immediate, 38
+from the generic builder's argument). Verified (tests/test_cps_schema.py):
+
+- per partition, the mapped item ids **equal** the object ids CPS addressed in
+  the live capture (0x80 164/164, 0x81 3/3, 0x85 2/2); no duplicates;
+- every object tag in all 3 real backups has a CPS block type;
+- anchors: types 24/43/243 → 4100/4101/4102 (0x81), 239/238 → 4798/4799 (0x85).
+
+## .cpg object directory (Strm_0) — VERIFIED
+
+`DataStg/Strm_0` (RC4) is N 10-byte big-endian records
+`<item_id><instance><partition><stream_crc><stream#>` + a 2-byte trailer (not a
+plain CRC-16 of the records; unverified). Every entry matches its stream's
+tag/instance/CRC on all 3 backups (146 / 110 / 500 entries), and the partition
+equals the one CPS assigns that block. So a `.cpg` says where each object is
+written — `CpgWriteAssembler.from_cpg` now takes partitions from the file and
+needs no capture (`CpgParser.directory()`).
+
+## Next: field layouts
+
+Each builder also constructs the block's fields — PatPort makes ~2,580
+field-layout calls (2,349 `CcgIshNumFieldLayout`, 64 `Str`, 43 `Name`, 91
+`List`, 33 `Union`, 1 `Char`) with offsets/sizes as arguments. Extracting them
+per builder (now that every builder is known) gives an authoritative per-object
+field schema for the decoder (open item #4).
