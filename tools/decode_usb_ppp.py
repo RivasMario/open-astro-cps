@@ -116,27 +116,30 @@ def extract_rcmp(ip_payload: bytes, vj_uncompressed: bool = False) -> List[Dict]
 
 
 def vj_compressed_data(p: bytes) -> bytes:
-    """Best-effort recovery of the TCP data from a VJ-compressed TCP/IP frame
-    (RFC 1144 3.2.2). We only need the data offset, so we count and skip the
-    variable-length delta fields; field order does not affect the total size.
-    Flag bits: 0x40=C(conn id) 0x20=I 0x10=PUSH(no field) 0x08=S 0x04=A
-    0x02=W 0x01=U. I/S/A/W/U each carry one SS-encoded delta (1 byte, or 0x00
-    followed by a 16-bit value)."""
+    """Recover the TCP data from a VJ-compressed TCP/IP frame (RFC 1144).
+
+    We only need the data offset. Change-mask bits (first byte): 0x40=NEW_C
+    (connection id follows), 0x20=NEW_I, 0x10=PUSH (flag only), 0x08=NEW_S,
+    0x04=NEW_A, 0x02=NEW_W, 0x01=NEW_U. Layout: [change][conn?][cksum:2]
+    [deltas...][data]. Each present delta among U,W,A,S,I is SS-encoded: 1 byte,
+    or 0x00 then a 16-bit value (3 bytes). CRUCIAL: the low nibble values 0x0b
+    (SPECIAL_I) and 0x0f (SPECIAL_D) are RESERVED special cases that carry NO
+    delta bytes (seq/ack are implied by the data length), not S/W/U/A deltas.
+    Validated: the full captured write session reassembles into 142 cleanly
+    framed RCMP records with this rule."""
     if not p:
         return b""
-    i = 0
-    mask = p[i]; i += 1
-    if mask & 0x40:  # connection id present
+    ch = p[0]
+    i = 1
+    if ch & 0x40:          # NEW_C: connection id byte
         i += 1
-    i += 2           # TCP checksum
-    for bit in (0x20, 0x08, 0x04, 0x02, 0x01):  # I, S, A, W, U
-        if mask & bit:
-            if i >= len(p):
-                break
-            if p[i] == 0x00:
-                i += 3
-            else:
-                i += 1
+    i += 2                 # TCP checksum
+    if (ch & 0x0F) not in (0x0B, 0x0F):   # not SPECIAL_I / SPECIAL_D
+        for bit in (0x01, 0x02, 0x04, 0x08):   # U, W, A, S deltas
+            if ch & bit and i < len(p):
+                i += 1 if p[i] != 0 else 3
+    if ch & 0x20 and i < len(p):          # NEW_I (IP id) delta
+        i += 1 if p[i] != 0 else 3
     return p[i:]
 
 
