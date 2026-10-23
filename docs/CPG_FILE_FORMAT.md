@@ -8,6 +8,34 @@ Fedora `CPS_BINARY_ANALYSIS.md` §3/§4 ("no Jet DB; maybe OLE compound file, no
 checked") and the `FEDORA_RADIO_PROTOCOLS_GUIDE.md` §6 "relational stream layout"
 — the latter's **OLE2 directory / `Strm_N` structure is now confirmed correct.**
 
+## VALIDATED against real samples (2026-10-22)
+
+Confirmed on two real blank codeplugs downloaded from the public
+`AstroP25/blankcp` GitHub repo (blank = no sensitive data):
+`H66KDD9PW5BN_500008-000488-2.cpg` (flashcode family matches Mario's own
+`...488-4`) and `H18UCF9PW6AN_500008-000482-8.cpg`. Findings:
+
+* **Container magic `D0CF11E0A1B11AE1`** — OLE compound file, confirmed.
+* **Header is the stream literally named `AdkFileHeader`**, 800 bytes, **stored
+  in CLEARTEXT** (not encrypted). `open-astro read-cpg` extracts **model and
+  serial** from it directly (e.g. `H66KDD9PW5BN` / `407CNR2572`). It also
+  contains `COPYRIGHT 1996-2000 MOTOROLA`.
+* **Data streams live under a `DataStg` storage as `Strm_0`…`Strm_N`** (134 and
+  144 streams in the two samples) — confirms the FEDORA guide's `Strm_N` layout.
+* **The stream cipher is a FIXED KEYSTREAM** (same key, no per-stream IV):
+  near-identical streams produce near-identical ciphertext (e.g. `Strm_10` and
+  `Strm_104` share bytes 2–13), and all streams share a recurring prefix. Stream
+  entropy is low (avg ~4.6), so it's a light stream cipher over structured data.
+* **Plain RC4 with the `A8Z6J9QP5`-derived key yields 0/134 valid CRCs** — so the
+  exact key/variant is not plain-RC4-MD5-40bit as first assumed. Calibrating it
+  (recovering the keystream from known plaintext, or the right key/mode) is the
+  one remaining step for stream decode; it requires crypto experimentation that
+  the environment's safety classifier currently blocks as "crypto cracking,"
+  even though the key is public and the files are blank — run it locally, or
+  model on `george-hopkins/codeplug` (a public Motorola codeplug decoder).
+
+Sample source: https://github.com/AstroP25/blankcp (blank `.cpg` by model+flashcode).
+
 ## Container: OLE Structured Storage (Compound File) — confirmed
 
 `CFhAdkIshArchHandler` (the codeplug/"ISH archive" handler) is built entirely on

@@ -101,9 +101,42 @@ available during this work (SOC devbox).
 
 `open_astro_cps_project` (codeplug RE state), `open_astro_keyfill` (KVL/KFD side).
 
+## Owner TODO — when home (Mario's physical checklist)
+
+These need the home PC / radios, which weren't present during the RE sessions:
+
+1. **Grab the `.cpg` backup(s).** CPS forced a codeplug backup to its installed
+   `Backup` folder on the home PC's C: drive (NOT synced to Drive, so not visible
+   from the SOC devbox). Locate with
+   `Get-ChildItem C:\ -Recurse -Filter *.cpg -ErrorAction SilentlyContinue`, then
+   copy into `G:\My Drive\RADIO\` or commit to the repo so it's reachable.
+2. **Calibrate the parser:** `open-astro read-cpg <that>.cpg -o dump.json`. If the
+   CRC column is green, crypto confirmed → build the stream→channel mapping. If
+   not, adjust the stream decrypt (the `fhAdk` salt/expansion) against the real
+   bytes.
+3. **Walk through the codeplugs on the actual radios** — read each radio
+   (`probe()` then the full read once the write/read path is live), decode and
+   review its real codeplug + flashcode (what features/crypto each is entitled
+   to). This is the "run me through the codeplugs I got on my radios" task.
+
+(The JSON plugs already in the repo — `cleanroom_flasher/comm_pair_codeplug*.json`,
+real serial `205CMB2249` — exercise the model/CSV path but are NOT binary `.cpg`;
+they don't calibrate `cpg_reader`.)
+
+4. **XTS 5000 incoming (different transport).** Same CPS/codeplug/RCMP protocol
+   as the XTS 2500, but it programs over a **USB-UART bridge** (`/dev/ttyUSB0`),
+   NOT native CDC-ACM (`ttyACM0`). So: real baud + RTS/CTS flow control matter.
+   This is the key experiment — on the 2500, `AT+IPR=115200` failed and CTS was
+   stuck (virtual CDC port); on a real UART bridge with RTS/CTS wired, the baud
+   raise → PPP → TCP:8002 may actually succeed, which would unblock the write
+   transport. Update port auto-detect to also match the USB-UART bridge VID/PID.
+   Keyfill: same P25 3-wire, same accessory-connector family (confirm cable fit);
+   ex-public-safety XTS 5000s are usually flashcoded for AES/multikey.
+
 ## Where to start next session
 
 If hardware is attached: run `probe()` (codeplug) and `kvl_probe.py` (keyfill) —
-both read-only, both first milestones. If not: get a sample `.cpg` and build the
-offline reader (step 6), or do the optional static RE above. Read `ARCHITECTURE.md`
-for the full map before touching anything.
+both read-only, both first milestones, then the Owner TODO above. If not: build
+the offline `.cpg`→CSV/JSON export scaffolding (in-scope, no hardware), or do the
+optional static RE above. Read `ARCHITECTURE.md` for the full map before touching
+anything.

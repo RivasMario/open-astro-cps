@@ -5,7 +5,7 @@ import argparse
 import os
 import sys
 from .models import RadioCodeplug, Zone, Channel, EncryptionKey
-from .parsers import JsonParser, CsvParser
+from .parsers import JsonParser, CsvParser, CpgParser
 from .protocol import RadioSerialLink, AstroFlasher
 
 def cmd_new(args):
@@ -323,6 +323,36 @@ def cmd_gui(args):
         print("\n[*] Stopping GUI server.")
         server.shutdown()
 
+def cmd_read_cpg(args):
+    try:
+        reader = CpgParser(args.input)
+    except (RuntimeError, ValueError) as e:
+        print(f"[-] {e}")
+        sys.exit(1)
+    try:
+        data = reader.to_json(args.output, decrypt=not args.raw) if args.output else reader.parse(decrypt=not args.raw)
+    finally:
+        reader.close()
+
+    hdr = data.get("header") or {}
+    streams = data.get("streams", [])
+    crc_ok = sum(1 for s in streams if s.get("crc_ok"))
+    print(f"[+] .cpg is an OLE compound file ({len(streams)} streams). RC4 key {data['rc4_key']}")
+    if hdr:
+        print(f"[+] Header stream '{hdr.get('stream')}' ({hdr.get('size')} B, cleartext):")
+        if hdr.get("model"):
+            print(f"      Model : {hdr['model']}")
+        if hdr.get("serial"):
+            print(f"      Serial: {hdr['serial']}")
+    if not args.raw:
+        print(f"[+] Stream CRC-16 check: {crc_ok}/{len(streams)} passed"
+              f"{'  (0 passing => stream crypto needs calibration, see docs/CPG_FILE_FORMAT.md)' if crc_ok == 0 else ''}")
+    if args.output:
+        print(f"[+] Wrote structural dump: {args.output}")
+    else:
+        print("    (pass -o <file.json> to save the full structural dump)")
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpenAstro: Open Source Motorola ASTRO 25 Codeplug Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -394,6 +424,12 @@ def main():
     p_gui = subparsers.add_parser("gui", help="Launch modern interactive GUI in web browser")
     p_gui.add_argument("--port", type=int, default=8080, help="HTTP server port (default: 8080)")
     p_gui.set_defaults(func=cmd_gui)
+
+    p_read_cpg = subparsers.add_parser("read-cpg", help="Read a .cpg codeplug file offline (OLE/RC4/CRC structural dump)")
+    p_read_cpg.add_argument("input", help="Path to the .cpg file")
+    p_read_cpg.add_argument("-o", "--output", help="Write full structural dump to this JSON file")
+    p_read_cpg.add_argument("--raw", action="store_true", help="Do not attempt decryption; dump raw stream sizes only")
+    p_read_cpg.set_defaults(func=cmd_read_cpg)
 
     args = parser.parse_args()
     args.func(args)

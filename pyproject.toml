@@ -30,6 +30,9 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
 ]
+cpg = [
+    "olefile>=0.46",
+]
 
 [project.scripts]
 open-astro = "open_astro.cli:main"

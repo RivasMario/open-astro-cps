@@ -71,7 +71,7 @@ class CsvParser:
                     tx_dpl_code=parse_int(row.get("TxDPL")),
                     rx_nac=row.get("RxNAC", "$293"),
                     tx_nac=row.get("TxNAC", "$293"),
-                    talkgroup_id=int(row.get("Talkgroup", 1)),
+                    talkgroup_id=parse_int(row.get("Talkgroup")),
                     secure_strapping=row.get("Secure", "Clear"),
                     key_id=parse_int(row.get("KeyID")),
                     key_name=row.get("KeyName") or None,
