@@ -4,6 +4,11 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Fedora%20%2F%20Linux%20%7C%20macOS-lightgrey.svg)]()
 
+> 🧭 **Working on this project (human or AI)? Start here:**
+> **[docs/NEXT_AGENT_HANDOFF.md](docs/NEXT_AGENT_HANDOFF.md)** (current state + exact
+> next steps) and **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** (how every
+> ASTRO 25 component works together). Those two are the canonical entry point.
+
 > ### Project status (2026-10-20)
 > **Working and verified, against real hardware:** the codeplug data model,
 > JSON/CSV conversion, the USB transport layer (port detection, permissions,
