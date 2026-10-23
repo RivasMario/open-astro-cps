@@ -25,6 +25,7 @@ import argparse
 import glob
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import importlib.util
@@ -96,16 +97,26 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("pcap")
     ap.add_argument("--device", type=int, default=None, help="USB device number of the write session")
-    ap.add_argument("--serial", help="COM/tty port to bring PPP up on and transmit")
+    ap.add_argument("--serial", help="(legacy) bring up userspace PPP on this COM port")
+    ap.add_argument("--socket", action="store_true",
+                    help="transmit over the OS TCP stack via an already-up RAS/pppd PPP link "
+                         "(robust; recommended for the write burst)")
+    ap.add_argument("--host", default="192.168.128.1", help="radio PPP IP for --socket")
     ap.add_argument("--confirm", action="store_true", help="actually transmit (irreversible)")
     ap.add_argument("--expect-serial", help="radio serial the backup must match, e.g. 205CFR2930")
+    ap.add_argument("--delay", type=float, default=0.03,
+                    help="seconds between records (paces the slow link; default 0.03)")
+    ap.add_argument("--retries", type=int, default=6,
+                    help="full-session retries if the radio drops mid-write (default 6)")
     args = ap.parse_args()
 
     records, rcmp = extract_out_records(args.pcap, args.device)
     framed = validate(records, rcmp)
 
-    if not (args.serial and args.confirm):
-        print("[i] DRY RUN -- not transmitting. Add --serial COMx --confirm to write.")
+    transport_selected = bool(args.serial) or bool(args.socket)
+    if not (args.confirm and transport_selected):
+        print("[i] DRY RUN -- not transmitting. Add --socket --confirm (RAS link up) "
+              "or --serial COMx --confirm to write.")
         return 0
 
     if args.expect_serial:
@@ -114,21 +125,48 @@ def main() -> int:
             raise SystemExit(f"[-] no backup matching {args.expect_serial} in backups/ -- refusing")
         print(f"[+] backup present: {[os.path.basename(b) for b in bk]}")
 
-    from open_astro.protocol.ppp_link import PppTcpConn
     from open_astro.protocol.rcmp_write import RcmpWriteClient
 
-    print(f"[!] TRANSMITTING {len(framed)} records to {args.serial} ...")
-    conn = PppTcpConn(args.serial)
-    client = RcmpWriteClient(conn, allow_write=True)
-    try:
-        for i, fr in enumerate(framed):
-            client.send_prebuilt(fr)
-            if (i + 1) % 20 == 0:
-                print(f"    ...{i + 1}/{len(framed)}")
-        print(f"[+] all {len(framed)} records acked by the radio")
-    finally:
-        client.close()
-    return 0
+    def _open_client():
+        if args.socket:
+            # OS TCP stack over an already-up RAS/pppd PPP link (robust).
+            return RcmpWriteClient.connect(host=args.host, allow_write=True)
+        from open_astro.protocol.ppp_link import PppTcpConn
+        return RcmpWriteClient(PppTcpConn(args.serial), allow_write=True)
+
+    # Full-session retry: on any drop, reconnect and replay the WHOLE session
+    # from the start (identical data, so restarting is safe and only a fully
+    # completed pass clears FAIL 01/02).
+    last_err = None
+    for attempt in range(1, args.retries + 1):
+        tgt = args.host if args.socket else args.serial
+        print(f"[!] attempt {attempt}/{args.retries}: transmitting {len(framed)} "
+              f"records to {tgt} (delay {args.delay}s) ...")
+        client = None
+        try:
+            client = _open_client()
+            for i, fr in enumerate(framed):
+                client.send_prebuilt(fr)
+                if args.delay:
+                    time.sleep(args.delay)
+                if (i + 1) % 20 == 0:
+                    print(f"    ...{i + 1}/{len(framed)}")
+            print(f"[+] all {len(framed)} records acked -- write session complete")
+            client.close()
+            return 0
+        except Exception as e:  # serial drop / re-enumeration / ack failure
+            last_err = e
+            print(f"    [x] attempt {attempt} failed: {e}")
+            try:
+                if client:
+                    client.close()
+            except Exception:
+                pass
+            time.sleep(4.0)   # let the radio re-enumerate / settle
+    print(f"[-] all {args.retries} attempts failed; last error: {last_err}")
+    print("[-] radio codeplug may still be incomplete -- do not power off; retry "
+          "or restore via CPS.")
+    return 1
 
 
 if __name__ == "__main__":

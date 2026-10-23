@@ -21,12 +21,17 @@ Write session flow (from the capture):
 """
 from __future__ import annotations
 
+import socket
 import struct
 from typing import List, Optional
 
 from . import rcmp
 
 PART_TUNING = 0x82  # forbidden target
+RADIO_PPP_HOST = "192.168.128.1"
+RCMP_PORT = 8002
+HOST_SRC_PORT = 8001
+LOCAL_PPP_IP = "192.168.128.2"
 
 
 class RcmpWriteError(Exception):
@@ -49,6 +54,32 @@ class RcmpWriteClient:
         self._conn = conn
         self._buf = bytearray()
         self._timeout = timeout
+
+    @classmethod
+    def connect(cls, host: str = RADIO_PPP_HOST, port: int = RCMP_PORT,
+                timeout: float = 15.0, src_port: int = HOST_SRC_PORT,
+                src_ip: str = LOCAL_PPP_IP, *, allow_write: bool = False):
+        """Write over the OS TCP stack via an already-up PPP link (RAS dial-up
+        or pppd). The OS stack handles windowing/retransmit/pacing, which our
+        minimal userspace TCP does not -- required for the sustained write
+        burst. The PPP link must be up (192.168.128.1 reachable)."""
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))
+        try:
+            if src_port:
+                try:
+                    sock.bind((src_ip, src_port))
+                except OSError:
+                    sock.bind(("", src_port))
+            sock.settimeout(timeout)
+            sock.connect((host, port))
+        except OSError as e:
+            sock.close()
+            raise RcmpWriteError(
+                f"cannot reach radio at {host}:{port} from :{src_port} ({e}); "
+                f"is the PPP (RAS) link up?") from e
+        return cls(sock, allow_write=allow_write, timeout=timeout)
 
     # -- low-level framed IO (same framing as the read client) -----------
     def _fill(self, need: int) -> None:
