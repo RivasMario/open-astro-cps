@@ -21,6 +21,20 @@ def test_rc4_is_involutive():
         assert rc4(key, rc4(key, pt)) == pt
 
 
+def test_parse_header_extracts_fields_at_mapped_offsets():
+    from open_astro.parsers.cpg_parser import parse_header, HDR_UUID_OFF, HDR_MODEL_OFF, HDR_SERIAL_OFF
+    # Build an 800-byte cleartext header with a UUID, model, serial at the mapped offsets.
+    blob = bytearray(800)
+    uuid = bytes(range(16))
+    blob[HDR_UUID_OFF:HDR_UUID_OFF + 16] = uuid
+    blob[HDR_MODEL_OFF:HDR_MODEL_OFF + 12] = b"H66KDD9PW5BN"
+    blob[HDR_SERIAL_OFF:HDR_SERIAL_OFF + 10] = b"407CNR2572"
+    h = parse_header(bytes(blob))
+    assert h["uuid"] == uuid.hex()
+    assert h["model"] == "H66KDD9PW5BN"
+    assert h["serial"] == "407CNR2572"
+
+
 def test_crc16_ccitt_known_vector():
     # Standard CRC-16/CCITT-FALSE check value for "123456789" is 0x29B1,
     # but this implementation is init=0x0000 (as in cgIsh10c) -> 0x31C3.

@@ -62,11 +62,25 @@ ret`). The header object (`AdkMotFhHeader`) carries, via its accessors:
 * `IsEncrypted`, `IsUsingSdkCrypto`, `IsUsingSmartNet` → feature flags
 * `GetInvalidLogBeginPosition` / `GetInvalidLogSize` → an "invalid field" log region
 
-Exact byte offsets **within** the 800-byte header are not yet mapped (needs a
-sample file or more disasm of `ReadFromFile`/`WriteToFile`). Known: it is read
-whole from the OLE root (`ReadFromFile(IStorage*)` / `ReadFromFile(CFile*)`),
-the model/serial/UUID identify the target radio, and the header has its own
-checksum separate from the per-stream checksums.
+**Header field offsets — MAPPED from real samples (cleartext, verified):**
+
+```
+[0:12]   version / flags  ("010000" 01 00 0a 00 00 00)
+[12:28]  UUID (16 bytes)      -- constant across both blank samples, so it's a
+                                 format/template GUID, not a per-radio id
+[28:48]  model number, null-padded ASCII   ("H66KDD9PW5BN")
+[48:..]  serial number, null-padded ASCII  ("407CNR2572")
+[118:..] "Requires MOTOROLA Customer Programming Software. COPYRIGHT 1996-2000
+         MOTOROLA" (fixed)
+```
+
+Only 39 of 800 bytes differ between two different radios' headers — exactly the
+UUID, model, and serial regions; the rest is fixed structure/flags. `CpgParser`
+parses model/serial/UUID at these offsets (`parse_header()`), verified on both
+`AstroP25/blankcp` samples. The **flashcode is NOT stored as ASCII** in the
+header (no "500008" bytes) — it is computed (`CalculateFlashCode`), consistent
+with it being derived from model + option bits. The header's own checksum and
+the encrypt-type flag live in the fixed region (offsets not yet pinned).
 
 ## Payload: named, encrypted ISH data streams
 

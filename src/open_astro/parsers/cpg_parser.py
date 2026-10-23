@@ -73,8 +73,36 @@ def _ascii_fields(blob: bytes, minlen: int = 3) -> List[str]:
     return out
 
 
+# AdkFileHeader field offsets, mapped from real samples (cleartext, 800 bytes):
+HDR_UUID_OFF = 12     # 16-byte GUID (GetUUID)
+HDR_MODEL_OFF = 28    # null-padded ASCII model number
+HDR_SERIAL_OFF = 48   # null-padded ASCII serial number
+
+
+def _cstr(blob: bytes, off: int, maxlen: int = 20) -> Optional[str]:
+    """Null-terminated ASCII at a fixed offset."""
+    if off >= len(blob):
+        return None
+    chunk = blob[off:off + maxlen].split(b"\x00", 1)[0]
+    try:
+        s = chunk.decode("ascii").strip()
+    except UnicodeDecodeError:
+        return None
+    return s or None
+
+
+def parse_header(blob: bytes) -> Dict[str, Any]:
+    """Parse the cleartext 800-byte AdkFileHeader into named fields."""
+    h: Dict[str, Any] = {}
+    if len(blob) >= HDR_UUID_OFF + 16:
+        h["uuid"] = blob[HDR_UUID_OFF:HDR_UUID_OFF + 16].hex()
+    h["model"] = _cstr(blob, HDR_MODEL_OFF)
+    h["serial"] = _cstr(blob, HDR_SERIAL_OFF)
+    return h
+
+
 def _guess_model(fields: List[str]) -> Optional[str]:
-    """Motorola model number, e.g. H66KDD9PW5BN (11-12 alnum, starts H or M)."""
+    """Fallback model heuristic from scanned ASCII fields."""
     import re
     for f in fields:
         if re.fullmatch(r"[HM][0-9A-Z]{10,11}", f):
@@ -83,7 +111,7 @@ def _guess_model(fields: List[str]) -> Optional[str]:
 
 
 def _guess_serial(fields: List[str]) -> Optional[str]:
-    """Radio serial, e.g. 407CNR2572 (digits + letters + digits, ~9-10 chars)."""
+    """Fallback serial heuristic from scanned ASCII fields."""
     import re
     model = _guess_model(fields)
     for f in fields:
@@ -150,13 +178,14 @@ class CpgParser:
             header_name, _, header_raw = size_best
         if header_raw is not None:
             fields = _ascii_fields(header_raw)
+            parsed = parse_header(header_raw)
             result["header"] = {
                 "stream": header_name,
                 "size": len(header_raw),
                 "encrypted": False,          # header is stored in cleartext
-                "ascii_fields": fields,
-                "model": _guess_model(fields),
-                "serial": _guess_serial(fields),
+                "uuid": parsed.get("uuid"),
+                "model": parsed.get("model") or _guess_model(fields),
+                "serial": parsed.get("serial") or _guess_serial(fields),
             }
         return result
 

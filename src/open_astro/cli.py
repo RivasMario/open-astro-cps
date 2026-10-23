@@ -344,6 +344,8 @@ def cmd_read_cpg(args):
             print(f"      Model : {hdr['model']}")
         if hdr.get("serial"):
             print(f"      Serial: {hdr['serial']}")
+        if hdr.get("uuid"):
+            print(f"      UUID  : {hdr['uuid']}")
     if not args.raw:
         print(f"[+] Stream CRC-16 check: {crc_ok}/{len(streams)} passed"
               f"{'  (0 passing => stream crypto needs calibration, see docs/CPG_FILE_FORMAT.md)' if crc_ok == 0 else ''}")
