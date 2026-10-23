@@ -103,3 +103,26 @@ field schema for the decoder (open item #4).
 The exact call order inside `NextGen10`'s `WriteCodeplug` was not extracted.
 The practical source of truth for the record-level sequence is the captured CPS
 write session (home PC pcap), whose shape is in docs/RCMP_WIRE_PROTOCOL.md.
+
+## Field layouts — partial result (2026-10-23)
+
+Field-constructor arguments (from cgIsh10c's own constructor/getters):
+`NumFieldLayout(FieldID, ByteOffset, LengthInBits, MsbStart, HasFixedAddr,
+BitGapFromPrevField, ParentLayout)`. Read statically from the builders:
+
+- 17 of 33 non-list blocks: summed field widths equal the real payload size in
+  the backups exactly. The rest differ because builders contain conditional
+  (per-model) fields or add fields via helpers.
+- Item 4093 (0x0FFD, channel frequency records), second union variant, packed
+  in order, lands on the decoder's independently-found offsets:
+  RX freq @12 = field 11532 (32b), TX freq @16 = 11531 (32b),
+  RX squelch @24 = 11542(1b)+11539(7b), byte @25 = 11538(1b)+11535(7b)
+  (same shape -- the decoder's "unresolved squelch-mode byte"),
+  TX squelch @26 = 11552(1b)+11549(7b), flags @27 = eight 1-bit fields
+  (bit 7 = 11553, the decoder's simplex bit). Computed entry = 34 bytes vs the
+  decoder's 35 (likely a 1-byte union selector).
+- 4095 (channel names) and 4088 (talkgroup names) are lists of strings.
+
+Not continued: the full automated extraction. Remaining layout work should be
+data-driven (compare objects across backups / CPS edits) rather than further
+binary work.
