@@ -70,6 +70,39 @@ def extract_out_records(pcap: str, device: int | None):
     return recs_of(devs[device][0]), rcmp
 
 
+def apply_edits(records, edits, rcmp):
+    """Substitute write-object payloads from --edit PART:OBJ:INST:PAYLOADHEX.
+    Only matching 0101 records are rebuilt (via build_write, so length+CRC are
+    recomputed); every other record is left byte-identical to the capture, so
+    the session structure/prepare/commit are unchanged."""
+    if not edits:
+        return records
+    wanted = {}
+    for e in edits:
+        try:
+            p, o, i, hx = e.split(":")
+            wanted[(int(p, 16), int(o, 16), int(i, 16))] = bytes.fromhex(hx)
+        except Exception:
+            raise SystemExit(f"[-] bad --edit '{e}' (want PART:OBJ:INST:PAYLOADHEX hex)")
+    out = []
+    applied = set()
+    for r in records:
+        if r[:2].hex() == "0101":
+            key = (r[2], int.from_bytes(r[3:5], "big"), int.from_bytes(r[5:7], "big"))
+            if key in wanted:
+                out.append(rcmp.build_write(key[0], key[1], wanted[key], key[2])[2:])
+                applied.add(key)
+                print(f"[+] edit applied: part 0x{key[0]:02x} obj 0x{key[1]:04x} "
+                      f"inst {key[2]} -> {len(wanted[key])}-byte payload")
+                continue
+        out.append(r)
+    missing = set(wanted) - applied
+    if missing:
+        raise SystemExit(f"[-] --edit targets not found in capture: "
+                         f"{[(hex(p),hex(o),i) for p,o,i in missing]}")
+    return out
+
+
 def validate(records, rcmp) -> list:
     """Return the list of framed records, raising if anything is unsafe."""
     framed = []
@@ -108,9 +141,14 @@ def main() -> int:
                     help="seconds between records (paces the slow link; default 0.03)")
     ap.add_argument("--retries", type=int, default=6,
                     help="full-session retries if the radio drops mid-write (default 6)")
+    ap.add_argument("--edit", action="append", default=[], metavar="PART:OBJ:INST:PAYLOADHEX",
+                    help="replace one write object's payload, e.g. 80:0fff:1:<hex>. "
+                         "Repeatable. The record is rebuilt (length+CRC) via build_write; "
+                         "all other records stay byte-identical to the capture.")
     args = ap.parse_args()
 
     records, rcmp = extract_out_records(args.pcap, args.device)
+    records = apply_edits(records, args.edit, rcmp)
     framed = validate(records, rcmp)
 
     transport_selected = bool(args.serial) or bool(args.socket)

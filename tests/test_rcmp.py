@@ -74,6 +74,20 @@ def test_build_write_matches_capture_byte_exact():
     assert rcmp.build_write(0x80, 0x0FFF, _PAYLOAD_0FFF, inst=1) == _CAP_WRITE_0FFF
 
 
+def test_edit_write_reproduces_cps_modified_record():
+    # Editing the normal CHAN 2 name to CHAN 2X must byte-match the record CPS
+    # actually sent for that same edit (captured device 64), framing aside.
+    normal = _PAYLOAD_0FFF
+    i = normal.find(b"CHAN 2") + len(b"CHAN 2")
+    modified = normal[:i] + b"\x58" + normal[i + 1:]
+    cps_modified_record = bytes.fromhex(
+        "0101800fff0001002a0000002a000000000002"
+        "4348414e20310000000000000000000000"
+        "4348414e20325800000000000000000000"
+        "22e7")
+    assert rcmp.build_write(0x80, 0x0FFF, modified, inst=1)[2:] == cps_modified_record
+
+
 def test_build_write_length_counts_payload_plus_crc():
     rec = rcmp.build_write(0x80, 0x0FFF, b"\x01\x02\x03\x04")
     payload_body = rec[2:]            # strip frame length
