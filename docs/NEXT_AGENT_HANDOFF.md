@@ -1,3 +1,6 @@
+> [!WARNING]
+> **SUPERSEDED (historical).** Status here is out of date. Current state: [HANDOFF_RCMP_LIVE.md](HANDOFF_RCMP_LIVE.md); doc map: [README.md](README.md).
+
 # Next-Agent Handoff — read this first
 
 Entry point for the next AI/developer. Supersedes `AGENT_HANDOFF_AND_MISSION_BRIEF.md`.

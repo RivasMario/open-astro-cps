@@ -110,7 +110,7 @@ Open questions, in the order they block progress:
 
 1. **The command protocol.** Unknown. The opcode table in
    `docs/astro_cps_reverse_engineering_guide.md`,
-   `docs/cps_subsystems_reference_notes.md` and the packet traces in
+   `docs/_unverified/cps_subsystems_reference_notes.md` and the packet traces in
    `docs/deep_dive_radio_port_and_cpg_relational_database.md` were reasoned out,
    not captured or disassembled. See `docs/PROTOCOL_STATUS.md`.
 2. **The memory map.** Unknown. The partition addresses and the dual-bank A/B

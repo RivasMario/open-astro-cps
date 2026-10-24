@@ -5,58 +5,30 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Fedora%20%2F%20Linux%20%7C%20macOS-lightgrey.svg)]()
 
 > 🧭 **Working on this project (human or AI)? Start here:**
-> **[docs/NEXT_AGENT_HANDOFF.md](docs/NEXT_AGENT_HANDOFF.md)** (current state + exact
-> next steps) and **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** (how every
-> ASTRO 25 component works together). Those two are the canonical entry point.
+> **[docs/HANDOFF_RCMP_LIVE.md](docs/HANDOFF_RCMP_LIVE.md)** (current state, how-to,
+> open work) and the **[docs index](docs/README.md)** (which docs are current,
+> reference, historical, or unverified).
 
-> ### Project status (2026-10-20)
-> **Working and verified, against real hardware:** the codeplug data model,
-> JSON/CSV conversion, the USB transport layer (port detection, permissions,
-> device identification), and **`open-astro probe`**, which reads a real
-> radio's identity today (model, serial, security status) via the AT command
-> interface its own USB descriptor advertises — a real, measured-safe,
-> read-only query, not a guess. See
-> [**docs/AT_INTERFACE_DISCOVERY.md**](docs/AT_INTERFACE_DISCOVERY.md).
+> ### Project status (2026-10-23)
+> **Verified against real radios (XTS 2500: 407CHT0214, 205CFR2930, 205CMB2249):**
+> * Live codeplug **read** over the USB cable with no dial-up/RAS setup --
+>   `open-astro rcmp-dump --serial COMx` -- byte-equal to the radios' own backups.
+> * Offline **`.cpg` decode** (`read-cpg`, typed zones/channels/frequencies/
+>   CTCSS/NAC/bandsplit), including the `.cpg` object directory.
+> * The RCMP protocol (records, opcodes, CRC) and the CPS codeplug schema
+>   (partitions + access rights, all 169 block types), taken from the real CPS
+>   binaries and cross-checked against live captures -- see
+>   [docs/RCMP_WIRE_PROTOCOL.md](docs/RCMP_WIRE_PROTOCOL.md) and
+>   [docs/CPS_ISH_SCHEMA.md](docs/CPS_ISH_SCHEMA.md).
 >
-> **Real, but not yet sufficient for codeplug read/write:** static analysis of
-> the actual Motorola CPS installer (`PatPort.exe`) recovered real command
-> names and byte payloads (`MEMACS`, `RELEASE`, `EPREQ`, `TSTMOD`, ...),
-> independently cross-confirmed against a leaked official Motorola protocol
-> manual and an unrelated open-source SB9600 CRC implementation. A live
-> `usbmon` capture of the real software running under Wine recorded its exact
-> real connection sequence (`AT&V` → `AT#DATLCL=1` → `AT+IPR=...`) — and
-> caught it failing at the same `AT+IPR=` step, every baud rate tried,
-> reproducibly, for both the real software and this project's own test code.
-> **Running the original 2002-era Windows CPS under Wine on this Fedora
-> laptop is a dead end** — broken rendering, repeated crashes, and this same
-> communication wall the real software hits too. See
-> [**docs/CPS_BINARY_ANALYSIS.md**](docs/CPS_BINARY_ANALYSIS.md) sections 7-8
-> for the full trail (opcode table, real CRC, captured sequence, crash
-> analysis).
+> **Not finished:** codeplug writing/editing is not a supported feature. A
+> research write was proven once on a test radio; there is no `write` command or
+> channel editor, and the write-related code stays gated. Safety rule throughout:
+> partition `0x82` (tuning/soft-pot calibration) is never written.
 >
-> **Biggest result yet:** the `AT+IPR=` wall turned out to need `ATD`
-> (bare dial) first — it returns `CONNECT`, and from there the radio runs a
-> real, standard PPP stack. A from-scratch LCP negotiation came up clean
-> (FCS-verified both ways), followed by a real IPCP negotiation assigning
-> `192.168.128.2`/`192.168.128.1`. A real kernel `ppp0` brought up against
-> this answers ICMP ping from the radio — **a live IP link, not a
-> hypothesis.** A full TCP port scan of the radio came back entirely
-> filtered (no TCP service); a UDP scan is in progress. See
-> [**docs/AT_INTERFACE_DISCOVERY.md**](docs/AT_INTERFACE_DISCOVERY.md)'s
-> final sections and [`tools/ppp_probe.py`](tools/ppp_probe.py).
->
-> **Still not implemented:** reading or writing the codeplug itself. The
-> service it rides on top of this new IP link hasn't been found yet (TCP
-> ruled out, UDP scan incomplete). Writing to a radio is gated off
-> (`--accept-unverified-protocol`) until this is resolved — see
-> [**docs/PROTOCOL_STATUS.md**](docs/PROTOCOL_STATUS.md) and
-> [**docs/HARDWARE_GROUND_TRUTH.md**](docs/HARDWARE_GROUND_TRUTH.md).
->
-> **A number of `docs/` files predate this investigation and were written
-> without reading any real Motorola code** — they present a plausible but
-> fabricated protocol (invented opcodes, a `0x05` start byte with no basis,
-> a Microsoft Jet database that isn't there). They're marked below; read
-> `CPS_BINARY_ANALYSIS.md` first for what's actually confirmed.
+> Some older `docs/` were written without reading real Motorola code; two are
+> confirmed fabricated and live in `docs/_unverified/`. The
+> [docs index](docs/README.md) labels everything.
 
 **OpenAstro CPS** is an open-source codeplug engine, format converter, and serial programming toolkit for **Motorola ASTRO 25** radios:
 * **Motorola XTS 2500** (Model I, Model II, Model III)
@@ -226,30 +198,14 @@ isn't implemented for real; see the project status note above.
 
 ## 📚 Documentation
 
-* [**AT Interface Discovery — the one real, working transport**](docs/AT_INTERFACE_DISCOVERY.md): how `probe` actually talks to a real radio today.
-* [**CPS Binary Analysis — real DLL names, real COM interface, real opcode names**](docs/CPS_BINARY_ANALYSIS.md): what extracting and reading the actual Motorola installer turned up.
-* [**Protocol Status — read before trusting any opcode**](docs/PROTOCOL_STATUS.md): what is measured vs. assumed, and how to get to ground truth.
-* [**Hardware Ground Truth**](docs/HARDWARE_GROUND_TRUTH.md): verified USB descriptors, port, and permissions for the XTS 2500.
-* [**Agent Handoff & Mission Brief**](docs/AGENT_HANDOFF_AND_MISSION_BRIEF.md): Mandatory technical briefing for AI agents/developers picking up hardware testing and codeplug operations. Carries a correction notice — read that first.
+Start with the [**docs index**](docs/README.md). The current core set:
 
-**The following predate the binary analysis and present an invented protocol
-as fact (fabricated opcodes, a `0x05` start byte, a Jet database — none of
-which exist in the real software). Kept for the genuinely original essay/
-analysis content on digital radio, trunking, and RF — not as protocol
-reference:**
-* [Inventing Sovereign Digital Radio Protocols](docs/inventing_sovereign_digital_radio_protocols.md): How bits become radio waves, comparing digital radio dialects (P25, DMR, NXDN, M17), breaking the DVSI vocoder patent monopoly with Codec2, and using the XTS 5000 as a transparent RF engine for custom digital languages.
-* [P25 Infrastructure & Sovereign Roaming Systems](docs/p25_infrastructure_and_roaming_systems_paper.md): The Cisco enterprise model of Motorola LMR, how SmartZone cellular-style tower switching works logically, and open-source infrastructure alternatives (MMDVM, P25Reflector, Quantar Bridge).
-* [ASTRO 25 Software Internals & DLL Architecture](docs/astro_25_software_internals_and_dll_architecture.md) ⚠️ *DLL names (A25Core, A25DB, A25Comm, A25Val, A25Sec) are fabricated — see `CPS_BINARY_ANALYSIS.md` §1 for the real ones.*
-* [ELINT Fingerprinting & Firmware Modification Horizons](docs/firmware_analysis_and_elint_fingerprinting.md): Naval ELINT specific emitter identification (SEI), soft-pot calibration physics, post-Motorola firmware enhancements, and the sovereign Codec2/Meshtastic side-car architecture.
-* [Write Failure Diagnosis & Fail-Safe Flashing Engine](docs/radio_write_failure_diagnosis_and_flashing_engine.md) ⚠️ *The dual-bank rollback "root cause" is invented — no such mechanism was found in the real installer.*
-* [Deep-Dive: Radio Port Communication & The `.cpg` Relational Database](docs/deep_dive_radio_port_and_cpg_relational_database.md) ⚠️ *The Jet/Access database claim has no support in the real binaries — see `CPS_BINARY_ANALYSIS.md` §3.*
-* [Engineering Paper: Motorola ASTRO CPS Architecture & Design](docs/motorola_astro_cps_architecture_and_design_paper.md): Comprehensive formal paper on the evolution, software stack, operational workflows, and reverse engineering blueprint.
-* [CPS Subsystems & Field Reference Notes](docs/cps_subsystems_reference_notes.md): Granular field-by-field reference, switch matrix, Flashcode bitmask lookup table, and C-struct data dictionaries.
-* [ASTRO CPS Reverse-Engineering Specification](docs/astro_cps_reverse_engineering_guide.md) ⚠️ *Its opcode table is the fabricated one — use `CPS_BINARY_ANALYSIS.md` §7 instead.*
-* [Radio Architecture Demystified](docs/radio_architecture_and_demystification.md): Codeplugs vs. Flashcodes, P25 & Trunking explained simply, the history of Depot software, and designing a sovereign voice + Meshtastic radio.
-* [Fleet Setup & Encryption Guide](docs/fleet_setup_and_encryption.md): Hardware roles, PSERN Phase 2 notes, and Motorola ADP configuration.
-* [Fedora Linux Setup & Udev Rules](docs/linux_fedora_setup.md): Complete setup for Fedora users.
-* [Interactive Web GUI Mockup](docs/gui_mockup.html): Visual comparison between legacy CPS and modern OpenAstro interface.
+* [**Handoff: live RCMP read/write status**](docs/HANDOFF_RCMP_LIVE.md) -- state, how-to, open work
+* [**RCMP wire protocol**](docs/RCMP_WIRE_PROTOCOL.md) -- records, opcodes, CRC, session shape
+* [**CPS ISH schema**](docs/CPS_ISH_SCHEMA.md) -- partitions, access rights, block map, `.cpg` directory, what the CPS DLLs do
+* [**`.cpg` file format**](docs/CPG_FILE_FORMAT.md) -- OLE container, RC4, per-object CRC
+* [**Provenance audit**](docs/PROVENANCE_AUDIT.md) -- which claims are verified vs. contradicted
+* [**Fedora Linux setup & udev rules**](docs/linux_fedora_setup.md)
 
 ---
 

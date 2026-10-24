@@ -29,6 +29,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
+    "olefile>=0.46",
 ]
 cpg = [
     "olefile>=0.46",
@@ -36,3 +37,9 @@ cpg = [
 
 [project.scripts]
 open-astro = "open_astro.cli:main"
+
+[tool.pytest.ini_options]
+# Run only the maintained suite; cleanroom_flasher/ holds legacy experiments
+# whose tests import modules that no longer exist.
+testpaths = ["tests"]
+pythonpath = ["src"]
