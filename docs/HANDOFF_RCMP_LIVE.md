@@ -170,3 +170,19 @@ capture). Details: docs/CPS_ISH_SCHEMA.md. Next: per-block field layouts for the
 - 205CMB2249 — Mario's, 700/800, Kent PD/King County, 147 ch.
 All drop PPP after each session. Backups in `backups/`. Never write partition
 0x82 on any of them.
+
+## Status at end of 2026-10-23 session
+
+Done and verified this session (see commits ab62655..c8ecb31):
+- Hardened userspace TCP for `--serial` (offline-proven; one on-radio write test
+  still needed before it replaces the RAS/`--socket` path).
+- `.cpg` -> write records (CpgWriteAssembler), partitions from the `.cpg`
+  Strm_0 directory, CPS-derived partition policy enforced in assembler and live
+  write client.
+- CPS schema: partitions/access rights, all 169 block type -> item id mappings,
+  write path architecture, partial field layouts (docs/CPS_ISH_SCHEMA.md).
+- Fabricated docs flagged (A25*.dll architecture).
+
+Not built in this session: a `write`/`verify` CLI command and a channel editor.
+Pending data: the CPS write-session pcap (home PC; `captures/*.pcap` is
+gitignored -- use `git add -f`).
