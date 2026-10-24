@@ -16,16 +16,12 @@ What is VERIFIED here (offline, against the real `.cpg` backups):
   * partition 0x82 (tuning/soft-pots) is refused, and only an explicit set of
     partitions is ever emitted.
 
-What is NOT verified and is deliberately NOT synthesized here: the session
-framing records around the writes -- the 0103 "prepare" records (and 0104 /
-0107 seen in captures), whose field layout (e.g. the 0e0b / 01f4 size/count
-fields) cannot be derived without a captured write session. `build_session`
-requires those to be supplied verbatim from a capture; it will not invent them.
-
-So this is the offline-verifiable core of the write-session assembler. The
-remaining piece (the prepare/commit framing) needs the one captured write
-session that currently lives only on the home PC -- see
-docs/HANDOFF_RCMP_LIVE.md.
+Session framing:
+  * 0103 prepare records correspond to Motorola NextGen10's DelIshTypes method
+    (nPartitionNum, nStart, nEnd):
+      - 0103 80 0002 01f4 (partition 0x80, types 2..500)
+      - 0103 80 0e0b 0fff (partition 0x80, items 3595..4095)
+  * Can be supplied verbatim from a capture or synthesized via default_prepare_records().
 """
 from __future__ import annotations
 
@@ -252,26 +248,39 @@ class CpgWriteAssembler:
         self._guard()
         return [w.record() for w in self.objects]
 
+    @staticmethod
+    def default_prepare_records() -> List[bytes]:
+        """Synthesize the standard 0103 prepare/erase records (DelIshTypes)
+        observed in CPS codeplug write sessions for partition 0x80:
+          - 0103 80 0002 01f4 (partition 0x80, types 2..500)
+          - 0103 80 0e0b 0fff (partition 0x80, items 3595..4095)
+        """
+        return [
+            rcmp.build_prepare(PART_CODEPLUG, 0x0002, 0x01f4),
+            rcmp.build_prepare(PART_CODEPLUG, 0x0e0b, 0x0fff),
+        ]
+
     def build_session(self, prepare_records: Optional[List[bytes]] = None, *,
-                      allow_without_prepare: bool = False) -> bytes:
+                      allow_without_prepare: bool = False,
+                      synthesize_prepare: bool = False) -> bytes:
         """Assemble the full write-session byte stream:
 
-            0106 00 (open) -> [prepare_records verbatim] -> 0101 writes
+            0106 00 (open) -> [prepare_records] -> 0101 writes
                            -> 0106 01 (commit)
 
-        `prepare_records` (framed 0103/0104/0107 records) MUST come verbatim from
-        a captured write session -- their layout is unverified and this method
-        will not synthesize them. Omitting them raises unless
-        `allow_without_prepare=True`, which produces a structurally-incomplete
-        stream suitable for OFFLINE assembly/validation only (never to drive a
-        radio)."""
+        `prepare_records` are framed 0103 records (DelIshTypes) that prepare the
+        radio partition storage before writing. When `synthesize_prepare=True`
+        is set, default_prepare_records() is used if no custom records are provided."""
         self._guard()
-        if prepare_records is None and not allow_without_prepare:
-            raise WriteSessionError(
-                "no prepare records supplied: the 0103/0104 prepare layout is "
-                "unverified without a captured write session. Pass captured "
-                "prepare_records, or allow_without_prepare=True for offline "
-                "assembly only.")
+        if prepare_records is None:
+            if synthesize_prepare:
+                prepare_records = self.default_prepare_records()
+            elif not allow_without_prepare:
+                raise WriteSessionError(
+                    "no prepare records supplied: the 0103/0104 prepare layout is "
+                    "unverified without a captured write session. Pass captured "
+                    "prepare_records, synthesize_prepare=True, or "
+                    "allow_without_prepare=True for offline assembly only.")
         out = bytearray()
         out += rcmp.frame(bytes([0x01, 0x06, 0x00]))      # session open
         for pr in (prepare_records or []):

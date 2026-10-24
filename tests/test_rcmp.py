@@ -101,3 +101,19 @@ def test_round_trip_build_then_parse():
     assert info["partition"] == rcmp.PART_TUNING
     assert info["object"] == 0x1079
     assert info["length"] == 0x03E8
+
+
+def test_build_prepare_matches_capture():
+    rec1 = rcmp.build_prepare(0x80, 0x0002, 0x01F4)
+    assert rec1 == bytes.fromhex("0007010380000201f4")
+    p1 = rcmp.parse_record(rec1[2:])
+    assert p1["op"] == "PREPARE"
+    assert p1["partition"] == 0x80
+    assert p1["start"] == 2
+    assert p1["end"] == 500
+
+    rec2 = rcmp.build_prepare(0x80, 0x0E0B, 0x0FFF)
+    assert rec2 == bytes.fromhex("00070103800e0b0fff")
+    p2 = rcmp.parse_record(rec2[2:])
+    assert p2["start"] == 0x0E0B
+    assert p2["end"] == 0x0FFF

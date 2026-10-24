@@ -92,6 +92,13 @@ def build_session_open() -> bytes:
     return frame(bytes([0x01, 0x06, 0x00]))
 
 
+def build_prepare(part: int, start: int, end: int) -> bytes:
+    """Build a framed PREPARE record (opcode 0x0103, DelIshTypes / DelIshItem). Layout:
+    01 03 <part:u8> <start:u16> <end:u16>"""
+    payload = struct.pack(">BBBHH", 0x01, 0x03, part, start, end)
+    return frame(payload)
+
+
 def build_write(part: int, obj: int, data: bytes, inst: int = 0) -> bytes:
     """Build a WRITE record (VERIFIED byte-exact against all 147 write records
     in the capture). Layout:
@@ -139,6 +146,10 @@ def parse_record(payload: bytes) -> Dict[str, object]:
         info["object"] = struct.unpack_from(">H", payload, 3)[0]
         info["instance"] = struct.unpack_from(">H", payload, 5)[0]
         info["length"] = struct.unpack_from(">H", payload, 7)[0]
+    elif opcode == OP_PREPARE and len(payload) >= 7:
+        info["partition"] = payload[2]
+        info["start"] = struct.unpack_from(">H", payload, 3)[0]
+        info["end"] = struct.unpack_from(">H", payload, 5)[0]
     info["body_hex"] = payload[2:].hex()
     return info
 

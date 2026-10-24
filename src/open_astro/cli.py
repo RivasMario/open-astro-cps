@@ -469,6 +469,72 @@ def cmd_rcmp_dump(args):
     print(f"[+] wrote typed codeplug JSON: {args.output}")
 
 
+def cmd_channel_edit(args):
+    """Offline channel patcher: load .cpg or structural JSON objects, patch channel,
+    and output modified objects or --edit CLI flags for rcmp_replay_write.py."""
+    import json
+    from .parsers.cpg_parser import CpgParser
+    from .parsers.channel_patch import ChannelPatcher, ChannelPatchError
+
+    if args.input.lower().endswith('.cpg'):
+        parser = CpgParser(args.input)
+        try:
+            objs = parser.objects()
+        finally:
+            parser.close()
+    else:
+        with open(args.input, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        objs = data.get('objects', data)
+        for o in objs:
+            if isinstance(o.get('payload'), str):
+                o['payload'] = bytes.fromhex(o['payload'])
+
+    patcher = ChannelPatcher(objs)
+    try:
+        patcher.patch_channel(
+            zone_num=args.zone,
+            chan_num=args.channel,
+            name=args.name,
+            rx_frequency=args.rx_freq,
+            tx_frequency=args.tx_freq,
+            rx_pl_tone=args.rx_pl,
+            tx_pl_tone=args.tx_pl,
+            rx_dpl_code=args.rx_dpl,
+            tx_dpl_code=args.tx_dpl,
+            rx_nac=args.rx_nac,
+            tx_nac=args.tx_nac,
+            simplex=args.simplex,
+        )
+    except ChannelPatchError as e:
+        print(f'[-] Edit failed: {e}')
+        sys.exit(1)
+
+    edits = patcher.generate_edits(objs)
+    print(f'[+] Channel modified: Zone {args.zone}, Channel {args.channel}')
+    if args.name:
+        print(f'    Name: {args.name}')
+    if args.rx_freq or args.tx_freq:
+        print(f'    Freq: Rx={args.rx_freq} MHz, Tx={args.tx_freq} MHz')
+    if args.rx_pl or args.tx_pl:
+        print(f'    PL: Rx={args.rx_pl} Hz, Tx={args.tx_pl} Hz')
+    if args.rx_dpl or args.tx_dpl:
+        print(f'    DPL: Rx={args.rx_dpl}, Tx={args.tx_dpl}')
+    print(f'[+] Generated {len(edits)} object edit(s) for live replay write:')
+    for e in edits:
+        print(f'    --edit {e}')
+
+    if args.output:
+        serializable = []
+        for o in patcher.objects:
+            entry = dict(o)
+            entry['payload'] = o['payload'].hex()
+            serializable.append(entry)
+        with open(args.output, 'w', encoding='utf-8') as f:
+            json.dump({'objects': serializable}, f, indent=2)
+        print(f'[+] Saved patched objects to {args.output}')
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpenAstro: Open Source Motorola ASTRO 25 Codeplug Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -579,6 +645,25 @@ def main():
     p_dump.add_argument("--model", default="Motorola XTS 2500", help="Model string for the output")
     p_dump.add_argument("--serial-number", default="UNKNOWN", help="Serial for the output")
     p_dump.set_defaults(func=cmd_rcmp_dump)
+
+    # channel-edit (offline channel patcher)
+    p_edit = subparsers.add_parser("channel-edit",
+        help="Modify a channel (name, freq, PL/DPL) and generate --edit replay flags")
+    p_edit.add_argument("input", help="Path to source .cpg or structural JSON dump")
+    p_edit.add_argument("--zone", type=int, required=True, help="Zone number (1-based)")
+    p_edit.add_argument("--channel", type=int, required=True, help="Channel number (1-based)")
+    p_edit.add_argument("--name", help="New channel name (up to 14 chars)")
+    p_edit.add_argument("--rx-freq", type=float, help="RX frequency in MHz")
+    p_edit.add_argument("--tx-freq", type=float, help="TX frequency in MHz")
+    p_edit.add_argument("--rx-pl", type=float, help="RX CTCSS PL tone in Hz (e.g. 156.7)")
+    p_edit.add_argument("--tx-pl", type=float, help="TX CTCSS PL tone in Hz (e.g. 156.7)")
+    p_edit.add_argument("--rx-dpl", type=int, help="RX DPL octal code (e.g. 23)")
+    p_edit.add_argument("--tx-dpl", type=int, help="TX DPL octal code (e.g. 23)")
+    p_edit.add_argument("--rx-nac", help="RX NAC hex string (e.g. $293)")
+    p_edit.add_argument("--tx-nac", help="TX NAC hex string (e.g. $293)")
+    p_edit.add_argument("--simplex", action="store_true", help="Set simplex/direct mode")
+    p_edit.add_argument("-o", "--output", help="Optional output JSON for patched objects")
+    p_edit.set_defaults(func=cmd_channel_edit)
 
     args = parser.parse_args()
     args.func(args)
