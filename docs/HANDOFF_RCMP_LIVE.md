@@ -139,3 +139,27 @@ identical/normal data is recoverable; the radio's own self-test (display) is the
    From home machine: `git add -f captures/<write_session>.pcap` and commit.
 4. **Field coverage expansion:**
    Trunked talkgroup ID linkage to conventional zone scan/monitor list.
+5. **SDR RF Calibration & Verification (Stretch Goal):**
+   - Use RTL-SDR / HackRF / Airspy over-the-air (or through a 30-40 dB attenuator) to verify radio RF health.
+   - Reference Oscillator Warp check: measure center frequency offset in Hz/PPM against an SDR reference.
+   - Deviation check: measure peak FM deviation and P25 C4FM 4-level FSK symbol constellation/eye pattern.
+   - Soft-pot verification: verify partition 0x82 tuning values match observed RF output without needing an expensive Motorola IFR/Aeroflex service monitor.
+
+
+## Reference Assets Discovered in `G:\My Drive\RADIO`
+
+Available in local Google Drive on the work machine (`G:\My Drive\RADIO`):
+
+1. **Motorola Depot CPS (`ASTRO25SOFTWARE/`):**
+   - `ASTRO_25_PORTABLE_DEPOT_R20.01.00.zip` (565 MB): Full internal Motorola Depot installer. All Advanced System Key (ASK) checks bypassed, arbitrary feature bit/flashcode editing, unconstrained recovery flashing.
+   - `ASTRO_25_MOBILE_DEPOT_R15.00.00.zip` (147 MB): Mobile depot for XTL radios.
+   - `astro25portablecpsr20.01.00/ASTRO25 Portable CPS R20.01.00/ASTRO25 Portable CPS R20.01.00/TunerInstall/`: Standalone installer for official Motorola ASTRO 25 Tuner (`A25Tuner.exe`).
+   - `KVL Mini.zip` & `KFDtool_Manual.pdf`: Key Variable Loader tools & manuals for the P25 hardware keyloading protocol over the side connector.
+
+2. **Factory Service & Alignment Manuals (`MOTOROLA XTS PRC 153/`):**
+   - `ASTRO XTS2500 XTS1500 MT1500 PR1500 Basic Service Manual 6816984H01-C (1).pdf` (16 MB): Full circuit schematics, board test points, disassembly.
+   - `xts-xtl-auto-test-and-alignment-user-guide-manuals-user-guides-en.pdf`: Documents the exact factory alignment sequence: the 6–9 calibration frequencies, target power levels, deviation tolerances, and soft-pot adjustment ranges across the bands.
+   - `xts5000.zip`: Contains internal CPS table definitions (`.tbl`) for DTMF, MDC, Quik-Call II, and Trunking System channel assignments.
+
+3. **SDR Measurement Reference (`GENERAL_COMMS_BIBS/`):**
+   - `The Hobbyist's Guide to the RTL - Carl Laufer.pdf`: Guide to RTL-SDR frequency PPM calibration, bandwidth measurement, and signal analysis.
