@@ -10,7 +10,7 @@
 | Radio ID | Unit Name | Serial | Model | Band | Flashcode | UCM Socket | Status |
 |:---|:---|:---|:---|:---|:---|:---|:---|
 | **Radio 1** | "Facebook" | `205CFR2930` | `H46UCF9PW6AN` (Mod III) | 700/800 MHz | `000008-002410-2` | Empty (`R000000`) | **ONLINE.** 3-Zone fleet flashed. Ch 3 `ADP SECURE` active. |
-| **Radio 2** | "Kent PD" | `205CMB2249` | `H46UCF9PW6BN` (Mod II) | 700/800 MHz | `000008-002410-2` | Empty (`R000000`) | **VERIFIED.** 3-Zone fleet flashed. Pending Ch 3 `ADP SECURE` match. |
+| **Radio 2** | "Kent PD" | `205CMB2249` | `H46UCF9PW6BN` (Mod II) | 700/800 MHz | `000008-002410-2` | Empty (`R000000`) | **ONLINE.** 3-Zone fleet flashed. Ch 3 `ADP SECURE` active (Matched to R1). |
 | **Radio 3** | "Chris's" | `407CHT0214` | `H46KDF9PW6BN` (Mod II) | VHF (136-174) | `140001-000000-3` | Empty (`R000000`) | **ONLINE.** 16-Ch PNW VHF fleet flashed (2M, MURS, Marine, WX). |
 
 ---
@@ -50,7 +50,7 @@
 - [x] Map bit position for `Q667` (ADP Software Encryption): Nibble 8, bit 4 (`000008-006410-X`).
 - [ ] **Task 2.1:** Verify Mod-10 checksum calculation for `000008-006410-X`.
 - [ ] **Task 2.2:** Add `open-astro flashcode-upgrade --add-adp` CLI tool to write `81:1006:0` over live RCMP.
-- [ ] **Task 2.3:** Match Radio 2 (`205CMB2249`) Zone A with Channel 3 `ADP SECURE` to pair with Radio 1.
+- [x] **Task 2.3:** Match Radio 2 (`205CMB2249`) Zone A with Channel 3 `ADP SECURE` to pair with Radio 1. [VERIFIED ON HARDWARE]
 
 ### Epic 3: SDR Over-The-Air Decryption & Audit [TODO]
 - [ ] **Task 3.1:** Write `open-astro export-sdr` command to export current codeplug frequencies, NACs, and Talkgroups directly to **DSD-FME** and **SDRTrunk** channel formats.
