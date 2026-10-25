@@ -21,6 +21,11 @@ for the wire format; this file is the current status, how-to, and open work.
   programmatically patches channel name, RX/TX frequencies, CTCSS tones, DPL codes,
   and simplex flags in codeplug objects, generating ready-to-run `--edit` flags for
   `rcmp_replay_write.py`.
+- **First Live Custom Codeplug Write (VERIFIED ON HARDWARE 2026-10-24)**:
+  Wrote custom channel name `OPEN ASTRO` to Zone 1 Channel 1 on radio `205CFR2930`
+  via `rcmp_replay_write.py --socket --edit 80:0fff:0:<hex>`. All 183 records acked
+  on Attempt 1. Radio booted cleanly, display verified showing `OPEN ASTRO`, and
+  live read-back via `verify_live_read.py COM7` returned `['OPEN ASTRO', 'CHAN 2']`.
 - **0103 Prepare Opcode Solved** (`rcmp.build_prepare` + `write_session.py`):
   mapped to `IRcmpBundler::DelIshTypes(nStart, nEnd, nPartitionNum)`:
   `01 03 <part:u8> <start:u16_be> <end:u16_be>`. `CpgWriteAssembler.default_prepare_records()`

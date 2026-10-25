@@ -115,6 +115,32 @@ def apply_edits(records, edits, rcmp):
     return out
 
 
+def apply_adds(records, adds, rcmp):
+    """Insert new 0101 write records just before the final 0106 01 commit."""
+    if not adds:
+        return records
+    new_writes = []
+    for a in adds:
+        try:
+            p, o, i, hx = a.split(":")
+            part = int(p, 16)
+            obj = int(o, 16)
+            inst = int(i, 16)
+            pl = bytes.fromhex(hx)
+            rec = rcmp.build_write(part, obj, pl, inst)[2:]
+            new_writes.append((part, obj, inst, pl, rec))
+        except Exception:
+            raise SystemExit(f"[-] bad --add '{a}' (want PART:OBJ:INST:PAYLOADHEX hex)")
+    out = []
+    for r in records:
+        if r[:2].hex() == "0106" and len(r) >= 3 and r[2] == 0x01:
+            for part, obj, inst, pl, rec in new_writes:
+                out.append(rec)
+                print(f"[+] added write: part 0x{part:02x} obj 0x{obj:04x} inst {inst} -> {len(pl)}-byte payload")
+        out.append(r)
+    return out
+
+
 def validate(records, rcmp) -> list:
     """Return the list of framed records, raising if anything is unsafe."""
     framed = []
@@ -164,10 +190,14 @@ def main() -> int:
                     help="replace one write object's payload, e.g. 80:0fff:1:<hex>. "
                          "Repeatable. The record is rebuilt (length+CRC) via build_write; "
                          "all other records stay byte-identical to the capture.")
+    ap.add_argument("--add", action="append", default=[], metavar="PART:OBJ:INST:PAYLOADHEX",
+                    help="insert a new write object before session commit, e.g. 80:0fff:2:<hex>. "
+                         "Repeatable.")
     args = ap.parse_args()
 
     records, rcmp = extract_out_records(args.pcap, args.device)
     records = apply_edits(records, args.edit, rcmp)
+    records = apply_adds(records, args.add, rcmp)
     framed = validate(records, rcmp)
 
     transport_selected = bool(args.serial) or bool(args.socket)
