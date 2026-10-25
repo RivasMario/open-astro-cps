@@ -170,11 +170,25 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
     sw_20 = "00000002000700070323041d60236123621a94238623"
     sw_22 = "00000002000700070323041d60236123622394238623"
 
-    # Button mapping:
-    # Row 0: Purple Button = Light (0x2c), Side 2 = Scan (0x1e), Side 3 = Scan (0x1e)
-    # Row 1: Top Red/Orange Short = Tx Low Power (0x29), Top Red Long = Emergency (0x48)
-    btn_14 = "0000000600040004032c1e1e2626022948262626002626262626002626262626"
-    btn_15 = "0000000600040004032c1e1e2626022948262626002626262626002626262626"
+    # Trunking default template (0x0014 / 0x0015):
+    btn_14 = "0000000600040004031e1e1e2626022648262626002626262626002626262626"
+    btn_15 = "0000000600040004031e1e1e2626022648262626002626262626002626262626"
+
+    # Conventional Physical Button Mapping (0x0016 = Short Press, 0x0017 = Long Press):
+    # Byte 0: Purple Button (Side Button 1) -> Light (0x2c)
+    # Byte 1: 1-Dot Button (Side Button 2)  -> Scan (0x1e)
+    # Byte 2: 2-Dot Button (Side Button 3)  -> Monitor / Squelch Open (0x2b)
+    # Byte 3: Top Red/Orange Button         -> Tx Low Power Toggle (0x29)
+    # Bytes 4..6: Front Panel Navigation Keys (Left 0x1c, Right 0x1a, Select 0x8e)
+    btn_16 = "00000001001000072c1e2b291c1a8e"
+
+    # Conventional Long Press (0x0017):
+    # Byte 0: Purple Button -> Light (0x2c)
+    # Byte 1: 1-Dot Button  -> Unprogrammed (0x26)
+    # Byte 2: 2-Dot Button  -> Monitor (0x2b)
+    # Byte 3: Top Red/Orange Long -> Emergency (0x48)
+    # Bytes 4..5: Front Panel Navigation Keys (0x1c, 0x8e)
+    btn_17 = "00000001001000062c262b481c8e"
 
     # Menu items: enable ZONE softkey on LCD
     menu_3e = "0affc00150300a9580343c141438873d1e000400210e28144d000f0100"
@@ -223,6 +237,8 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
         (0x80, 0x0022, 0): bytes.fromhex(sw_22),
         (0x80, 0x0014, 0): bytes.fromhex(btn_14),
         (0x80, 0x0015, 0): bytes.fromhex(btn_15),
+        (0x80, 0x0016, 0): bytes.fromhex(btn_16),
+        (0x80, 0x0017, 0): bytes.fromhex(btn_17),
         (0x80, 0x003e, 0): bytes.fromhex(menu_3e),
         (0x80, 0x003f, 0): bytes.fromhex(menu_3f),
         (0x80, 0x000d, 0): bytes(val_0d),
