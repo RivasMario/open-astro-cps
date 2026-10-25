@@ -1,0 +1,20 @@
+{
+  "OUT host->radio": {
+    "bytes_total": 0,
+    "at_text": "",
+    "ppp_frame_count": 0,
+    "ppp_proto_histogram": {},
+    "rcmp_segments": [],
+    "rcmp_stream_hex": "",
+    "frames": []
+  },
+  "IN radio->host": {
+    "bytes_total": 0,
+    "at_text": "",
+    "ppp_frame_count": 0,
+    "ppp_proto_histogram": {},
+    "rcmp_segments": [],
+    "rcmp_stream_hex": "",
+    "frames": []
+  }
+}
