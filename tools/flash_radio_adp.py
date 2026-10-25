@@ -166,15 +166,15 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
     # Key table 0x005D: Key 1 = A1B2C3D4E5
     sec_5d = "0000000e000800083030303141314232433344344535303030322a2a2a2a2a2a2a2a2a2a303030332a2a2a2a2a2a2a2a2a2a303030342a2a2a2a2a2a2a2a2a2a303030352a2a2a2a2a2a2a2a2a2a303030362a2a2a2a2a2a2a2a2a2a303030372a2a2a2a2a2a2a2a2a2a303030382a2a2a2a2a2a2a2a2a2a"
 
-    # Conventional Physical Controls (0x0020:0) verified from Depot:
-    # 03: Side Button 2 (1-Dot) -> Scan (0x1a)
+    # Conventional Physical Controls (0x0020:0) compiled by Depot:
+    # 03: Top Button (Orange)   -> Volume Set Tone (0x29)
     # 04: Rotary Switch         -> Channel Select (0x1d)
     # 60: Purple Button (Side 1)-> Light Toggle (0x18)
-    # 61: Top Button (Orange)   -> TalkAround/Direct (0x21)
+    # 61: Side Button 2 (1-Dot) -> Scan (0x21)
     # 62: Side Button 3 (2-Dot) -> Monitor (0x19)
-    # 94: Switch 94             -> 0x1a
+    # 94: Switch 94 (paired)    -> Volume Set Tone (0x29)
     # 86: Switch 86             -> Unprogrammed (0x23)
-    sw_20 = "0000000200070007031a041d601861216219941a8623"
+    sw_20 = "00000002000700070329041d60186121621994298623"
 
     # Trunking Physical Controls (0x0022:0):
     # 60: Purple Button (Side 1)-> Light Toggle (0x18)
