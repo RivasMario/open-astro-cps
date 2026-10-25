@@ -166,29 +166,28 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
     # Key table 0x005D: Key 1 = A1B2C3D4E5
     sec_5d = "0000000e000800083030303141314232433344344535303030322a2a2a2a2a2a2a2a2a2a303030332a2a2a2a2a2a2a2a2a2a303030342a2a2a2a2a2a2a2a2a2a303030352a2a2a2a2a2a2a2a2a2a303030362a2a2a2a2a2a2a2a2a2a303030372a2a2a2a2a2a2a2a2a2a303030382a2a2a2a2a2a2a2a2a2a"
 
-    # Switch 60 unprogrammed (0x23) in both 0x0020 and 0x0022; Switch 62 mapped to Zone Select (0x1a):
-    sw_20 = "00000002000700070323041d60236123621a94238623"
-    sw_22 = "00000002000700070323041d60236123622394238623"
+    # Conventional Physical Controls (0x0020:0) verified from Depot:
+    # 03: Side Button 2 (1-Dot) -> Scan (0x1a)
+    # 04: Rotary Switch         -> Channel Select (0x1d)
+    # 60: Purple Button (Side 1)-> Light Toggle (0x18)
+    # 61: Top Button (Orange)   -> TalkAround/Direct (0x21)
+    # 62: Side Button 3 (2-Dot) -> Monitor (0x19)
+    # 94: Switch 94             -> 0x1a
+    # 86: Switch 86             -> Unprogrammed (0x23)
+    sw_20 = "0000000200070007031a041d601861216219941a8623"
+
+    # Trunking Physical Controls (0x0022:0):
+    # 60: Purple Button (Side 1)-> Light Toggle (0x18)
+    sw_22 = "0000000200070007031f041d601861386221941f8623"
 
     # Trunking default template (0x0014 / 0x0015):
     btn_14 = "0000000600040004031e1e1e2626022648262626002626262626002626262626"
     btn_15 = "0000000600040004031e1e1e2626022648262626002626262626002626262626"
 
-    # Conventional Physical Button Mapping (0x0016 = Short Press, 0x0017 = Long Press):
-    # Byte 0: Purple Button (Side Button 1) -> Light (0x2c)
-    # Byte 1: 1-Dot Button (Side Button 2)  -> Scan (0x1e)
-    # Byte 2: 2-Dot Button (Side Button 3)  -> Monitor / Squelch Open (0x2b)
-    # Byte 3: Top Red/Orange Button         -> Tx Low Power Toggle (0x29)
-    # Bytes 4..6: Front Panel Navigation Keys (Left 0x1c, Right 0x1a, Select 0x8e)
-    btn_16 = "00000001001000072c1e2b291c1a8e"
-
-    # Conventional Long Press (0x0017):
-    # Byte 0: Purple Button -> Light (0x2c)
-    # Byte 1: 1-Dot Button  -> Unprogrammed (0x26)
-    # Byte 2: 2-Dot Button  -> Monitor (0x2b)
-    # Byte 3: Top Red/Orange Long -> Emergency (0x48)
-    # Bytes 4..5: Front Panel Navigation Keys (0x1c, 0x8e)
-    btn_17 = "00000001001000062c262b481c8e"
+    # Conventional Display / Softkey Navigation (0x0016 / 0x0017):
+    # Restored to standard 4-byte baseline:
+    btn_16 = "00000001001000041e1c8e37"
+    btn_17 = "00000001001000041e1c8e37"
 
     # Menu items: enable ZONE softkey on LCD
     menu_3e = "0affc00150300a9580343c141438873d1e000400210e28144d000f0100"
