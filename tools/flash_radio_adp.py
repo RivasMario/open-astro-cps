@@ -79,12 +79,8 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
         p, item, inst = entry['partition'], entry['item_id'], entry['instance']
         if p == 0x82:
             continue
-        if item in (0x0fe7, 0x0ffc, 0x0ffe, 0x0fff) and inst >= 3:
-            continue
-        if item == 0x0ffd and inst not in (0, 2, 4):
-            continue
-        if item == 0x0fe4 and inst >= 3:
-            continue
+        # Kept full 10-zone structure for Depot compatibility
+        pass
         strm = kent_cp._read(['DataStg', f"Strm_{entry['stream']}"])
         dec = rc4(kent_cp.key, strm)[6:-2]
         cpg_objs[(p, item, inst)] = dec
@@ -193,15 +189,14 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
     menu_3e = "0affc00150300a9580343c141438873d1e000400210e28144d000f0100"
     menu_3f = "344046507850ff090808141a206a660a0a4d03"
 
-    # Exact 3-Zone name table in 0x000D:0
-    val_0d = bytearray(b"\x00\x00\x00\x11\x00\x32\x00\x03")
-    val_0d += b"TEAM OPS".ljust(17, b"\x00")
-    val_0d += b"800 INTEROP".ljust(17, b"\x00")
-    val_0d += b"TAC OPS".ljust(17, b"\x00")
+    # 10-Zone name table in 0x000D:0 (keep zones 4-10 intact from baseline)
+    val_0d = bytearray(cpg_objs[(0x80, 0x000d, 0)])
+    val_0d[8:25] = b"TEAM OPS".ljust(17, b"\x00")
+    val_0d[25:42] = b"800 INTEROP".ljust(17, b"\x00")
+    val_0d[42:59] = b"TAC OPS".ljust(17, b"\x00")
 
-    # 0x0FF1:0 zone count = 3
+    # Keep 0x0FF1:0 zone count at 10
     val_ff1 = bytearray(cpg_objs[(0x80, 0x0ff1, 0)])
-    val_ff1[-1] = 3
 
     # Zone channel counts (0x0FFC and 0x0FFE)
     v_ffc0 = bytes.fromhex("0001002300ff00030ffd0000000001")
