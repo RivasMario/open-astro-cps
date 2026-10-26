@@ -1,0 +1,9 @@
+import re
+
+with open(r"C:\Program Files (x86)\Motorola\ASTRO 25 Products\ASTRO 25 Portable Depot\PatPortDepot.exe", "rb") as fp:
+    data = fp.read()
+
+matches = re.findall(b"C[A-Z][a-zA-Z0-9_]*Scan[a-zA-Z0-9_]*", data)
+print(f"Matches: {len(matches)}")
+for m in sorted(set(matches))[:30]:
+    print(m.decode('ascii', errors='ignore'))

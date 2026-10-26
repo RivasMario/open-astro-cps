@@ -1,0 +1,1305 @@
+0x0113b500: xToFilterIndex
+0x0113b510: Only List and Union fields may be specified when defining connections
+0x0113b556: for an ISH List Structure. See block %d.
+0x0113b580: Field connections within Union must be inside layout (see block %d).
+0x0113b5c8: packSpecialListInfoToIndex
+0x0113b5e4: unpackSpecialListInfoFromIndex
+0x0113b604: packSpecialListInfoToIndex
+0x0113b620: unpackSpecialListInfoFromIndex
+0x0113b640: Only List and Union fields may be specified when defining connections
+0x0113b686: for an ISH List Structure. See block %d.
+0x0113b6b0: Field connections within Union must be inside layout (see block %d).
+0x0113b6f8: packSpecialListInfoFromFilterIndexToAbsIndex
+0x0113b728: unpackSpecialListInfoFromAbsIndexToFilterIndex
+0x0113b758: packSpecialListInfoFromFilterIndexToAbsIndex
+0x0113b788: unpackSpecialListInfoFromAbsIndexToFilterIndex
+0x0113b7b8: Only List and Union fields may be specified when defining connections
+0x0113b7fe: for an ISH List Structure. See block %d.
+0x0113b828: Field connections within Union must be inside layout (see block %d).
+0x0113b870: packSpecialListInfoToIndex
+0x0113b88c: unpackSpecialListInfoFromIndex
+0x0113b8ac: packSpecialListInfoToIndex
+0x0113b8c8: unpackSpecialListInfoFromIndex
+0x0113b8e8: Only List and Union fields may be specified when defining connections
+0x0113b92e: for an ISH List Structure. See block %d.
+0x0113b958: Field connections within Union must be inside layout (see block %d).
+0x0113b9a0: packSpecialListInfoFromFilterIndexToAbsIndex
+0x0113b9d0: unpackSpecialListInfoFromAbsIndexToFilterIndex
+0x0113ba00: packSpecialListInfoFromFilterIndexToAbsIndex
+0x0113ba30: unpackSpecialListInfoFromAbsIndexToFilterIndex
+0x0113ba60: Only List and Union fields may be specified when defining connections
+0x0113baa6: for an ISH List Structure. See block %d.
+0x0113bad0: Field connections within Union must be inside layout (see block %d).
+0x0113bb18: packSpecialListInfoToIndex
+0x0113bb34: unpackSpecialListInfoFromIndex
+0x0113bb54: packSpecialListInfoToIndex
+0x0113bb70: unpackSpecialListInfoFromIndex
+0x0113bb90: Only List and Union fields may be specified when defining connections
+0x0113bbd6: for an ISH List Structure. See block %d.
+0x0113bc00: Field connections within Union must be inside layout (see block %d).
+0x0113bc48: packSpecialListInfoFromFilterIndexToAbsIndex
+0x0113bc78: unpackSpecialListInfoFromAbsIndexToFilterIndex
+0x0113bca8: packSpecialListInfoFromFilterIndexToAbsIndex
+0x0113bcd8: unpackSpecialListInfoFromAbsIndexToFilterIndex
+0x0113bd08: FALSE
+0x0113bd10: FALSE
+0x0113bd18: TRUE
+0x0113bd20: DISPLAY_LAST
+0x0113bd30: APPEND
+0x0113bd38: COM1
+0x0113bd48: NULL
+0x0113bd50: NULL
+0x0113bd58: N/A
+0x0113bd5c: INVALID
+0x0113bd64: _s_
+0x0113bd68: _m_
+0x0113bd6c: _d_
+0x0113bd70: _h_
+0x0113bd74: _H_
+0x0113bd78: _o_
+0x0113bd7c: _c_
+0x0113bd80: _f_
+0x0113bd84: _b_
+0x0113bd88: _e_
+0x0113bd8c: _i_
+0x0113bd90: _t_
+0x0113bd94: _A_
+0x0113bd98: _g_
+0x0113bd9c: _D_
+0x0113bda0: _p_
+0x0113bda4: _r_
+0x0113bda8: _a_
+0x0113bdac: _S_
+0x0113bdb0: _P_
+0x0113bdb4: _E_
+0x0113bdb8: _B_
+0x0113bdbc: _O_
+0x0113bdc0: _C_
+0x0113bdc4: _U_
+0x0113bdc8: _V_
+0x0113bdcc: _W_
+0x0113bdd0: _L_
+0x0113bdd4: _R_
+0x0113bdd8: _q_
+0x0113bddc: _Q_
+0x0113bde0: Unknown Node Name
+0x0113bdf4: Orange Button
+0x0113be04: 16 Pos Rotary
+0x0113be14: Top Side Button
+0x0113be24: Middle Side Button
+0x0113be38: Bottom Side Button
+0x0113be4c: RSM Orange Button
+0x0113be60: Data Button
+0x0113be6c: Top Button Left
+0x0113be7c: Top Button Middle
+0x0113be90: Top Button Right
+0x0113bea4: Side Button 1 (Top)
+0x0113beb8: Side Button 2
+0x0113bec8: Side Button 3
+0x0113bed8: Light
+0x0113bee0: Monitor
+0x0113bee8: TalkAround/Direct
+0x0113befc: Chan/Sub Select
+0x0113bf0c: Zone/Sys Select
+0x0113bf1c: Emergency
+0x0113bf28: Phone
+0x0113bf30: Scan
+0x0113bf38: Unprogrammed
+0x0113bf48: Select Call
+0x0113bf54: Call Alert
+0x0113bf60: Blank
+0x0113bf68: Volume Set Tone
+0x0113bf78: Status
+0x0113bf80: Message
+0x0113bf88: Nuisance Delete
+0x0113bf98: Call Response
+0x0113bfa8: Dynamic Priority
+0x0113bfbc: Keypad Lock
+0x0113bfc8: Rekey Request
+0x0113bfd8: One Touch 1
+0x0113bfe4: One Touch 2
+0x0113bff0: One Touch 3
+0x0113bffc: One Touch 4
+0x0113c008: Rab1
+0x0113c010: Rab2
+0x0113c018: Talkgroup
+0x0113c024: Secure/Clear Mode
+0x0113c038: Channel Announcement
+0x0113c050: Zone Bank
+0x0113c05c: RTT
+0x0113c060: MPL
+0x0113c064: Voice Mute
+0x0113c070: IP
+0x0113c074: Dim
+0x0113c078: SPKR
+0x0113c080: TMS
+0x0113c084: TMS Quick Text
+0x0113c094: TMS Query
+0x0113c0a0: User
+0x0113c0a8: MS1
+0x0113c0ac: MS2
+0x0113c0b0: MS3
+0x0113c0b4: ZnUp
+0x0113c0bc: ZnDn
+0x0113c0c4: Light
+0x0113c0cc: Monitor
+0x0113c0d4: TalkAround/Direct
+0x0113c0e8: Channel Select
+0x0113c0f8: Zone Select
+0x0113c104: Emergency
+0x0113c110: Phone
+0x0113c118: Scan
+0x0113c120: Unprogrammed
+0x0113c130: Select Call
+0x0113c13c: Call Alert
+0x0113c148: Blank
+0x0113c150: Volume Set Tone
+0x0113c160: Status
+0x0113c168: Message
+0x0113c170: Nuisance Delete
+0x0113c180: Call Response
+0x0113c190: Dynamic Priority
+0x0113c1a4: Keypad Lock
+0x0113c1b0: Rekey Request
+0x0113c1c0: One Touch 1
+0x0113c1cc: One Touch 2
+0x0113c1d8: One Touch 3
+0x0113c1e4: One Touch 4
+0x0113c1f0: Rab1
+0x0113c1f8: Rab2
+0x0113c200: Talkgroup
+0x0113c20c: Secure/Clear Mode
+0x0113c220: Channel Announcement
+0x0113c238: Zone Bank
+0x0113c244: RTT
+0x0113c248: MPL
+0x0113c24c: Voice Mute
+0x0113c258: IP
+0x0113c25c: Dim
+0x0113c260: SPKR
+0x0113c268: TMS
+0x0113c26c: TMS Quick Text
+0x0113c27c: TMS Query
+0x0113c288: User
+0x0113c290: MS1
+0x0113c294: MS2
+0x0113c298: MS3
+0x0113c29c: ZnUp
+0x0113c2a4: ZnDn
+0x0113c2ac: Light
+0x0113c2b4: Monitor
+0x0113c2bc: TalkAround/Direct
+0x0113c2d0: Chan/Sub Select
+0x0113c2e0: Zone/Sys Select
+0x0113c2f0: Emergency
+0x0113c2fc: Phone
+0x0113c304: Scan
+0x0113c30c: Unprogrammed
+0x0113c31c: Select Call
+0x0113c328: Call Alert
+0x0113c334: Blank
+0x0113c33c: Volume Set Tone
+0x0113c34c: Status
+0x0113c354: Message
+0x0113c35c: Nuisance Delete
+0x0113c36c: Call Response
+0x0113c37c: Dynamic Priority
+0x0113c390: Keypad Lock
+0x0113c39c: Rekey Request
+0x0113c3ac: One Touch 1
+0x0113c3b8: One Touch 2
+0x0113c3c4: One Touch 3
+0x0113c3d0: One Touch 4
+0x0113c3dc: Rab1
+0x0113c3e4: Rab2
+0x0113c3ec: Talkgroup
+0x0113c3f8: Secure/Clear Mode
+0x0113c40c: Channel Announcement
+0x0113c424: Zone Bank
+0x0113c430: RTT
+0x0113c434: MPL
+0x0113c438: Voice Mute
+0x0113c444: IP
+0x0113c448: Dim
+0x0113c44c: SPKR
+0x0113c454: TMS
+0x0113c458: TMS Quick Text
+0x0113c468: TMS Query
+0x0113c474: User
+0x0113c47c: MS1
+0x0113c480: MS2
+0x0113c484: MS3
+0x0113c488: ZnUp
+0x0113c490: ZnDn
+0x0113c498: Light
+0x0113c4a0: Monitor
+0x0113c4a8: TalkAround/Direct
+0x0113c4bc: Chan/Sub Select
+0x0113c4cc: Zone/Sys Select
+0x0113c4dc: Emergency
+0x0113c4e8: Phone
+0x0113c4f0: Scan
+0x0113c4f8: Unprogrammed
+0x0113c508: Select Call
+0x0113c514: Call Alert
+0x0113c520: Blank
+0x0113c528: Volume Set Tone
+0x0113c538: Status
+0x0113c540: Message
+0x0113c548: Nuisance Delete
+0x0113c558: Call Response
+0x0113c568: Dynamic Priority
+0x0113c57c: Keypad Lock
+0x0113c588: Rekey Request
+0x0113c598: One Touch 1
+0x0113c5a4: One Touch 2
+0x0113c5b0: One Touch 3
+0x0113c5bc: One Touch 4
+0x0113c5c8: Rab1
+0x0113c5d0: Rab2
+0x0113c5d8: Talkgroup
+0x0113c5e4: Secure/Clear Mode
+0x0113c5f8: Channel Announcement
+0x0113c610: Zone Bank
+0x0113c61c: RTT
+0x0113c620: MPL
+0x0113c624: Voice Mute
+0x0113c630: IP
+0x0113c634: Dim
+0x0113c638: SPKR
+0x0113c640: TMS
+0x0113c644: TMS Quick Text
+0x0113c654: TMS Query
+0x0113c660: User
+0x0113c668: MS1
+0x0113c66c: MS2
+0x0113c670: MS3
+0x0113c674: ZnUp
+0x0113c67c: ZnDn
+0x0113c684: Light
+0x0113c68c: Monitor
+0x0113c694: TalkAround/Direct
+0x0113c6a8: Chan/Sub Select
+0x0113c6b8: Zone/Sys Select
+0x0113c6c8: Emergency
+0x0113c6d4: Phone
+0x0113c6dc: Scan
+0x0113c6e4: Unprogrammed
+0x0113c6f4: Select Call
+0x0113c700: Call Alert
+0x0113c70c: Blank
+0x0113c714: Volume Set Tone
+0x0113c724: Status
+0x0113c72c: Message
+0x0113c734: Nuisance Delete
+0x0113c744: Call Response
+0x0113c754: Dynamic Priority
+0x0113c768: Keypad Lock
+0x0113c774: Rekey Request
+0x0113c784: One Touch 1
+0x0113c790: One Touch 2
+0x0113c79c: One Touch 3
+0x0113c7a8: One Touch 4
+0x0113c7b4: Rab1
+0x0113c7bc: Rab2
+0x0113c7c4: Talkgroup
+0x0113c7d0: Secure/Clear Mode
+0x0113c7e4: Channel Announcement
+0x0113c7fc: Zone Bank
+0x0113c808: RTT
+0x0113c80c: MPL
+0x0113c810: Voice Mute
+0x0113c81c: IP
+0x0113c820: Dim
+0x0113c824: SPKR
+0x0113c82c: TMS
+0x0113c830: TMS Quick Text
+0x0113c840: TMS Query
+0x0113c84c: User
+0x0113c854: MS1
+0x0113c858: MS2
+0x0113c85c: MS3
+0x0113c860: ZnUp
+0x0113c868: ZnDn
+0x0113c870: Light
+0x0113c878: Monitor
+0x0113c880: TalkAround/Direct
+0x0113c894: Chan/Sub Select
+0x0113c8a4: Zone/Sys Select
+0x0113c8b4: Emergency
+0x0113c8c0: Phone
+0x0113c8c8: Scan
+0x0113c8d0: Unprogrammed
+0x0113c8e0: Select Call
+0x0113c8ec: Call Alert
+0x0113c8f8: Blank
+0x0113c900: Volume Set Tone
+0x0113c910: Status
+0x0113c918: Message
+0x0113c920: Nuisance Delete
+0x0113c930: Call Response
+0x0113c940: Dynamic Priority
+0x0113c954: Keypad Lock
+0x0113c960: Rekey Request
+0x0113c970: One Touch 1
+0x0113c97c: One Touch 2
+0x0113c988: One Touch 3
+0x0113c994: One Touch 4
+0x0113c9a0: Rab1
+0x0113c9a8: Rab2
+0x0113c9b0: Talkgroup
+0x0113c9bc: Secure/Clear Mode
+0x0113c9d0: Channel Announcement
+0x0113c9e8: Zone Bank
+0x0113c9f4: RTT
+0x0113c9f8: MPL
+0x0113c9fc: Voice Mute
+0x0113ca08: IP
+0x0113ca0c: Dim
+0x0113ca10: SPKR
+0x0113ca18: TMS
+0x0113ca1c: TMS Quick Text
+0x0113ca2c: TMS Query
+0x0113ca38: User
+0x0113ca40: MS1
+0x0113ca44: MS2
+0x0113ca48: MS3
+0x0113ca4c: ZnUp
+0x0113ca54: ZnDn
+0x0113ca5c: TMS
+0x0113ca60: Unprogrammed
+0x0113ca70: Light
+0x0113ca78: Monitor
+0x0113ca80: TalkAround/Direct
+0x0113ca94: Chan/Sub Select
+0x0113caa4: Zone/Sys Select
+0x0113cab4: Emergency
+0x0113cac0: Phone
+0x0113cac8: Scan
+0x0113cad0: Unprogrammed
+0x0113cae0: Select Call
+0x0113caec: Call Alert
+0x0113caf8: Blank
+0x0113cb00: Volume Set Tone
+0x0113cb10: Status
+0x0113cb18: Message
+0x0113cb20: Nuisance Delete
+0x0113cb30: Call Response
+0x0113cb40: Dynamic Priority
+0x0113cb54: Keypad Lock
+0x0113cb60: Rekey Request
+0x0113cb70: One Touch 1
+0x0113cb7c: One Touch 2
+0x0113cb88: One Touch 3
+0x0113cb94: One Touch 4
+0x0113cba0: Rab1
+0x0113cba8: Rab2
+0x0113cbb0: Talkgroup
+0x0113cbbc: Secure/Clear Mode
+0x0113cbd0: Channel Announcement
+0x0113cbe8: Zone Bank
+0x0113cbf4: RTT
+0x0113cbf8: MPL
+0x0113cbfc: Voice Mute
+0x0113cc08: IP
+0x0113cc0c: Dim
+0x0113cc10: SPKR
+0x0113cc18: TMS
+0x0113cc1c: TMS Quick Text
+0x0113cc2c: TMS Query
+0x0113cc38: User
+0x0113cc40: MS1
+0x0113cc44: MS2
+0x0113cc48: MS3
+0x0113cc4c: ZnUp
+0x0113cc54: ZnDn
+0x0113cc5c: Light
+0x0113cc64: Monitor
+0x0113cc6c: TalkAround/Direct
+0x0113cc80: Chan/Sub Select
+0x0113cc90: Zone/Sys Select
+0x0113cca0: Emergency
+0x0113ccac: Phone
+0x0113ccb4: Scan
+0x0113ccbc: Unprogrammed
+0x0113cccc: Select Call
+0x0113ccd8: Call Alert
+0x0113cce4: Blank
+0x0113ccec: Volume Set Tone
+0x0113ccfc: Status
+0x0113cd04: Message
+0x0113cd0c: Nuisance Delete
+0x0113cd1c: Call Response
+0x0113cd2c: Dynamic Priority
+0x0113cd40: Keypad Lock
+0x0113cd4c: Rekey Request
+0x0113cd5c: One Touch 1
+0x0113cd68: One Touch 2
+0x0113cd74: One Touch 3
+0x0113cd80: One Touch 4
+0x0113cd8c: Rab1
+0x0113cd94: Rab2
+0x0113cd9c: Talkgroup
+0x0113cda8: Secure/Clear Mode
+0x0113cdbc: Channel Announcement
+0x0113cdd4: Zone Bank
+0x0113cde0: RTT
+0x0113cde4: MPL
+0x0113cde8: Voice Mute
+0x0113cdf4: IP
+0x0113cdf8: Dim
+0x0113cdfc: SPKR
+0x0113ce04: TMS
+0x0113ce08: TMS Quick Text
+0x0113ce18: TMS Query
+0x0113ce24: User
+0x0113ce2c: MS1
+0x0113ce30: MS2
+0x0113ce34: MS3
+0x0113ce38: ZnUp
+0x0113ce40: ZnDn
+0x0113ce48: Light
+0x0113ce50: Channel Select
+0x0113ce60: Zone Select
+0x0113ce6c: Emergency
+0x0113ce78: Phone
+0x0113ce80: Scan
+0x0113ce88: Unprogrammed
+0x0113ce98: Private Call
+0x0113cea8: Page
+0x0113ceb0: Blank
+0x0113ceb8: Site Lock/Unlock
+0x0113cecc: Volume Set Tone
+0x0113cedc: Status
+0x0113cee4: Message
+0x0113ceec: Site Displ/Srch
+0x0113cefc: Nuisance Delete
+0x0113cf0c: Call Response
+0x0113cf1c: Reprogram Request
+0x0113cf30: Keypad Lock
+0x0113cf3c: Rekey Request
+0x0113cf4c: One Touch 1
+0x0113cf58: One Touch 2
+0x0113cf64: One Touch 3
+0x0113cf70: One Touch 4
+0x0113cf7c: Channel Announcement
+0x0113cf94: Secure/Clear Mode
+0x0113cfa8: Zone Bank
+0x0113cfb4: Voice Mute
+0x0113cfc0: IP
+0x0113cfc4: Dim
+0x0113cfc8: SPKR
+0x0113cfd0: TMS
+0x0113cfd4: TMS Quick Text
+0x0113cfe4: TMS Query
+0x0113cff0: User
+0x0113cff8: MS1
+0x0113cffc: MS2
+0x0113d000: MS3
+0x0113d004: ZnUp
+0x0113d00c: ZnDn
+0x0113d014: Light
+0x0113d01c: Channel Select
+0x0113d02c: Zone Select
+0x0113d038: Emergency
+0x0113d044: Phone
+0x0113d04c: Scan
+0x0113d054: Unprogrammed
+0x0113d064: Private Call
+0x0113d074: Page
+0x0113d07c: Blank
+0x0113d084: Site Lock/Unlock
+0x0113d098: Volume Set Tone
+0x0113d0a8: Status
+0x0113d0b0: Message
+0x0113d0b8: Site Displ/Srch
+0x0113d0c8: Nuisance Delete
+0x0113d0d8: Call Response
+0x0113d0e8: Reprogram Request
+0x0113d0fc: Keypad Lock
+0x0113d108: Rekey Request
+0x0113d118: One Touch 1
+0x0113d124: One Touch 2
+0x0113d130: One Touch 3
+0x0113d13c: One Touch 4
+0x0113d148: Channel Announcement
+0x0113d160: Secure/Clear Mode
+0x0113d174: Zone Bank
+0x0113d180: Voice Mute
+0x0113d18c: IP
+0x0113d190: Dim
+0x0113d194: SPKR
+0x0113d19c: TMS
+0x0113d1a0: TMS Quick Text
+0x0113d1b0: TMS Query
+0x0113d1bc: User
+0x0113d1c4: MS1
+0x0113d1c8: MS2
+0x0113d1cc: MS3
+0x0113d1d0: ZnUp
+0x0113d1d8: ZnDn
+0x0113d1e0: Light
+0x0113d1e8: Channel Select
+0x0113d1f8: Zone Select
+0x0113d204: Emergency
+0x0113d210: Phone
+0x0113d218: Scan
+0x0113d220: Unprogrammed
+0x0113d230: Private Call
+0x0113d240: Page
+0x0113d248: Blank
+0x0113d250: Site Lock/Unlock
+0x0113d264: Volume Set Tone
+0x0113d274: Status
+0x0113d27c: Message
+0x0113d284: Site Displ/Srch
+0x0113d294: Nuisance Delete
+0x0113d2a4: Call Response
+0x0113d2b4: Reprogram Request
+0x0113d2c8: Keypad Lock
+0x0113d2d4: Rekey Request
+0x0113d2e4: One Touch 1
+0x0113d2f0: One Touch 2
+0x0113d2fc: One Touch 3
+0x0113d308: One Touch 4
+0x0113d314: Channel Announcement
+0x0113d32c: Secure/Clear Mode
+0x0113d340: Zone Bank
+0x0113d34c: Voice Mute
+0x0113d358: IP
+0x0113d35c: Dim
+0x0113d360: SPKR
+0x0113d368: TMS
+0x0113d36c: TMS Quick Text
+0x0113d37c: TMS Query
+0x0113d388: User
+0x0113d390: MS1
+0x0113d394: MS2
+0x0113d398: MS3
+0x0113d39c: ZnUp
+0x0113d3a4: ZnDn
+0x0113d3ac: Light
+0x0113d3b4: Channel Select
+0x0113d3c4: Zone Select
+0x0113d3d0: Emergency
+0x0113d3dc: Phone
+0x0113d3e4: Scan
+0x0113d3ec: Unprogrammed
+0x0113d3fc: Private Call
+0x0113d40c: Page
+0x0113d414: Blank
+0x0113d41c: Site Lock/Unlock
+0x0113d430: Volume Set Tone
+0x0113d440: Status
+0x0113d448: Message
+0x0113d450: Site Displ/Srch
+0x0113d460: Nuisance Delete
+0x0113d470: Call Response
+0x0113d480: Reprogram Request
+0x0113d494: Keypad Lock
+0x0113d4a0: Rekey Request
+0x0113d4b0: One Touch 1
+0x0113d4bc: One Touch 2
+0x0113d4c8: One Touch 3
+0x0113d4d4: One Touch 4
+0x0113d4e0: Channel Announcement
+0x0113d4f8: Secure/Clear Mode
+0x0113d50c: Zone Bank
+0x0113d518: Voice Mute
+0x0113d524: IP
+0x0113d528: Dim
+0x0113d52c: SPKR
+0x0113d534: TMS
+0x0113d538: TMS Quick Text
+0x0113d548: TMS Query
+0x0113d554: User
+0x0113d55c: MS1
+0x0113d560: MS2
+0x0113d564: MS3
+0x0113d568: ZnUp
+0x0113d570: ZnDn
+0x0113d578: Light
+0x0113d580: Channel Select
+0x0113d590: Zone Select
+0x0113d59c: Emergency
+0x0113d5a8: Phone
+0x0113d5b0: Scan
+0x0113d5b8: Unprogrammed
+0x0113d5c8: Private Call
+0x0113d5d8: Page
+0x0113d5e0: Blank
+0x0113d5e8: Site Lock/Unlock
+0x0113d5fc: Volume Set Tone
+0x0113d60c: Status
+0x0113d614: Message
+0x0113d61c: Site Displ/Srch
+0x0113d62c: Nuisance Delete
+0x0113d63c: Call Response
+0x0113d64c: Reprogram Request
+0x0113d660: Keypad Lock
+0x0113d66c: Rekey Request
+0x0113d67c: One Touch 1
+0x0113d688: One Touch 2
+0x0113d694: One Touch 3
+0x0113d6a0: One Touch 4
+0x0113d6ac: Channel Announcement
+0x0113d6c4: Secure/Clear Mode
+0x0113d6d8: Zone Bank
+0x0113d6e4: Voice Mute
+0x0113d6f0: IP
+0x0113d6f4: Dim
+0x0113d6f8: SPKR
+0x0113d700: TMS
+0x0113d704: TMS Quick Text
+0x0113d714: TMS Query
+0x0113d720: User
+0x0113d728: MS1
+0x0113d72c: MS2
+0x0113d730: MS3
+0x0113d734: ZnUp
+0x0113d73c: ZnDn
+0x0113d744: Light
+0x0113d74c: Channel Select
+0x0113d75c: Zone Select
+0x0113d768: Emergency
+0x0113d774: Phone
+0x0113d77c: Scan
+0x0113d784: Unprogrammed
+0x0113d794: Private Call
+0x0113d7a4: Page
+0x0113d7ac: Blank
+0x0113d7b4: Site Lock/Unlock
+0x0113d7c8: Volume Set Tone
+0x0113d7d8: Status
+0x0113d7e0: Message
+0x0113d7e8: Site Displ/Srch
+0x0113d7f8: Nuisance Delete
+0x0113d808: Call Response
+0x0113d818: Reprogram Request
+0x0113d82c: Keypad Lock
+0x0113d838: Rekey Request
+0x0113d848: One Touch 1
+0x0113d854: One Touch 2
+0x0113d860: One Touch 3
+0x0113d86c: One Touch 4
+0x0113d878: Channel Announcement
+0x0113d890: Secure/Clear Mode
+0x0113d8a4: Zone Bank
+0x0113d8b0: Voice Mute
+0x0113d8bc: IP
+0x0113d8c0: Dim
+0x0113d8c4: SPKR
+0x0113d8cc: TMS
+0x0113d8d0: TMS Quick Text
+0x0113d8e0: TMS Query
+0x0113d8ec: User
+0x0113d8f4: MS1
+0x0113d8f8: MS2
+0x0113d8fc: MS3
+0x0113d900: ZnUp
+0x0113d908: ZnDn
+0x0113d910: Light
+0x0113d918: Channel Select
+0x0113d928: Zone Select
+0x0113d934: Emergency
+0x0113d940: Phone
+0x0113d948: Scan
+0x0113d950: Unprogrammed
+0x0113d960: Private Call
+0x0113d970: Page
+0x0113d978: Blank
+0x0113d980: Site Lock/Unlock
+0x0113d994: Volume Set Tone
+0x0113d9a4: Status
+0x0113d9ac: Message
+0x0113d9b4: Site Displ/Srch
+0x0113d9c4: Nuisance Delete
+0x0113d9d4: Call Response
+0x0113d9e4: Reprogram Request
+0x0113d9f8: Keypad Lock
+0x0113da04: Rekey Request
+0x0113da14: One Touch 1
+0x0113da20: One Touch 2
+0x0113da2c: One Touch 3
+0x0113da38: One Touch 4
+0x0113da44: Channel Announcement
+0x0113da5c: Secure/Clear Mode
+0x0113da70: Zone Bank
+0x0113da7c: Voice Mute
+0x0113da88: IP
+0x0113da8c: Dim
+0x0113da90: SPKR
+0x0113da98: TMS
+0x0113da9c: TMS Quick Text
+0x0113daac: TMS Query
+0x0113dab8: User
+0x0113dac0: MS1
+0x0113dac4: MS2
+0x0113dac8: MS3
+0x0113dacc: ZnUp
+0x0113dad4: ZnDn
+0x0113dadc: TMS
+0x0113dae0: Unprogrammed
+0x0113daf0: Light
+0x0113daf8: Monitor
+0x0113db00: TalkAround/Direct
+0x0113db14: Chan/Sub Select
+0x0113db24: Zone/Sys Select
+0x0113db34: Emergency
+0x0113db40: Phone
+0x0113db48: Scan
+0x0113db50: Unprogrammed
+0x0113db60: Select Call
+0x0113db6c: Call Alert
+0x0113db78: Blank
+0x0113db80: Volume Set Tone
+0x0113db90: Status
+0x0113db98: Message
+0x0113dba0: Nuisance Delete
+0x0113dbb0: Call Response
+0x0113dbc0: Dynamic Priority
+0x0113dbd4: Keypad Lock
+0x0113dbe0: Rekey Request
+0x0113dbf0: One Touch 1
+0x0113dbfc: One Touch 2
+0x0113dc08: One Touch 3
+0x0113dc14: One Touch 4
+0x0113dc20: Rab1
+0x0113dc28: Rab2
+0x0113dc30: Talkgroup
+0x0113dc3c: Secure/Clear Mode
+0x0113dc50: Channel Announcement
+0x0113dc68: Zone Bank
+0x0113dc74: RTT
+0x0113dc78: MPL
+0x0113dc7c: Voice Mute
+0x0113dc88: IP
+0x0113dc8c: Dim
+0x0113dc90: SPKR
+0x0113dc98: MS1
+0x0113dc9c: MS2
+0x0113dca0: MS3
+0x0113dca4: ZnUp
+0x0113dcac: ZnDn
+0x0113dcb4: Light
+0x0113dcbc: Monitor
+0x0113dcc4: TalkAround/Direct
+0x0113dcd8: Chan/Sub Select
+0x0113dce8: Zone/Sys Select
+0x0113dcf8: Emergency
+0x0113dd04: Phone
+0x0113dd0c: Scan
+0x0113dd14: Unprogrammed
+0x0113dd24: Select Call
+0x0113dd30: Call Alert
+0x0113dd3c: Blank
+0x0113dd44: Volume Set Tone
+0x0113dd54: Status
+0x0113dd5c: Message
+0x0113dd64: Nuisance Delete
+0x0113dd74: Call Response
+0x0113dd84: Dynamic Priority
+0x0113dd98: Keypad Lock
+0x0113dda4: Rekey Request
+0x0113ddb4: One Touch 1
+0x0113ddc0: One Touch 2
+0x0113ddcc: One Touch 3
+0x0113ddd8: One Touch 4
+0x0113dde4: Rab1
+0x0113ddec: Rab2
+0x0113ddf4: Talkgroup
+0x0113de00: Secure/Clear Mode
+0x0113de14: Channel Announcement
+0x0113de2c: Zone Bank
+0x0113de38: RTT
+0x0113de3c: MPL
+0x0113de40: Voice Mute
+0x0113de4c: IP
+0x0113de50: Dim
+0x0113de54: SPKR
+0x0113de5c: MS1
+0x0113de60: MS2
+0x0113de64: MS3
+0x0113de68: ZnUp
+0x0113de70: ZnDn
+0x0113de78: Light
+0x0113de80: Monitor
+0x0113de88: TalkAround/Direct
+0x0113de9c: Chan/Sub Select
+0x0113deac: Zone/Sys Select
+0x0113debc: Emergency
+0x0113dec8: Phone
+0x0113ded0: Scan
+0x0113ded8: Unprogrammed
+0x0113dee8: Select Call
+0x0113def4: Call Alert
+0x0113df00: Blank
+0x0113df08: Volume Set Tone
+0x0113df18: Status
+0x0113df20: Message
+0x0113df28: Nuisance Delete
+0x0113df38: Call Response
+0x0113df48: Dynamic Priority
+0x0113df5c: Keypad Lock
+0x0113df68: Rekey Request
+0x0113df78: One Touch 1
+0x0113df84: One Touch 2
+0x0113df90: One Touch 3
+0x0113df9c: One Touch 4
+0x0113dfa8: Rab1
+0x0113dfb0: Rab2
+0x0113dfb8: Talkgroup
+0x0113dfc4: Secure/Clear Mode
+0x0113dfd8: Channel Announcement
+0x0113dff0: Zone Bank
+0x0113dffc: RTT
+0x0113e000: MPL
+0x0113e004: Voice Mute
+0x0113e010: IP
+0x0113e014: Dim
+0x0113e018: SPKR
+0x0113e020: MS1
+0x0113e024: MS2
+0x0113e028: MS3
+0x0113e02c: ZnUp
+0x0113e034: ZnDn
+0x0113e03c: Light
+0x0113e044: Monitor
+0x0113e04c: TalkAround/Direct
+0x0113e060: Chan/Sub Select
+0x0113e070: Zone/Sys Select
+0x0113e080: Emergency
+0x0113e08c: Phone
+0x0113e094: Scan
+0x0113e09c: Unprogrammed
+0x0113e0ac: Select Call
+0x0113e0b8: Call Alert
+0x0113e0c4: Blank
+0x0113e0cc: Volume Set Tone
+0x0113e0dc: Status
+0x0113e0e4: Message
+0x0113e0ec: Nuisance Delete
+0x0113e0fc: Call Response
+0x0113e10c: Dynamic Priority
+0x0113e120: Keypad Lock
+0x0113e12c: Rekey Request
+0x0113e13c: One Touch 1
+0x0113e148: One Touch 2
+0x0113e154: One Touch 3
+0x0113e160: One Touch 4
+0x0113e16c: Rab1
+0x0113e174: Rab2
+0x0113e17c: Talkgroup
+0x0113e188: Secure/Clear Mode
+0x0113e19c: Channel Announcement
+0x0113e1b4: Zone Bank
+0x0113e1c0: RTT
+0x0113e1c4: MPL
+0x0113e1c8: Voice Mute
+0x0113e1d4: IP
+0x0113e1d8: Dim
+0x0113e1dc: SPKR
+0x0113e1e4: MS1
+0x0113e1e8: MS2
+0x0113e1ec: MS3
+0x0113e1f0: ZnUp
+0x0113e1f8: ZnDn
+0x0113e200: Light
+0x0113e208: Monitor
+0x0113e210: TalkAround/Direct
+0x0113e224: Chan/Sub Select
+0x0113e234: Zone/Sys Select
+0x0113e244: Emergency
+0x0113e250: Phone
+0x0113e258: Scan
+0x0113e260: Unprogrammed
+0x0113e270: Select Call
+0x0113e27c: Call Alert
+0x0113e288: Blank
+0x0113e290: Volume Set Tone
+0x0113e2a0: Status
+0x0113e2a8: Message
+0x0113e2b0: Nuisance Delete
+0x0113e2c0: Call Response
+0x0113e2d0: Dynamic Priority
+0x0113e2e4: Keypad Lock
+0x0113e2f0: Rekey Request
+0x0113e300: One Touch 1
+0x0113e30c: One Touch 2
+0x0113e318: One Touch 3
+0x0113e324: One Touch 4
+0x0113e330: Rab1
+0x0113e338: Rab2
+0x0113e340: Talkgroup
+0x0113e34c: Secure/Clear Mode
+0x0113e360: Channel Announcement
+0x0113e378: Zone Bank
+0x0113e384: RTT
+0x0113e388: MPL
+0x0113e38c: Voice Mute
+0x0113e398: IP
+0x0113e39c: Dim
+0x0113e3a0: SPKR
+0x0113e3a8: MS1
+0x0113e3ac: MS2
+0x0113e3b0: MS3
+0x0113e3b4: ZnUp
+0x0113e3bc: ZnDn
+0x0113e3c4: Light
+0x0113e3cc: Monitor
+0x0113e3d4: TalkAround/Direct
+0x0113e3e8: Chan/Sub Select
+0x0113e3f8: Zone/Sys Select
+0x0113e408: Emergency
+0x0113e414: Phone
+0x0113e41c: Scan
+0x0113e424: Unprogrammed
+0x0113e434: Select Call
+0x0113e440: Call Alert
+0x0113e44c: Blank
+0x0113e454: Volume Set Tone
+0x0113e464: Status
+0x0113e46c: Message
+0x0113e474: Nuisance Delete
+0x0113e484: Call Response
+0x0113e494: Dynamic Priority
+0x0113e4a8: Keypad Lock
+0x0113e4b4: Rekey Request
+0x0113e4c4: One Touch 1
+0x0113e4d0: One Touch 2
+0x0113e4dc: One Touch 3
+0x0113e4e8: One Touch 4
+0x0113e4f4: Rab1
+0x0113e4fc: Rab2
+0x0113e504: Talkgroup
+0x0113e510: Secure/Clear Mode
+0x0113e524: Channel Announcement
+0x0113e53c: Zone Bank
+0x0113e548: RTT
+0x0113e54c: MPL
+0x0113e550: Voice Mute
+0x0113e55c: IP
+0x0113e560: Dim
+0x0113e564: SPKR
+0x0113e56c: MS1
+0x0113e570: MS2
+0x0113e574: MS3
+0x0113e578: ZnUp
+0x0113e580: ZnDn
+0x0113e588: Light
+0x0113e590: Channel Select
+0x0113e5a0: Zone Select
+0x0113e5ac: Emergency
+0x0113e5b8: Phone
+0x0113e5c0: Scan
+0x0113e5c8: Unprogrammed
+0x0113e5d8: Private Call
+0x0113e5e8: Page
+0x0113e5f0: Blank
+0x0113e5f8: Site Lock/Unlock
+0x0113e60c: Volume Set Tone
+0x0113e61c: Status
+0x0113e624: Message
+0x0113e62c: Site Displ/Srch
+0x0113e63c: Nuisance Delete
+0x0113e64c: Call Response
+0x0113e65c: Reprogram Request
+0x0113e670: Keypad Lock
+0x0113e67c: Rekey Request
+0x0113e68c: One Touch 1
+0x0113e698: One Touch 2
+0x0113e6a4: One Touch 3
+0x0113e6b0: One Touch 4
+0x0113e6bc: Channel Announcement
+0x0113e6d4: Secure/Clear Mode
+0x0113e6e8: Zone Bank
+0x0113e6f4: Voice Mute
+0x0113e700: IP
+0x0113e704: Dim
+0x0113e708: SPKR
+0x0113e710: MS1
+0x0113e714: MS2
+0x0113e718: MS3
+0x0113e71c: ZnUp
+0x0113e724: ZnDn
+0x0113e72c: Light
+0x0113e734: Channel Select
+0x0113e744: Zone Select
+0x0113e750: Emergency
+0x0113e75c: Phone
+0x0113e764: Scan
+0x0113e76c: Unprogrammed
+0x0113e77c: Private Call
+0x0113e78c: Page
+0x0113e794: Blank
+0x0113e79c: Site Lock/Unlock
+0x0113e7b0: Volume Set Tone
+0x0113e7c0: Status
+0x0113e7c8: Message
+0x0113e7d0: Site Displ/Srch
+0x0113e7e0: Nuisance Delete
+0x0113e7f0: Call Response
+0x0113e800: Reprogram Request
+0x0113e814: Keypad Lock
+0x0113e820: Rekey Request
+0x0113e830: One Touch 1
+0x0113e83c: One Touch 2
+0x0113e848: One Touch 3
+0x0113e854: One Touch 4
+0x0113e860: Channel Announcement
+0x0113e878: Secure/Clear Mode
+0x0113e88c: Zone Bank
+0x0113e898: Voice Mute
+0x0113e8a4: IP
+0x0113e8a8: Dim
+0x0113e8ac: SPKR
+0x0113e8b4: MS1
+0x0113e8b8: MS2
+0x0113e8bc: MS3
+0x0113e8c0: ZnUp
+0x0113e8c8: ZnDn
+0x0113e8d0: Light
+0x0113e8d8: Channel Select
+0x0113e8e8: Zone Select
+0x0113e8f4: Emergency
+0x0113e900: Phone
+0x0113e908: Scan
+0x0113e910: Unprogrammed
+0x0113e920: Private Call
+0x0113e930: Page
+0x0113e938: Blank
+0x0113e940: Site Lock/Unlock
+0x0113e954: Volume Set Tone
+0x0113e964: Status
+0x0113e96c: Message
+0x0113e974: Site Displ/Srch
+0x0113e984: Nuisance Delete
+0x0113e994: Call Response
+0x0113e9a4: Reprogram Request
+0x0113e9b8: Keypad Lock
+0x0113e9c4: Rekey Request
+0x0113e9d4: One Touch 1
+0x0113e9e0: One Touch 2
+0x0113e9ec: One Touch 3
+0x0113e9f8: One Touch 4
+0x0113ea04: Channel Announcement
+0x0113ea1c: Secure/Clear Mode
+0x0113ea30: Zone Bank
+0x0113ea3c: Voice Mute
+0x0113ea48: IP
+0x0113ea4c: Dim
+0x0113ea50: SPKR
+0x0113ea58: MS1
+0x0113ea5c: MS2
+0x0113ea60: MS3
+0x0113ea64: ZnUp
+0x0113ea6c: ZnDn
+0x0113ea74: Light
+0x0113ea7c: Channel Select
+0x0113ea8c: Zone Select
+0x0113ea98: Emergency
+0x0113eaa4: Phone
+0x0113eaac: Scan
+0x0113eab4: Unprogrammed
+0x0113eac4: Private Call
+0x0113ead4: Page
+0x0113eadc: Blank
+0x0113eae4: Site Lock/Unlock
+0x0113eaf8: Volume Set Tone
+0x0113eb08: Status
+0x0113eb10: Message
+0x0113eb18: Site Displ/Srch
+0x0113eb28: Nuisance Delete
+0x0113eb38: Call Response
+0x0113eb48: Reprogram Request
+0x0113eb5c: Keypad Lock
+0x0113eb68: Rekey Request
+0x0113eb78: One Touch 1
+0x0113eb84: One Touch 2
+0x0113eb90: One Touch 3
+0x0113eb9c: One Touch 4
+0x0113eba8: Channel Announcement
+0x0113ebc0: Secure/Clear Mode
+0x0113ebd4: Zone Bank
+0x0113ebe0: Voice Mute
+0x0113ebec: IP
+0x0113ebf0: Dim
+0x0113ebf4: SPKR
+0x0113ebfc: MS1
+0x0113ec00: MS2
+0x0113ec04: MS3
+0x0113ec08: ZnUp
+0x0113ec10: ZnDn
+0x0113ec18: Light
+0x0113ec20: Channel Select
+0x0113ec30: Zone Select
+0x0113ec3c: Emergency
+0x0113ec48: Phone
+0x0113ec50: Scan
+0x0113ec58: Unprogrammed
+0x0113ec68: Private Call
+0x0113ec78: Page
+0x0113ec80: Blank
+0x0113ec88: Site Lock/Unlock
+0x0113ec9c: Volume Set Tone
+0x0113ecac: Status
+0x0113ecb4: Message
+0x0113ecbc: Site Displ/Srch
+0x0113eccc: Nuisance Delete
+0x0113ecdc: Call Response
+0x0113ecec: Reprogram Request
+0x0113ed00: Keypad Lock
+0x0113ed0c: Rekey Request
+0x0113ed1c: One Touch 1
+0x0113ed28: One Touch 2
+0x0113ed34: One Touch 3
+0x0113ed40: One Touch 4
+0x0113ed4c: Channel Announcement
+0x0113ed64: Secure/Clear Mode
+0x0113ed78: Zone Bank
+0x0113ed84: Voice Mute
+0x0113ed90: IP
+0x0113ed94: Dim
+0x0113ed98: SPKR
+0x0113eda0: MS1
+0x0113eda4: MS2
+0x0113eda8: MS3
+0x0113edac: ZnUp
+0x0113edb4: ZnDn
+0x0113edbc: Light
+0x0113edc4: Channel Select
+0x0113edd4: Zone Select
+0x0113ede0: Emergency
+0x0113edec: Phone
+0x0113edf4: Scan
+0x0113edfc: Unprogrammed
+0x0113ee0c: Private Call
+0x0113ee1c: Page
+0x0113ee24: Blank
+0x0113ee2c: Site Lock/Unlock
+0x0113ee40: Volume Set Tone
+0x0113ee50: Status
+0x0113ee58: Message
+0x0113ee60: Site Displ/Srch
+0x0113ee70: Nuisance Delete
+0x0113ee80: Call Response
+0x0113ee90: Reprogram Request
+0x0113eea4: Keypad Lock
+0x0113eeb0: Rekey Request
+0x0113eec0: One Touch 1
+0x0113eecc: One Touch 2
+0x0113eed8: One Touch 3
+0x0113eee4: One Touch 4
+0x0113eef0: Channel Announcement
+0x0113ef08: Secure/Clear Mode
+0x0113ef1c: Zone Bank
+0x0113ef28: Voice Mute
+0x0113ef34: IP
+0x0113ef38: Dim
+0x0113ef3c: SPKR
+0x0113ef44: MS1
+0x0113ef48: MS2
+0x0113ef4c: MS3
+0x0113ef50: ZnUp
+0x0113ef58: ZnDn
+0x0113ef60: Talkaround/Direct
+0x0113ef74: Tx Inhibit
+0x0113ef80: Channel Select
+0x0113ef90: Zone Select
+0x0113ef9c: Scan
+0x0113efa4: Unprogrammed
+0x0113efb4: Blank
+0x0113efbc: PL Disable
+0x0113efc8: Tx Low Power
+0x0113efd8: Scan List Prgm
+0x0113efe8: Mute
+0x0113eff0: Secure Tx Select
+0x0113f004: Keypad Lock
+0x0113f010: Channel Announcement
+0x0113f028: Talkaround/Direct
+0x0113f03c: Tx Inhibit Disabled
+0x0113f050: Channel Select
+0x0113f060: Zone Select
+0x0113f06c: Scan
+0x0113f074: Unprogrammed
+0x0113f084: Blank
+0x0113f08c: PL Disable
+0x0113f098: Tx Low Power
+0x0113f0a8: Scan List Prgm
+0x0113f0b8: Mute
+0x0113f0c0: Secure Tx Select
+0x0113f0d4: Keypad Lock
+0x0113f0e0: Clear Tx Select
+0x0113f0f0: Channel Announcement
+0x0113f108: Talkaround/Direct
+0x0113f11c: Tx Inhibit
+0x0113f128: Channel Select
+0x0113f138: Zone Select
+0x0113f144: Scan
+0x0113f14c: Unprogrammed
+0x0113f15c: Blank
+0x0113f164: PL Disable
+0x0113f170: Tx Low Power
+0x0113f180: Scan List Prgm
+0x0113f190: Mute
+0x0113f198: Secure Tx Select
+0x0113f1ac: Keypad Lock
+0x0113f1b8: Channel Announcement
+0x0113f1d0: Talkaround/Direct
+0x0113f1e4: Tx Inhibit Disabled
+0x0113f1f8: Channel Select
+0x0113f208: Zone Select
+0x0113f214: Scan
+0x0113f21c: Unprogrammed
+0x0113f22c: Blank
+0x0113f234: PL Disable
+0x0113f240: Tx Low Power
+0x0113f250: Scan List Prgm
+0x0113f260: Mute
+0x0113f268: Clear Tx Select
+0x0113f278: Keypad Lock
+0x0113f284: Channel Announcement
+0x0113f29c: Talkaround/Direct
+0x0113f2b0: Tx Inhibit Disabled
+0x0113f2c4: Channel Select
+0x0113f2d4: Zone Select
+0x0113f2e0: Scan
+0x0113f2e8: Unprogrammed
+0x0113f2f8: Blank
+0x0113f300: PL Disable
+0x0113f30c: Tx Low Power
+0x0113f31c: Scan List Prgm
+0x0113f32c: Mute
+0x0113f334: Clear Tx Select
+0x0113f344: Keypad Lock
+0x0113f350: Channel Announcement
+0x0113f368: Talkaround/Direct
+0x0113f37c: Channel Select
+0x0113f38c: Zone Select
+0x0113f398: Scan
+0x0113f3a0: Unprogrammed
+0x0113f3b0: Blank
+0x0113f3b8: PL Disable
+0x0113f3c4: Tx Low Power
+0x0113f3d4: Scan List Prgm
+0x0113f3e4: No OP/SEL
+0x0113f3f0: No Audio
+0x0113f3fc: Mute
+0x0113f404: Tx Inhibit
+0x0113f410: Secure Tx Select
+0x0113f424: Keypad Lock
+0x0113f430: Clear Tx Select
+0x0113f440: Channel Announcement
+0x0113f458: Talkaround/Direct
+0x0113f46c: Channel Select
+0x0113f47c: Zone Select
+0x0113f488: Scan
+0x0113f490: Unprogrammed
+0x0113f4a0: Blank
+0x0113f4a8: PL Disable
+0x0113f4b4: Tx Low Power
+0x0113f4c4: Scan List Prgm
+0x0113f4d4: No OP/SEL
+0x0113f4e0: No Audio
+0x0113f4ec: Mute
+0x0113f4f4: Tx Inhibit

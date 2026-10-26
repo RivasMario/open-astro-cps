@@ -37,14 +37,14 @@ KNOWN_RADIOS = {
     "205CFR2930": {
         "model": "H46UCF9PW6AN",
         "1004": "0212323035434652323933300048343655434639505736414e000000000000030005000100000000000000000000050829010001000e03010c061b09152f0000006a90d7",
-        "1005": "1d1632597ef5b534fbebb9e20258c53800000084980001a31066000000000c05000000000800000004080c",
-        "1006": "00000010000100013530303030382d3030303438432d3700",  # 500008-00048C-7
+        "1005": "1d1632597ef5b534fbebb9e20258c53800000084980001a31066000000000c05040004000800000007080c",
+        "1006": "00000010000100013534303430382d3030303738432d3600",  # 540408-00078C-6
     },
     "205CMB2249": {
         "model": "H46UCF9PW6BN",
         "1004": "0212323035434d42323234390048343655434639505736424e00000000000003000500010000000000000000000026102403000100240300261024222015000000000000",
-        "1005": "1d1632597ef5b534fbebb9e20258c53800000084980001a31066000000000c05000000000800000004080c",
-        "1006": "00000010000100013530303030382d3030303438432d3700",  # 500008-00048C-7
+        "1005": "1d1632597ef5b534fbebb9e20258c53800000084980001a31066000000000c05040004000800000007080c",
+        "1006": "00000010000100013534303430382d3030303738432d3600",  # 540408-00078C-6
     }
 }
 
@@ -112,9 +112,9 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
     #   Ch 1: OPEN ASTRO   (P25 Clear, 851.5125 MHz, NAC $293)
     #   Ch 2: TEAM ANALOG  (Analog Clear, 853.0125 MHz, CTCSS 156.7 Hz)
     #   Ch 3: ADP SECURE   (P25 Secure, 852.0125 MHz, NAC $293, Strapped Secure, Lock Icon)
-    ch1_z1 = "0ffb0001322f0293029302930a269c240a269c240a269c240000000000000000000001"
-    ch2_z1 = "0ffb0001322f0000000000000a2b30040a2b30040a2b30041a001a0000000000000001"
-    ch3_z1 = "0ffb0000642a0293029302930a2822c40a2822c40a2822c40000014000000000000001"
+    ch1_z1 = "0ffb0000322f0293029302930a269c240a269c240a269c240000008000000000000001"
+    ch2_z1 = "0ffb0000322f0000000000000a2b30040a2b30040a2b30041a001a8000000000000001"
+    ch3_z1 = "0ffb0001642a0293029302930a2822c40a2822c40a2822c40000014000000000000001"
     ffd0 = "000000000003" + ch1_z1 + ch2_z1 + ch3_z1
 
     fff0 = "000000000003" + \
@@ -126,9 +126,9 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
     #   Ch 1: 8CALL90 (Analog Clear, 851.0125 MHz, CTCSS 156.7 Hz)
     #   Ch 2: 8TAC91  (Analog Clear, 851.5125 MHz, CTCSS 156.7 Hz)
     #   Ch 3: 8TAC92  (Analog Clear, 852.0125 MHz, CTCSS 156.7 Hz)
-    ch1_z2 = "0ffb0001322f0000000000000a2515840a2515840a2515841a001a0000000000000001"
-    ch2_z2 = "0ffb0001322f0000000000000a269c240a269c240a269c241a001a0000000000000001"
-    ch3_z2 = "0ffb0001322f0000000000000a2822c40a2822c40a2822c41a001a0000000000000001"
+    ch1_z2 = "0ffb0000322f0000000000000a2515840a2515840a2515841a001a8000000000000001"
+    ch2_z2 = "0ffb0000322f0000000000000a269c240a269c240a269c241a001a8000000000000001"
+    ch3_z2 = "0ffb0000322f0000000000000a2822c40a2822c40a2822c41a001a8000000000000001"
     ffd2 = "000000000003" + ch1_z2 + ch2_z2 + ch3_z2
 
     fff1 = "000000000003" + \
@@ -140,9 +140,9 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
     #   Ch 1: TAC CLEAR  (P25 Clear, 851.5125 MHz, NAC $293)
     #   Ch 2: TAC ANALOG (Analog Clear, 853.0125 MHz, CTCSS 156.7 Hz)
     #   Ch 3: TAC SECURE (P25 Secure, 852.0125 MHz, NAC $293, Strapped Secure, Lock Icon)
-    ch1_z3 = "0ffb0001322f0293029302930a269c240a269c240a269c240000000000000000000001"
-    ch2_z3 = "0ffb0001322f0000000000000a2b30040a2b30040a2b30041a001a0000000000000001"
-    ch3_z3 = "0ffb0000642a0293029302930a2822c40a2822c40a2822c40000014000000000000001"
+    ch1_z3 = "0ffb0000322f0293029302930a269c240a269c240a269c240000008000000000000001"
+    ch2_z3 = "0ffb0000322f0000000000000a2b30040a2b30040a2b30041a001a8000000000000001"
+    ch3_z3 = "0ffb0001642a0293029302930a2822c40a2822c40a2822c40000014000000000000001"
     ffd4 = "000000000003" + ch1_z3 + ch2_z3 + ch3_z3
 
     fff2 = "000000000003" + \
@@ -150,11 +150,11 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
            "54414320414e414c4f4700000000000000" + \
            "5441432053454355524500000000000000"
 
-    # Pers 0: Exact SECURE ADP from CPG (88 at byte 23)
-    sec_ffb0 = "000fcd000040748000001d0000000001020001000a0000100003881000000fbe00000000000001010101000ffa00000ff30000000000000ff7000000000000262626260000000000000000"
+    # Pers 0: Clean CLEAR Conventional Personality (80 at byte 26, matching baseline 407CHT0214)
+    clr_ffb0 = "000fcd00004c748011001d0ff100000182000022220000010203801000000fbe00000000000001010101000ffa00000ff30000000000000ff7000000000000262626260000000000000000"
 
-    # Pers 1: Clean Clear personality (80 at byte 23)
-    clr_ffb1 = "000fcd00014074b000001c000000000102000122200001000003801000000fbe00000000000001010101000ffa00000ff30000000000000ff7000000000000262626260000000000000000"
+    # Pers 1: SECURE ADP Conventional Personality (88 at byte 26, cloned from clean baseline)
+    sec_ffb1 = "000fcd00014c748011001d0ff1000001020001000a0000100003881000000fbe00000000000001010101000ffa00000ff30000000000000ff7000000000000262626260000000000000000"
 
     # Radio Wide Secure master enable: length 16 with 0003
     rw_34 = "400314060000070c230b0a0602570003"
@@ -174,7 +174,7 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
 
     # Trunking Physical Controls (0x0022:0):
     # 60: Purple Button (Side 1)-> Light Toggle (0x18)
-    sw_22 = "0000000200070007031f041d601861386221941f8623"
+    sw_22 = "00000002000700070329041d60186121621994298623"
 
     # Trunking default template (0x0014 / 0x0015):
     btn_14 = "0000000600040004031e1e1e2626022648262626002626262626002626262626"
@@ -195,8 +195,10 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
     val_0d[25:42] = b"800 INTEROP".ljust(17, b"\x00")
     val_0d[42:59] = b"TAC OPS".ljust(17, b"\x00")
 
-    # Keep 0x0FF1:0 zone count at 10
-    val_ff1 = bytearray(cpg_objs[(0x80, 0x0ff1, 0)])
+    # 0x0FF1:0 Scan & Zone Master: Fixed Priority 1 (Ch 1) & Priority 2 (Ch 2)
+    # Activates Scan 'Z' icon on Side 2 (1-Dot) press and eliminates ILS unpacking errors
+    val_ff1 = bytes.fromhex("00010003000f000f0ff000008000ff00ff0000000002000000000000000a")
+    val_ff0 = bytes.fromhex("00000000000f010001010002010003000000000000000000000000000000000000000000000000000000000000000000000000")
 
     # Zone channel counts (0x0FFC and 0x0FFE)
     v_ffc0 = bytes.fromhex("0001002300ff00030ffd0000000001")
@@ -223,8 +225,8 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
         (0x80, 0x0ffe, 0): v_ffe0,
         (0x80, 0x0ffe, 1): v_ffe1,
         (0x80, 0x0ffe, 2): v_ffe2,
-        (0x80, 0x0ffb, 0): bytes.fromhex(sec_ffb0),
-        (0x80, 0x0ffb, 1): bytes.fromhex(clr_ffb1),
+        (0x80, 0x0ffb, 0): bytes.fromhex(clr_ffb0),
+        (0x80, 0x0ffb, 1): bytes.fromhex(sec_ffb1),
         (0x80, 0x0034, 0): bytes.fromhex(rw_34),
         (0x80, 0x005d, 0): bytes.fromhex(sec_5d),
         (0x80, 0x0020, 0): bytes.fromhex(sw_20),
@@ -236,7 +238,8 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
         (0x80, 0x003e, 0): bytes.fromhex(menu_3e),
         (0x80, 0x003f, 0): bytes.fromhex(menu_3f),
         (0x80, 0x000d, 0): bytes(val_0d),
-        (0x80, 0x0ff1, 0): bytes(val_ff1),
+        (0x80, 0x0ff0, 0): val_ff0,
+        (0x80, 0x0ff1, 0): val_ff1,
     }
 
     edits = []
@@ -292,7 +295,7 @@ def main():
             print("[-] Auto-detection failed (radio offline or PPP down). Please specify --serial.")
             return 1
 
-    kent_cpg = os.path.join(REPO, "backups", "Radio1_205CMB2249_codeplug.cpg")
+    base_cpg = os.path.join(REPO, "backups", "407CHT0214.cpg")
     adp_cpg = os.path.join(REPO, "backups", "205CMB2249_ADP.cpg")
     if not os.path.exists(adp_cpg):
         adp_cpg = os.path.expanduser("~/Desktop/205CMB2249_ADP.cpg")
@@ -301,13 +304,13 @@ def main():
     print(f"=== OpenAstro Standalone Multi-Zone & ADP Flasher ===")
     print(f"Target Serial:   {serial}")
     print(f"Target Model:    {KNOWN_RADIOS[serial]['model']}")
-    print(f"FLASHcode:       500008-00048C-7 (Q667 ADP Enabled)")
+    print(f"FLASHcode:       540408-00078C-6 (Kitchen Sink: Q387 Scan + Q53 FPP + Q667 ADP + H869 AES)")
     print(f"Key 1:           A1B2C3D4E5 (40-bit RC4 Software ADP)")
     print(f"Zones:           Zone 1: TEAM OPS | Zone 2: 800 INTEROP | Zone 3: TAC OPS (+ Zones 4-10)")
     print(f"Controls:        [ZONE] softkey | 1-dot ZnUp | 2-dot ZnDn | Switch 62 Zone Select")
     print(f"Write Mode:      {'LIVE WRITE' if args.write else 'DRY RUN'}")
 
-    framed = build_flash_stream(serial, kent_cpg, adp_cpg, pcap_path)
+    framed = build_flash_stream(serial, base_cpg, adp_cpg, pcap_path)
     print(f"[+] Total validated RCMP records: {len(framed)}")
 
     if not args.write:
@@ -315,7 +318,7 @@ def main():
         return 0
 
     print(f"[!] Transmitting {len(framed)} records to {args.host}:{args.port}...")
-    time.sleep(1.0)
+    time.sleep(2.5)
     client = RcmpWriteClient.connect(host=args.host, port=args.port, allow_write=True, src_port=0)
     try:
         for i, fr in enumerate(framed):

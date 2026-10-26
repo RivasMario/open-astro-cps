@@ -1,0 +1,350 @@
+{
+  "15603": {
+    "control_id": 15603,
+    "total_options": 28,
+    "options": {
+      "Light": {
+        "index": 0,
+        "diffs": {
+          "80:0020:0": {
+            "before": "00000002000700070329041d60186121621994298623",
+            "after": "00000002000700070318041d60186121621994188623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 9,
+                "before": "29",
+                "after": "18"
+              },
+              {
+                "offset": 19,
+                "before": "29",
+                "after": "18"
+              }
+            ]
+          }
+        }
+      },
+      "Monitor": {
+        "index": 1,
+        "diffs": {
+          "80:0020:0": {
+            "before": "00000002000700070318041d60186121621994188623",
+            "after": "00000002000700070319041d60186121621994198623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 9,
+                "before": "18",
+                "after": "19"
+              },
+              {
+                "offset": 19,
+                "before": "18",
+                "after": "19"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "15607": {
+    "control_id": 15607,
+    "total_options": 23,
+    "options": {
+      "Light": {
+        "index": 0,
+        "diffs": {
+          "80:0022:0": {
+            "before": "0000000200070007031f041d601861386221941f8623",
+            "after": "00000002000700070318041d60186138622194188623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 9,
+                "before": "1f",
+                "after": "18"
+              },
+              {
+                "offset": 19,
+                "before": "1f",
+                "after": "18"
+              }
+            ]
+          }
+        }
+      },
+      "Emergency": {
+        "index": 1,
+        "diffs": {
+          "80:0022:0": {
+            "before": "00000002000700070318041d60186138622194188623",
+            "after": "0000000200070007031f041d601861386221941f8623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 9,
+                "before": "18",
+                "after": "1f"
+              },
+              {
+                "offset": 19,
+                "before": "18",
+                "after": "1f"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "15602": {
+    "control_id": 15602,
+    "total_options": 28,
+    "options": {
+      "Light": {
+        "index": 0,
+        "diffs": {}
+      },
+      "Monitor": {
+        "index": 1,
+        "diffs": {
+          "80:0020:0": {
+            "before": "00000002000700070329041d60186121621994298623",
+            "after": "00000002000700070329041d60196121621994298623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 13,
+                "before": "18",
+                "after": "19"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "15606": {
+    "control_id": 15606,
+    "total_options": 23,
+    "options": {
+      "Light": {
+        "index": 0,
+        "diffs": {}
+      },
+      "Emergency": {
+        "index": 1,
+        "diffs": {
+          "80:0022:0": {
+            "before": "0000000200070007031f041d601861386221941f8623",
+            "after": "0000000200070007031f041d601f61386221941f8623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 13,
+                "before": "18",
+                "after": "1f"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "15601": {
+    "control_id": 15601,
+    "total_options": 28,
+    "options": {
+      "Light": {
+        "index": 0,
+        "diffs": {
+          "80:0020:0": {
+            "before": "00000002000700070329041d60186121621994298623",
+            "after": "00000002000700070329041d60186118621994298623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 15,
+                "before": "21",
+                "after": "18"
+              }
+            ]
+          }
+        }
+      },
+      "Monitor": {
+        "index": 1,
+        "diffs": {
+          "80:0020:0": {
+            "before": "00000002000700070329041d60186118621994298623",
+            "after": "00000002000700070329041d60186119621994298623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 15,
+                "before": "18",
+                "after": "19"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "15605": {
+    "control_id": 15605,
+    "total_options": 23,
+    "options": {
+      "Light": {
+        "index": 0,
+        "diffs": {
+          "80:0022:0": {
+            "before": "0000000200070007031f041d601861386221941f8623",
+            "after": "0000000200070007031f041d601861186221941f8623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 15,
+                "before": "38",
+                "after": "18"
+              }
+            ]
+          }
+        }
+      },
+      "Emergency": {
+        "index": 1,
+        "diffs": {
+          "80:0022:0": {
+            "before": "0000000200070007031f041d601861186221941f8623",
+            "after": "0000000200070007031f041d6018611f6221941f8623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 15,
+                "before": "18",
+                "after": "1f"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "15600": {
+    "control_id": 15600,
+    "total_options": 28,
+    "options": {
+      "Light": {
+        "index": 0,
+        "diffs": {
+          "80:0020:0": {
+            "before": "00000002000700070329041d60186121621994298623",
+            "after": "00000002000700070329041d60186121621894298623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 17,
+                "before": "19",
+                "after": "18"
+              }
+            ]
+          }
+        }
+      },
+      "Monitor": {
+        "index": 1,
+        "diffs": {
+          "80:0020:0": {
+            "before": "00000002000700070329041d60186121621894298623",
+            "after": "00000002000700070329041d60186121621994298623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 17,
+                "before": "18",
+                "after": "19"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "15604": {
+    "control_id": 15604,
+    "total_options": 23,
+    "options": {
+      "Light": {
+        "index": 0,
+        "diffs": {
+          "80:0022:0": {
+            "before": "0000000200070007031f041d601861386221941f8623",
+            "after": "0000000200070007031f041d601861386218941f8623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 17,
+                "before": "21",
+                "after": "18"
+              }
+            ]
+          }
+        }
+      },
+      "Emergency": {
+        "index": 1,
+        "diffs": {
+          "80:0022:0": {
+            "before": "0000000200070007031f041d601861386218941f8623",
+            "after": "0000000200070007031f041d60186138621f941f8623",
+            "length_before": 22,
+            "length_after": 22,
+            "changed_bytes": [
+              {
+                "offset": 17,
+                "before": "18",
+                "after": "1f"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "15977": {
+    "control_id": 15977,
+    "total_options": 1,
+    "options": {
+      "Unprogrammed": {
+        "index": 0,
+        "diffs": {}
+      }
+    }
+  },
+  "15978": {
+    "control_id": 15978,
+    "total_options": 1,
+    "options": {
+      "Unprogrammed": {
+        "index": 0,
+        "diffs": {}
+      }
+    }
+  }
+}

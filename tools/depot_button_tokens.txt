@@ -1,0 +1,129 @@
+Button Function                     | Token IDs (Hex)                | Resource ID
+--------------------------------------------------------------------------------
+Bootcode File Not Found!!           | 0xed                           | 
+Bootcode Not Present!               | 0xe3                           | 
+COM Library Initialization Failed   | 0x96                           | 
+Checksum Error in the Flash Upgrade File | 0xaa                           | 
+Codeplug Upgrade Failed.            | 0xa7                           | 
+Dsp Code Not Present!               | 0xe5                           | 
+ERROR - Cannot proceed with FLASH Upgrade when the codeplug has more than 1 Zones.
+Please remove the additional Zones and try again! | 0x209                          | 
+ERROR - Cannot proceed with FLASH Upgrade when the codeplug has more than 15 Zones.
+Please remove the additional Zones and try again! | 0x202                          | 
+ERROR - Cannot proceed with FLASH Upgrade when the codeplug has more than 16 Channels in each Zone.
+Please remove the additional Channels and try again! | 0x203                          | 
+ERROR - Cannot proceed with FLASH Upgrade when the codeplug has more than 16 Conventional Personalities.
+Please remove the additional Conventional Personalities and try again! | 0x208                          | 
+ERROR - Cannot proceed with FLASH Upgrade when the codeplug has more than 240 Conventional Personalities.
+Please remove the additional Conventional Personalities and try again! | 0x201                          | 
+ERROR - Cannot proceed with FLASH Upgrade when the codeplug has more than two ASTRO System.
+Please remove the additional ASTRO Systems and try again! | 0x200                          | 
+ERROR - Cannot proceed with FLASH Upgrade when the codeplug has more than two DTMF System.
+Please remove the additional DTMF Systems and try again! | 0x205                          | 
+ERROR - Cannot proceed with FLASH Upgrade when the codeplug has more than two MDC System.
+Please remove the additional MDC Systems and try again! | 0x204                          | 
+ERROR - Cannot proceed with FLASH Upgrade when the codeplug has more than two QCII System.
+Please remove the additional QCII Systems and try again! | 0x206                          | 
+ERROR - Cannot proceed with FLASH Upgrade when the codeplug has more than two Singletone System.
+Please remove the additional Singletone Systems and try again! | 0x207                          | 
+Error Opening Flash Upgrade File    | 0xa9                           | 
+Error encountered during flash radio | 0x9a                           | 
+Error encountered in update firmware | 0x9b                           | 
+Error encountered while flashing the control head | 0x82                           | 
+Error encountered while handling the Flash Upgrade File. | 0x98                           | 
+Error encountered while validating Flash Upgrade File. | 0x99                           | 
+Error extracting DSP software from upgrade file | 0x9e                           | 
+Error extracting bootcode from upgrade file | 0x9c                           | 
+Error extracting radio application software from upgrade file | 0x9d                           | 
+Error programming the codeplug      | 0xca                           | 
+Error reading FLASHcode             | 0xc5                           | 
+Error reading authorization code    | 0xc3                           | 
+Error reading date code             | 0xc4                           | 
+Error reading model definition flag - FLASHport capable flag | 0xc7                           | 
+Error reading model number          | 0xc1                           | 
+Error reading radio processor type  | 0xbd                           | 
+Error reading radio type            | 0xbc                           | 
+Error reading serial number         | 0xc6                           | 
+Error reading system enhancement bytes | 0xc8                           | 
+Error reading system package or version | 0xc2                           | 
+Error reading the codeplug          | 0xcb                           | 
+Error validating Flash RAM Downloader in upgrade file | 0x9f                           | 
+Error writing post flash data       | 0xc9                           | 
+FLASH Authcode Verify Error - Upgrade Aborted | 0x157                          | 
+FLASH File is too old!!             | 0xeb                           | 
+FLASH Software Version Error        | 0xf4                           | 
+FLASH Unknown Failure               | 0x7d, 0x7e, 0x83, 0x88, 0x8c, 0x90, 0x91, 0x93, 0x94, 0x95 | 
+FLASHkey Data Read Error            | 0x118                          | 
+FLASHkey Data Verifiy Error         | 0x119                          | 
+FLASHkey Data Write Error           | 0x11a                          | 
+FLASHkey ID Verify Error - Upgrade Aborted | 0x117                          | 
+Failed to complete recovery - Upgrade Aborted | 0xb4                           | 
+Failed to connect to remote device  | 0x85                           | 
+Failed to disconnect from remote device | 0x86                           | 
+Failed to download bootcode         | 0xcc                           | 
+Failed to enter into Program Mode   | 0x92                           | 
+Failed to enter maintenance mode    | 0x84                           | 
+Failed to extract a radio component from the upgrade file | 0x8b                           | 
+Failed to install Motorola Solutions FLASHzap Device. Please reset your radio. | 0xbf                           | 
+Failed to obtain the list of remote devices connected | 0x87                           | 
+Failed to open the port             | 0xb8                           | 
+Failed to perform post bootmode operations | 0xb7                           | 
+Failed to read a radio component's version | 0xb9                           | 
+Failed to unlock the radio          | 0xcf                           | 
+Failed to upgrade a radio component | 0x8a                           | 
+Failed to upgrade the DSP           | 0xce                           | 
+Failed to upgrade the host          | 0xcd                           | 
+Flash Not Performed - Radio Already Upgraded | 0xa5                           | 
+H-Option File Import Failure        | 0xa6                           | 
+Host Code Not Present!              | 0xe4                           | 
+Invalid Current Flash Code          | 0xf5                           | 
+Invalid External Codeplug Version   | 0xf7                           | 
+Invalid FLASHkey                    | 0xef                           | 
+Invalid Internal Codeplug Version   | 0xf6                           | 
+Invalid Radio Model Number          | 0xf8                           | 
+Invalid UCM Upgrade File            | 0xdc                           | 
+Invalid Upgrade File - The file is missing the MACE UCM secure module component. | 0x78                           | 
+Invalid Upgrade File - The version of the Main Host Application in the upgrade file is older than the version in the control head. | 0xb1                           | 
+Invalid Upgrade File - The version of the Main Host Application in the upgrade file is older than the version in the radio. | 0xb0                           | 
+Invalid Upgrade File Format         | 0xc0                           | 
+Kit Number Error                    | 0xf3                           | 
+Model Upgrade File Failed to Decrypt
+Please make sure modup.mdf is in the same directory as this CPS Application | 0x7f                           | 
+Model Upgrade File Not Found
+Please make sure modup.mdf is in the same directory as this CPS Application | 0x79                           | 
+Model Upgrade Lists Failed to Populate
+Please make sure modup.mdf is in the same directory as this CPS Application | 0x7c                           | 
+Model Upgrade XML Conversion Failed
+Please make sure the correct version of MSXML is installed on this machine | 0x7b                           | 
+Model Upgrade XML Initialization Failed
+Please make sure the correct version of MSXML is installed on this machine | 0x7a                           | 
+Network validation failed           | 0x89                           | 
+No Flashkey Data Reply!             | 0xb3                           | 
+PSDT not found in upgrade file.     | 0x81                           | 
+Radio Component missing from upgrade file | 0x8d                           | 
+Radio contains a Type I Encryption Module. Unable to upgrade this module type. | 0xdd                           | 
+Radio failed to reset               | 0xbe                           | 
+Secure Encryption Module Upgrade Failed | 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd7, 0xd8, 0xd9, 0xda, 0xdb | 
+The FLASH Upgrade Failed!! Cannot read the FLASHkey.
+Verify that the FLASHkey is properly connected.  | 0x116, 0x158                   | 
+The FLASH Upgrade failed            | 0xa4                           | 
+The Radio Failed to Bootstrap - Check All Cables | 0xab                           | 
+The Source Model Number in the Codeplug doesn't match the Model Number in the radio being read. | 0x80                           | 
+The currently selected FLASHport Upgrade file cannot be used for USB FLASHport. | 0xdf                           | 
+There is a FLASH file and hardware mismatch | 0xec                           | 
+This Radio Cannot be FLASH Upgraded!! The Controller
+ Board Must be Initialized with a Proper Serial Number.
+ Reset the Radio and Perform a Standard Read. | 0xac                           | 
+This Radio has an Invalid Serial Number - Upgrade Aborted | 0xad                           | 
+This Radio is not supported by this application | 0xbb                           | 
+This radio can only be refreshed. The FLASHkey must be a refresh key. | 0xf9                           | 
+This radio does not currently support FLASHport via USB. It needs to be FLASHport refreshed first via RS232 to the R06.00.00 software releases or newer versions before FLASHport via USB will work. | 0xb6                           | 
+This version of the control head software does not currently support FLASHport via USB. This radio needs to be FLASHport refreshed first via RS232 to the R07.00.00 software releases or newer versions before FLASHport via USB will work. | 0xb5                           | 
+Unable to Pack Codeplug - Upgrade Aborted | 0xaf                           | 
+Unable to create instance of Encaten Component | 0x97                           | 
+Unable to read the RSSI DSP Offset from the tuning partition | 0x8f                           | 
+Unable to reprogram the RSSI DSP Offset to the tuning partition | 0x8e                           | 
+Unpack Codeplug Error - Upgrade Aborted | 0xae                           | 
+Unsupported Destination Model Number for Model Upgrade. | 0xee                           | 
+Upgrades Expired!                   | 0xf2                           | 
+You need a secure enabled codeplug to upgrade the Secure Encryption Module in your radio.  Please reprogram your radio with a secure enabled codeplug and try again. Aborting upgrade... | 0xba                           | 
