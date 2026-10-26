@@ -13,7 +13,7 @@ def cmd_new(args):
         radio_model=args.model,
         bandsplit=args.bandsplit,
         serial_number="OPENASTRO_SURPLUS",
-        flashcode="500008-000488-4",
+        flashcode="500008-000488-2",
         encryption_keys=[
             EncryptionKey(key_id=1, name="TEAM_ADP_1", algorithm="ADP", key_data="A1B2C3D4E5")
         ],
@@ -535,6 +535,196 @@ def cmd_channel_edit(args):
         print(f'[+] Saved patched objects to {args.output}')
 
 
+def _parse_nibble_bit(spec):
+    """Parse a 'NIBBLE:BIT' feature spec (e.g. '8:4') into (int, int)."""
+    try:
+        n_str, b_str = spec.split(":")
+        nibble, bit = int(n_str, 0), int(b_str, 0)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"feature spec must be NIBBLE:BIT (e.g. 8:4), got '{spec}'")
+    if not (0 <= nibble <= 11) or bit not in (1, 2, 4, 8):
+        raise argparse.ArgumentTypeError(f"nibble must be 0..11 and bit one of 1/2/4/8, got '{spec}'")
+    return (nibble, bit)
+
+
+def cmd_flashcode_upgrade(args):
+    """Offline FLASHcode editor: flip feature bits, recompute the (verified Luhn)
+    check digit, and emit a `--edit 81:1006:0:<HEX>` flag for rcmp_replay_write.py.
+    Does NOT transmit -- partition 0x81 is ReadWriteLocked and needs UnlockSecurity
+    (0x0107) first; see docs/FLASHCODE_AND_EEPROM_MAP.md."""
+    from .models.flashcode import (
+        FlashcodeDecoder, FLASHCODE_MATRIX, HARDWARE_GATED, ADP_Q667,
+        FEATURE_FLAGS, PROFILES, format_flashcode, verify_flashcode,
+        set_feature, feature_bits,
+    )
+    import json
+
+    def _feat_label(key):
+        feat = FLASHCODE_MATRIX.get(key)
+        return f"{feat.code} {feat.name}" if feat else f"Nibble {key[0]} bit {key[1]} (proprietary)"
+
+    # --list-features: print the friendly feature slugs and exit.
+    if args.list_features:
+        print("Feature switches (--enable / --disable <name>):\n")
+        for slug, nb in FEATURE_FLAGS.items():
+            gate = "  [UCM/dongle]" if nb in HARDWARE_GATED else ""
+            print(f"  {slug:<20} {_feat_label(nb)}{gate}")
+        print("\nProfiles (--profile): recommended | max-nonucm | max-ucm")
+        print("  recommended : sane no-UCM P25 conventional load")
+        print("  max-nonucm  : every software feature (no UCM) -- the no-UCM 'kitchen sink'")
+        print("  max-ucm     : all 48 bits incl. hardware crypto (implies --ucm)")
+        print("\n[UCM/dongle] features do nothing without the physical module; blocked unless --ucm.")
+        return
+
+    # Gate: hardware features need a UCM/dongle. Without --ucm, refuse to enable them.
+    def _enable_bit(payload, nibble, bit, source):
+        if (nibble, bit) in HARDWARE_GATED and not args.ucm:
+            print(f"[-] '{source}' ({_feat_label((nibble, bit))}) needs a UCM/dongle you said")
+            print(f"    this fleet does not have. Pass --ucm to force it anyway.")
+            sys.exit(1)
+        return set_feature(payload, nibble, bit, True)
+
+    # 1. Resolve the starting 12-nibble payload.
+    if args.set:
+        payload = args.set.strip().upper()
+        if len(payload) != 12 or any(c not in "0123456789ABCDEF" for c in payload):
+            print(f"[-] --set must be 12 hex nibbles, got '{args.set}'")
+            sys.exit(1)
+    else:
+        src = args.flashcode
+        if args.input:
+            try:
+                with open(args.input, "r", encoding="utf-8") as f:
+                    src = json.load(f).get("flashcode") or src
+            except (OSError, ValueError) as e:
+                print(f"[-] Could not read flashcode from {args.input}: {e}")
+                sys.exit(1)
+        payload = FlashcodeDecoder.clean_flashcode(src)
+        if len(payload) != 12:
+            print(f"[-] Could not parse a 12-nibble payload from '{src}'")
+            sys.exit(1)
+
+    if any(c not in "0123456789ABCDEF" for c in payload):
+        print(f"[-] '{payload}' uses the extended-alphabet flashcode format (letters beyond")
+        print("    hex A-F, e.g. G/L/Q/R/S/Y -- newer H98/H51/M22/M25-SS/M37 families).")
+        print("    Only the classic numeric/hex format is supported (verified Luhn). Aborting.")
+        sys.exit(1)
+
+    before = set(feature_bits(payload))
+    old_fc = format_flashcode(payload)
+
+    # 2. Apply operations: profile -> kitchen-sink -> enable -> add -> adp -> disable -> remove.
+    def _apply_all_bits(payload, allow_ucm):
+        # All software features ON; hardware-gated bits ON only with --ucm, else
+        # CLEARED (strip dead UCM bits from a no-UCM load, incl. pre-existing ones).
+        for n in range(12):
+            for b in (8, 4, 2, 1):
+                if (n, b) in HARDWARE_GATED:
+                    payload = set_feature(payload, n, b, allow_ucm)
+                else:
+                    payload = set_feature(payload, n, b, True)
+        return payload
+
+    if args.profile == "recommended":
+        for slug in PROFILES["recommended"]:
+            n, b = FEATURE_FLAGS[slug]
+            payload = _enable_bit(payload, n, b, slug)
+    elif args.profile == "max-nonucm":
+        payload = _apply_all_bits(payload, allow_ucm=False)
+    elif args.profile == "max-ucm":
+        payload = _apply_all_bits(payload, allow_ucm=True)   # implies UCM installed
+
+    if args.kitchen_sink:
+        payload = _apply_all_bits(payload, allow_ucm=args.ucm)
+
+    for slug in (args.enable or []):
+        if slug not in FEATURE_FLAGS:
+            print(f"[-] Unknown feature '{slug}'. Use --list-features for valid names.")
+            sys.exit(1)
+        n, b = FEATURE_FLAGS[slug]
+        payload = _enable_bit(payload, n, b, slug)
+
+    if args.add_adp:
+        payload = _enable_bit(payload, ADP_Q667[0], ADP_Q667[1], "adp")
+
+    for n, b in (args.add or []):
+        payload = _enable_bit(payload, n, b, f"{n}:{b}")
+
+    for slug in (args.disable or []):
+        if slug not in FEATURE_FLAGS:
+            print(f"[-] Unknown feature '{slug}'. Use --list-features for valid names.")
+            sys.exit(1)
+        n, b = FEATURE_FLAGS[slug]
+        payload = set_feature(payload, n, b, False)
+
+    for n, b in (args.remove or []):
+        payload = set_feature(payload, n, b, False)
+
+    after = set(feature_bits(payload))
+    new_fc = format_flashcode(payload)
+
+    def _label(key):
+        feat = FLASHCODE_MATRIX.get(key)
+        return f"{feat.code} {feat.name}" if feat else f"Nibble {key[0]} bit {key[1]} (proprietary)"
+
+    # 3. Report.
+    print(f"\n[+] FLASHcode upgrade")
+    print(f"    From: {old_fc}")
+    print(f"    To  : {new_fc}")
+    print(f"    (check digit {new_fc[-1]} = verified Luhn mod-10; self-check {'OK' if verify_flashcode(new_fc) else 'FAIL'})")
+
+    added = sorted(after - before)
+    removed = sorted(before - after)
+    if added:
+        print(f"\n[+] Features ENABLED ({len(added)}):")
+        for k in added:
+            gate = HARDWARE_GATED.get(k)
+            print(f"    + {_label(k)}" + (f"   [!] HARDWARE-GATED: {gate}" if gate else ""))
+    if removed:
+        print(f"\n[-] Features DISABLED ({len(removed)}):")
+        for k in removed:
+            print(f"    - {_label(k)}")
+    if not added and not removed:
+        print("\n[*] No feature change (payload identical).")
+
+    gated_on = sorted(k for k in after if k in HARDWARE_GATED)
+    if gated_on:
+        print(f"\n[!] {len(gated_on)} feature(s) in the final flashcode need physical hardware")
+        print("    and will NOT activate from the bit alone (UCM / dongle):")
+        for k in gated_on:
+            print(f"      - {_label(k)}: {HARDWARE_GATED[k]}")
+    if args.kitchen_sink:
+        print("\n[!] --kitchen-sink sets ALL 48 bits. Some combinations (band/channel-spacing")
+        print("    straps) are mutually exclusive and UNTESTED on hardware -- the radio's")
+        print("    acceptance of an arbitrary all-features code is not yet confirmed. Prefer")
+        print("    targeted flags (e.g. --add-adp) for a known-good single-bit change.")
+
+    # 4. Emit the write record (ASCII of the dashed string + NUL pad to 16 bytes).
+    ascii_bytes = new_fc.encode("ascii") + b"\x00"   # 15 chars + NUL = 16-byte object
+    edit_hex = ascii_bytes.hex()
+    print(f"\n[+] Replay-write flag for 81:1006:0 (ASCII '{new_fc}' + NUL pad, 16 B):")
+    print(f"    --edit 81:1006:0:{edit_hex}")
+    print(f"    (undashed-ascii variant: {(payload + new_fc[-1]).encode('ascii').hex()})")
+
+    print("\n[!] This writes partition 0x81 (RW-LOCKED). It will NOT persist over plain RCMP:")
+    print("    the radio must be unlocked first (CRcmpBundler::UnlockSecurity / 0x0107), and")
+    print("    the exact 16-byte on-wire framing of 0x1006 is UNCONFIRMED -- verify with")
+    print("    `open-astro rcmp-read --partition 0x81 --object 0x1006 --length 0x10` on the")
+    print("    radio before transmitting. See docs/FLASHCODE_AND_EEPROM_MAP.md.")
+
+    if args.output:
+        with open(args.output, "w", encoding="utf-8") as f:
+            json.dump({
+                "old_flashcode": old_fc, "new_flashcode": new_fc,
+                "payload": payload, "check_digit": new_fc[-1],
+                "edit_flag": f"81:1006:0:{edit_hex}",
+                "features_enabled": [{"nibble": k[0], "bit": k[1], "label": _label(k),
+                                      "hardware_gated": k in HARDWARE_GATED} for k in added],
+                "features_disabled": [{"nibble": k[0], "bit": k[1], "label": _label(k)} for k in removed],
+            }, f, indent=2)
+        print(f"\n[+] Wrote upgrade summary: {args.output}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpenAstro: Open Source Motorola ASTRO 25 Codeplug Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -664,6 +854,37 @@ def main():
     p_edit.add_argument("--simplex", action="store_true", help="Set simplex/direct mode")
     p_edit.add_argument("-o", "--output", help="Optional output JSON for patched objects")
     p_edit.set_defaults(func=cmd_channel_edit)
+
+    # flashcode-upgrade (offline: flip feature bits + compute check digit)
+    p_fc = subparsers.add_parser("flashcode-upgrade",
+        help="Edit FLASHcode feature bits, recompute the check digit, emit a 81:1006:0 write flag")
+    p_fc.add_argument("--flashcode", default="000008-002410-2",
+                      help="Starting flashcode (default: fleet 000008-002410-2)")
+    p_fc.add_argument("--input", help="Read starting flashcode from a JSON file's 'flashcode' field")
+    p_fc.add_argument("--set", help="Override: raw 12-nibble payload (hex), skips --flashcode")
+    p_fc.add_argument("--add-adp", action="store_true",
+                      help="Enable Q667 Motorola ADP software encryption (nibble 8 bit 4)")
+    p_fc.add_argument("--add", type=_parse_nibble_bit, action="append", metavar="N:B",
+                      help="Enable feature at NIBBLE:BIT (e.g. 8:4); repeatable")
+    p_fc.add_argument("--remove", type=_parse_nibble_bit, action="append", metavar="N:B",
+                      help="Disable feature at NIBBLE:BIT; repeatable")
+    p_fc.add_argument("--profile", choices=["recommended", "max-nonucm", "max-ucm"],
+                      help="Preset: recommended (sane no-UCM P25 conventional), max-nonucm "
+                           "(all software features), max-ucm (all 48 bits, implies UCM present)")
+    p_fc.add_argument("--enable", action="append", metavar="FEATURE",
+                      help="Enable a named feature (see --list-features); repeatable")
+    p_fc.add_argument("--disable", action="append", metavar="FEATURE",
+                      help="Disable a named feature; repeatable")
+    p_fc.add_argument("--ucm", action="store_true",
+                      help="Allow hardware-gated features (AES/DES/HW-multikey/ASK). Default: "
+                           "refuse them -- this fleet has no UCM, so the bits are dead weight.")
+    p_fc.add_argument("--kitchen-sink", action="store_true",
+                      help="Set all feature bits. Without --ucm = software-only (no-UCM max); "
+                           "with --ucm = all 48. Experimental; see warnings.")
+    p_fc.add_argument("--list-features", action="store_true",
+                      help="List all feature switch names + profiles and exit")
+    p_fc.add_argument("-o", "--output", help="Write upgrade summary to this JSON file")
+    p_fc.set_defaults(func=cmd_flashcode_upgrade)
 
     args = parser.parse_args()
     args.func(args)

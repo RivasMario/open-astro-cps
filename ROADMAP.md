@@ -47,9 +47,9 @@
 ### Epic 2: FLASHcode Upgrade & Software ADP Activation [TODO]
 - [x] Prove mathematically that DSP firmware (`R16.00.01` / `R19.50.01`) contains native ADP RC4-40 engine.
 - [x] Locate FLASHcode storage in codeplug: Partition `0x81`, object `0x1006:0`.
-- [x] Map bit position for `Q667` (ADP Software Encryption): Nibble 8, bit 4 (`000008-006410-X`).
-- [ ] **Task 2.1:** Verify Mod-10 checksum calculation for `000008-006410-X`.
-- [ ] **Task 2.2:** Add `open-astro flashcode-upgrade --add-adp` CLI tool to write `81:1006:0` over live RCMP.
+- [x] Map bit position for `Q667` (ADP Software Encryption): Nibble 8, bit 4 (`000008-006410-3`).
+- [x] **Task 2.1:** Verify Mod-10 checksum. SOLVED/VERIFIED-BIN — PatPort.exe `conCalculateFlashcode` @ `0xa0b631` = standard Luhn mod-10 over the 12 nibble values (even-from-left doubled). Q667 upgrade → `000008-006410-3`. See `docs/FLASHCODE_AND_EEPROM_MAP.md` §7.1.
+- [x] **Task 2.2:** `open-astro flashcode-upgrade` CLI built (`--add-adp` / `--add N:B` / `--remove` / `--kitchen-sink` / `--set`). Offline: flips bits, computes the verified check digit, emits a `81:1006:0` replay-write flag with hardware-gated + 0x81-lockout warnings. Does NOT transmit (0x81 needs UnlockSecurity first). Tests in `tests/test_flashcode.py`.
 - [x] **Task 2.3:** Match Radio 2 (`205CMB2249`) Zone A with Channel 3 `ADP SECURE` to pair with Radio 1. [VERIFIED ON HARDWARE]
 
 ### Epic 3: SDR Over-The-Air Decryption & Audit [TODO]

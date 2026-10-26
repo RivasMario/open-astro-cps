@@ -38,7 +38,7 @@ class RadioCodeplug:
     radio_model: str                    # e.g., "Motorola XTS 2500 Model II"
     bandsplit: str                      # e.g., "700/800 MHz (764-870 MHz)"
     serial_number: str = "OPENASTRO_001"
-    flashcode: str = "500008-000488-4"  # Default: Digital P25 + FPP Enabled
+    flashcode: str = "500008-000488-2"  # Default: Digital P25 + FPP Enabled (Luhn-valid check digit)
     zones: List[Zone] = field(default_factory=list)
     encryption_keys: List[EncryptionKey] = field(default_factory=list)
     talkgroups: List["Talkgroup"] = field(default_factory=list)
