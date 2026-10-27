@@ -937,6 +937,106 @@ def cmd_trunking_dump(args):
         print("=" * 70)
 
 
+def cmd_make_nas(args):
+    """Build a safe Non-Affiliation Scan (NAS) codeplug or objects bundle."""
+    import json
+    from .builders.nas_builder import (
+        NasBuilder,
+        NasSafetyViolation,
+    )
+
+    # Parse control channels (accept comma-separated or multiple flags)
+    ccs = []
+    if args.control_channels:
+        for item in args.control_channels:
+            for part in str(item).split(","):
+                part = part.strip()
+                if part:
+                    ccs.append(float(part))
+    else:
+        ccs = [856.1625, 860.4375, 860.5875]
+
+    try:
+        builder = NasBuilder.create_default(
+            system_id=args.system_id,
+            system_name=args.system_name,
+            control_channels=ccs,
+            target_tgid=args.tgid,
+            target_name=args.tg_name,
+            park_name=args.dummy_name,
+            park_rx_freq=args.dummy_freq,
+            zone_num=args.zone,
+            chan_num=args.channel,
+        )
+    except NasSafetyViolation as e:
+        print(f"[-] Safety violation: {e}")
+        sys.exit(1)
+
+    summary = builder.export_summary()
+
+    # If base codeplug is provided, load and patch it
+    if args.input:
+        if args.input.lower().endswith(".json"):
+            codeplug = JsonParser.load_file(args.input)
+        elif args.input.lower().endswith(".cpg"):
+            decoder = CpgDecoder(args.input)
+            try:
+                codeplug = decoder.decode()
+            finally:
+                decoder.close()
+        else:
+            print(f"[-] Unsupported input format: {args.input}")
+            sys.exit(1)
+
+        builder.apply_to_codeplug(codeplug)
+        if args.output:
+            JsonParser.save_file(codeplug, args.output)
+            if not args.json:
+                print(f"[+] Successfully patched NAS into codeplug: {args.output}")
+    else:
+        # Build standalone codeplug template with NAS zone
+        codeplug = RadioCodeplug(
+            radio_model="Motorola XTS 5000 Model III",
+            bandsplit="700/800 MHz (764-870 MHz)",
+            serial_number="NAS_STAGING",
+            flashcode="FBFFFF-B7F3FF-1",
+            zones=[]
+        )
+        builder.apply_to_codeplug(codeplug)
+        if args.output:
+            JsonParser.save_file(codeplug, args.output)
+            if not args.json:
+                print(f"[+] Successfully wrote NAS codeplug to {args.output}")
+
+    if args.emit_objects:
+        objs = builder.generate_codeplug_objects()
+        serializable_objs = {
+            f"{p}:{t}:{i}": pl.hex()
+            for (p, t, i), pl in objs.items()
+        }
+        with open(args.emit_objects, "w", encoding="utf-8") as f:
+            json.dump(serializable_objs, f, indent=2)
+        if not args.json:
+            print(f"[+] Wrote {len(objs)} codeplug objects to {args.emit_objects}")
+
+    if args.json:
+        print(json.dumps(summary, indent=2))
+    else:
+        print("\n=======================================================")
+        print(" Non-Affiliation Scan (NAS) Configuration")
+        print("=======================================================")
+        print(f" Trunking System : {summary['trunking_system']['system_name']} (ID: {summary['trunking_system']['system_id']})")
+        print(f" Control Channels: {', '.join(f'{f:.4f} MHz' for f in summary['trunking_system']['control_channels'])}")
+        print(f" Target TGID     : {summary['talkgroups'][0]['tgid']} ({summary['talkgroups'][0]['name']})")
+        print(f" Parked Channel  : Zone {summary['park_channel']['zone']} Ch {summary['park_channel']['channel']} - {summary['park_channel']['name']}")
+        print(f" Parked RX Freq  : {summary['park_channel']['rx_frequency_mhz']:.4f} MHz")
+        print(f" Parked TX Freq  : {summary['park_channel']['tx_frequency_mhz']:.4f} MHz (STRICT 0.0)")
+        print(f" RX Only / Inhibit: {summary['park_channel']['rx_only']} / {summary['park_channel']['tx_inhibit']}")
+        print(f" Zero RF Emission: ENFORCED (Passive DSP monitoring)")
+        print(f" Inhibit Immunity: ACTIVE (No ISW affiliation emitted)")
+        print("=======================================================\n")
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpenAstro: Open Source Motorola ASTRO 25 Codeplug Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1132,6 +1232,25 @@ def main():
     p_tdump.add_argument("--json", action="store_true", help="Output raw structured JSON")
     p_tdump.add_argument("-o", "--output", help="Write output to file instead of stdout")
     p_tdump.set_defaults(func=cmd_trunking_dump)
+
+    # make-nas
+    p_nas = subparsers.add_parser("make-nas",
+        help="Generate safe Non-Affiliation Scan (NAS) codeplug (zero transmit, inhibit protected)")
+    p_nas.add_argument("--input", help="Optional source .cpg or .json codeplug to patch NAS into")
+    p_nas.add_argument("--system-name", default="PUGET SOUND", help="Trunking system display name (default: PUGET SOUND)")
+    p_nas.add_argument("--system-id", type=int, default=1, help="Trunking system ID (default: 1)")
+    p_nas.add_argument("--control-channels", action="append", metavar="MHZ",
+                       help="Candidate control channel frequency (MHz). Can specify multiple times or comma-separated")
+    p_nas.add_argument("--tgid", type=int, default=1188, help="Target talkgroup ID (default: 1188)")
+    p_nas.add_argument("--tg-name", default="SEATTLE DISP", help="Target talkgroup name (default: SEATTLE DISP)")
+    p_nas.add_argument("--dummy-name", default="NAS PARK", help="Rotary knob parked dummy channel name (default: NAS PARK)")
+    p_nas.add_argument("--dummy-freq", type=float, default=851.0125, help="Dummy channel RX frequency MHz (default: 851.0125)")
+    p_nas.add_argument("--zone", type=int, default=1, help="Zone number for dummy channel (default: 1)")
+    p_nas.add_argument("--channel", type=int, default=1, help="Channel position for dummy channel (default: 1)")
+    p_nas.add_argument("-o", "--output", default="nas_codeplug.json", help="Output codeplug JSON path (default: nas_codeplug.json)")
+    p_nas.add_argument("--emit-objects", metavar="JSON_PATH", help="Optional path to output raw RCMP write objects JSON")
+    p_nas.add_argument("--json", action="store_true", help="Output JSON summary to stdout")
+    p_nas.set_defaults(func=cmd_make_nas)
 
     args = parser.parse_args()
     args.func(args)
