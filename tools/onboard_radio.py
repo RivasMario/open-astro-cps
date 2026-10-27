@@ -50,11 +50,11 @@ def probe_at_interface(port: str, baud: int = 19200) -> dict:
     try:
         with serial.Serial(port, baud, timeout=1.2) as ser:
             time_window = 0.5
-            for cmd in ["AT", "ATI1", "ATI2", "ATI3", "ATI4"]:
+            for cmd in ["AT", "ATI1", "ATI2", "ATI3", "ATI4", "AT&V"]:
                 ser.write(f"{cmd}\r".encode("ascii"))
                 import time
                 time.sleep(time_window)
-                raw = ser.read(ser.in_waiting or 100).decode("ascii", errors="replace").strip()
+                raw = ser.read(ser.in_waiting or 200).decode("ascii", errors="replace").strip()
                 clean = "\n".join(line.strip() for line in raw.splitlines() if line.strip() and line.strip() != cmd)
                 info[cmd] = clean
     except Exception as e:
@@ -74,13 +74,18 @@ def onboard_radio(port: str | None = None, host: str = "127.0.0.1", tcp_port: in
             print(f"  Host Firmware (ATI1) : {at_info.get('ATI1', 'Unknown')}")
             print(f"  DSP Firmware  (ATI2) : {at_info.get('ATI2', 'Unknown')}")
             print(f"  Model/Serial  (ATI3) : {at_info.get('ATI3', 'Unknown')}")
-            ucm_str = at_info.get('ATI4', 'NOT EQUIPPED')
-            print(f"  UCM Crypto    (ATI4) : {ucm_str}")
+            at_v = at_info.get('AT&V', '')
+            ucm_str = 'NOT EQUIPPED (R000000)'
+            for line in at_v.splitlines():
+                if line.startswith('SECURE:'):
+                    ucm_str = line.split(':', 1)[1].strip()
+                    break
+            print(f"  UCM Crypto (AT&V)     : {ucm_str}")
 
-            if "R000000" in ucm_str or "NOT" in ucm_str.upper():
-                print("[!] UCM AUDIT: NO HARDWARE CRYPTO MODULE DETECTED (Socket Empty).")
-                print("    -> Hardware features (H869 AES, H868 Multikey) MUST remain OFF.")
-                print("    -> Software ADP encryption (Q667) and FPP (Q53) are 100% supported.")
+            if 'R000000' in ucm_str or 'NOT' in ucm_str.upper():
+                print("[!] UCM AUDIT: NO HARDWARE CRYPTO MODULE DETECTED (Socket Empty: R000000).")
+                print("    -> Hardware features (H869 AES, H868 Multikey) MUST remain OFF (prevents ERROR 01/82).")
+                print("    -> Software ADP encryption (Q667) and FPP (Q53) are 100% supported natively.")
             else:
                 print(f"[+] UCM AUDIT: Hardware Crypto Module Detected ({ucm_str}).")
 

@@ -19,7 +19,7 @@ Task status lives in `ROADMAP.md`; this explains how it got there.
     - Model Number: `H18UCF9PW6AN` (XTS 5000 Model III, 700/800 MHz, Full Keypad & Display)
     - Host Firmware: `R15.00.00`
     - DSP Firmware: `R15.00.00`
-    - UCM Hardware Crypto: Equipped (`Motorola CGISS`)
+    - UCM Hardware Crypto: Empty socket (`SECURE: R000000` via AT&V audit)
     - Codeplug Tag (`0x0047`): `REPD-XTS5000-2P_20151208` (Redmond Police Department Unit 2-Portable, archived 2015-12-08)
     - Current FLASHcode: `400008-002000-0` (Q806 IMBE Digital + Q53 FPP + Q888 Software ASK)
 
