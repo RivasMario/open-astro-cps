@@ -860,6 +860,83 @@ def cmd_buttons(args):
         print(f"[+] Saved patched objects to {args.output}")
 
 
+def cmd_trunking_dump(args):
+    """Dump P25/Type II trunking systems, control channels, and talkgroups."""
+    import json
+    from .parsers.cpg_parser import CpgParser
+    from .parsers.trunking_decode import TrunkingDecoder, TAG_TALKGROUPS
+
+    if args.input.lower().endswith(".cpg"):
+        cpg = CpgParser.load_file(args.input)
+        objects = cpg.objects
+    else:
+        with open(args.input, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        objects = {}
+        for k, v in data.items():
+            if isinstance(k, str) and ":" in k:
+                parts = [int(p, 0) for p in k.split(":")]
+                objects[(parts[0], parts[1], parts[2])] = bytes.fromhex(v) if isinstance(v, str) else bytes(v)
+
+    systems = TrunkingDecoder.decode_all_systems(objects)
+    master_tg_data = objects.get((128, TAG_TALKGROUPS, 0)) or objects.get((0x80, TAG_TALKGROUPS, 0))
+    talkgroups = TrunkingDecoder.decode_talkgroups(master_tg_data) if master_tg_data else []
+
+    if args.json:
+        out = {
+            "systems": [
+                {
+                    "system_index": s.system_index,
+                    "name": s.name,
+                    "system_id": s.system_id,
+                    "control_channels": [
+                        {
+                            "flags": cc.flags,
+                            "rx_channel_id": cc.rx_channel_id,
+                            "tx_channel_id": cc.tx_channel_id,
+                            "rx_freq_mhz": cc.rx_freq_mhz,
+                            "tx_freq_mhz": cc.tx_freq_mhz,
+                        }
+                        for cc in s.control_channels
+                    ],
+                }
+                for s in systems
+            ],
+            "master_talkgroups": [
+                {"tgid": tg.tgid, "flags": tg.flags, "priority_flags": tg.priority_flags}
+                for tg in talkgroups
+            ],
+        }
+        json_str = json.dumps(out, indent=2)
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                f.write(json_str)
+            print(f"[+] Wrote trunking dump JSON to {args.output}")
+        else:
+            print(json_str)
+        return
+
+    print(f"\n[+] P25 / Type II Trunking Systems ({len(systems)} found in {args.input}):")
+    print("=" * 70)
+    for s in systems:
+        print(f"System #{s.system_index + 1:<2} | Name: {s.name:<12} | System ID: {s.system_id} (0x{s.system_id:04X})")
+        if s.control_channels:
+            print(f"  Candidate Control Channels ({len(s.control_channels)}):")
+            for idx, cc in enumerate(s.control_channels):
+                flag_str = " (revert/alt)" if cc.flags & 0x80 else ""
+                print(f"    [{idx+1:2d}] {cc.rx_freq_mhz:.4f} MHz (Ch {cc.rx_channel_id}){flag_str}")
+        else:
+            print("  (no control channels configured)")
+        print("-" * 70)
+
+    if talkgroups:
+        print(f"\n[+] Master Fleet Talkgroup List ({len(talkgroups)} entries):")
+        tg_strings = [f"{tg.tgid}" for tg in talkgroups]
+        for i in range(0, len(tg_strings), 7):
+            print("  " + "  ".join(f"{tg:<6}" for tg in tg_strings[i:i+7]))
+        print("=" * 70)
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpenAstro: Open Source Motorola ASTRO 25 Codeplug Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1047,6 +1124,14 @@ def main():
                        help="Target long-press (0x0017) instead of short-press (0x0016)")
     p_btn.add_argument("-o", "--output", help="Path to write patched JSON dump")
     p_btn.set_defaults(func=cmd_buttons)
+
+    # trunking-dump
+    p_tdump = subparsers.add_parser("trunking-dump",
+        help="Inspect P25/Type II trunking systems, control channels, and talkgroups")
+    p_tdump.add_argument("input", help="Path to .cpg codeplug or structural JSON file")
+    p_tdump.add_argument("--json", action="store_true", help="Output raw structured JSON")
+    p_tdump.add_argument("-o", "--output", help="Write output to file instead of stdout")
+    p_tdump.set_defaults(func=cmd_trunking_dump)
 
     args = parser.parse_args()
     args.func(args)
