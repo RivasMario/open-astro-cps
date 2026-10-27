@@ -51,3 +51,39 @@ Task status lives in `ROADMAP.md`; this explains how it got there.
   controls `0x0020`, trunking `0x0FD0`, password `0x0047`), #6 extended-alphabet
   flashcode check digit, #7 toggle switch, NextGen10 pin-8000 proxy path.
 - Hardware-only (still parked): Epic 3.2/3.3 live P25 over SDR; any live radio write.
+
+## RE session #5 — codeplug schema past 0x0FFB (empirical + PatPort)
+
+RE binaries unblocked: copied G: -> local NTFS `C:\Users\v-mariorivas\re_quarantine\astro25\`
+(Ghidra refuses to analyze off the Drive-for-Desktop volume: "Backing volume must be NTFS").
+PatPort.exe opened in REA (sha ae26c95c…); `binary_overview` indexing in background.
+
+Empirically mapped + cross-validated on 3 backups (into `schema/field_layouts.json`):
+- **0x000D = Zone name table.** resv[4] + u16(=50 const) + u16 count + count×17 B
+  (16-byte ASCII zone name + 1 byte). 205CFR2930=Z1/Z2, 407CHT0214=A/B/C, Radio1=A..J,RB.
+- **0x0020 = Physical controls matrix.** resv[4] + u16 count + u16 cap + count×(u8 control_id,
+  u8 function). 7 controls {03,04,60,61,62,94,86} identical across radios; functions differ.
+  **Function enum still TBD — needs PatPort builder 0x50c4fc (type 174).**
+- **0x0047 = codeplug NAME/comment** (e.g. "KENT-PD_XTS 2500-II_160406-RB2D"), 44 B, NOT a
+  password. **Revise Epic 4.2: password is 0x0002, not 0x0047.**
+
+Open: Ghidra `binary_overview` (task running) to decode the 0x0020 function enum + confirm
+builders. Then trunking 0x0FD0..0x0FDF (#5 cont.), extended-alphabet flashcode (#6).
+
+## RE session #6 — P25 Trunking Subsystem (0x0FD0..0x0FDF) & Zero-Dongle Verification
+
+Decoded the entire relational trunking graph from `Radio1_205CMB2249_codeplug.cpg`:
+- **0x0FD2 = Control-channel frequency table:** Count x 5-byte records (`flags` + `rx_ch` + `tx_ch`).
+  - **Frequency Grid Formula:** $\text{Freq (Hz)} = 851{,}000{,}000 + (\text{channel\_id} \times 6{,}250)$.
+  - Validated down to the exact Hz against real King County / Seattle public safety allocations:
+    `0x05e6` (1510) = 860.4375 MHz, `0x033a` (826) = 856.1625 MHz, `0x06ee` (1774) = 862.0875 MHz.
+- **0x0FDF = Talkgroup table:** Count x 5-byte records (`flags` + `u16 TGID` + `u16 priority/flags`).
+  - Master fleet list (Inst 0) decodes 28 talkgroups (1188, 930, 1192, 1742, 1148, 866, etc.).
+  - Instances 1..9 decode zone-specific talkgroup selector lists.
+- **0x0FDC = System Name table:** 15 systems (SEATTLE, APPLE CV, EPSCA, KCVC, etc.).
+- **0x0FDD = System ID table:** 15 systems (SysIDs 1, 2, 3, 6, 7, 8, etc.).
+- **0x0FDE = System Link bridge:** Maps 0x0FDD IDs to 0x0FDC Names.
+- **Shipped `src/open_astro/parsers/trunking_decode.py`:** Clean-room typed parser `TrunkingDecoder`.
+- **Shipped `tests/test_trunking_decode.py`:** 7 unit tests covering frequency math, synthetic tables, and end-to-end codeplug extraction (208 total tests passing).
+- Documented in `docs/TRUNKING_0FD0_MAP.md`. Zero-dongle trunking read is complete.
+

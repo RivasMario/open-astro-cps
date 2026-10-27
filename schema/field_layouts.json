@@ -34,13 +34,24 @@
     ]
   },
   "0x0020": {
-    "_name": "Physical controls matrix",
-    "_status": "NOT MAPPED this pass. Builder PatPort.exe 0x50c4fc (type 174). See docs for button stream 0x003C work.",
-    "fields": []
+    "_name": "Physical controls matrix (control -> function map)",
+    "_note": "Empirically verified across 205CFR2930/407CHT0214/Radio1_205CMB2249 (all 22 B, 7 pairs). resv[4] + u16 count + u16 capacity, then count x 2-byte (control_id, function) pairs. Control ids {0x03,0x04,0x60,0x61,0x62,0x94,0x86} are identical across radios = the 7 programmable controls; function values differ per radio. Function enum not yet decoded (needs PatPort.exe builder 0x50c4fc, type 174). Distinct from button streams 0x0016/0x0017.",
+    "fields": [
+      {"name": "reserved",   "offset": 0, "length": 4, "type": "bytes",  "confidence": "verified"},
+      {"name": "count",      "offset": 4, "length": 2, "type": "u16be",  "confidence": "verified"},
+      {"name": "capacity",   "offset": 6, "length": 2, "type": "u16be",  "confidence": "partial", "note": "equals count in all samples"},
+      {"name": "pairs",      "offset": 8, "length": 0, "type": "ctrl_pair[]", "confidence": "verified", "note": "count x (u8 control_id, u8 function); function enum TBD"}
+    ]
   },
   "0x000D": {
-    "_name": "ASTRO system / zone definition",
-    "_status": "NOT MAPPED this pass. Builder PatPort.exe 0x120d916 (type 172).",
-    "fields": []
+    "_name": "Zone name table",
+    "_note": "Empirically verified across 3 radios (205CFR2930=2 zones Z1/Z2, 407CHT0214=3 A/B/C, Radio1=10 A..J,RB). resv[4] + u16 (constant 50, likely max-name-len/field size) + u16 count, then count x 17-byte records = 16-byte ASCII zone name (space/NUL padded) + 1 trailing byte (0). Names only; channel->zone linkage lives elsewhere (0x0FFC refs / 0x0FFE). Builder PatPort.exe 0x120d916 (type 172), enum/flags TBD.",
+    "_record_len": 17,
+    "fields": [
+      {"name": "reserved",   "offset": 0,  "length": 4,  "type": "bytes",  "confidence": "verified"},
+      {"name": "name_size",  "offset": 4,  "length": 2,  "type": "u16be",  "confidence": "partial", "note": "constant 0x0032 (50) across all samples"},
+      {"name": "count",      "offset": 6,  "length": 2,  "type": "u16be",  "confidence": "verified"},
+      {"name": "records",    "offset": 8,  "length": 0,  "type": "zone_name[]", "confidence": "verified", "note": "count x 17 B: 16-byte ASCII name + 1 trailing byte"}
+    ]
   }
 }
