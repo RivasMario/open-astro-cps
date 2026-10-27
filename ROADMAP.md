@@ -23,8 +23,8 @@
 +--------------------+--------------------+--------------------+------------------------+
 |      BACKLOG       |       TODO         |    IN PROGRESS     |  DONE (VERIFIED ON HW) |
 +--------------------+--------------------+--------------------+------------------------+
-| - GPU ADP Cracker  | - Match Radio 2    | - Button Mapping   | - Live RCMP Read/Write |
-|   (Hashcat / Brute)|   Ch 3 to ADP      |   Pcap Capture &   | - Radio 1 & 2 Fleets   |
+| - ADP Security Audit  | - Match Radio 2    | - Button Mapping   | - Live RCMP Read/Write |
+|   (Cryptanalysis Verification)|   Ch 3 to ADP      |   Pcap Capture &   | - Radio 1 & 2 Fleets   |
 | - Mobile XTL Model | - Flashcode Patch  |   UI Assignment    | - Radio 3 PNW VHF Pack |
 |   RCMP Parity      |   CLI (Q667 ADP)   | - Unified Mega App | - 0x82 Tuning Firewall |
 | - LibreP25 CCH     | - SDR Decryption   |   Architecture     | - Model III Backlight  |
@@ -41,7 +41,7 @@
 - [x] Extract button function lookup table from `PatPort.exe` (Light=6, Monitor=7, Scan=13, Nuisance=21, Emergency=11).
 - [x] Resolve Model III purple button hardware conflict (hardwired to display backlight; software remapping suppressed by LCD controller).
 - [ ] **Task 1.1:** Capture live button modification in CPS via USBPcap to verify exact handshake when user changes Side Button 2 / Orange Button.
-- [ ] **Task 1.2:** Implement `open-astro buttons` CLI command allowing one-line mapping (e.g. `--orange unprogrammed --side2 monitor --side3 scan`).
+- [x] **Task 1.2:** Implement `open-astro buttons` CLI command allowing one-line mapping (`--set orange=monitor --set side2=scan`). Fully implemented in `src/open_astro/parsers/button_edit.py` and `cli.py`; 13/13 tests pass.
 - [ ] **Task 1.3:** Map top concentric toggle switch (`Ø` / `O`) for hardware Secure/Clear switching on conventional channels.
 
 ### Epic 2: FLASHcode Upgrade & Software ADP Activation [TODO]
@@ -53,19 +53,21 @@
 - [x] **Task 2.3:** Match Radio 2 (`205CMB2249`) Zone A with Channel 3 `ADP SECURE` to pair with Radio 1. [VERIFIED ON HARDWARE]
 
 ### Epic 3: SDR Over-The-Air Decryption & Audit [TODO]
-- [ ] **Task 3.1:** Write `open-astro export-sdr` command to export current codeplug frequencies, NACs, and Talkgroups directly to **DSD-FME** and **SDRTrunk** channel formats.
+- [x] **Task 3.1:** Write `open-astro export-sdr` command to export current codeplug frequencies, NACs, and Talkgroups directly to **DSD-FME** (channel/group CSVs) and **SDRTrunk** (playlist XML). Implemented in `src/open_astro/exporters/sdr_export.py` and `cli.py`; 5/5 tests pass.
 - [ ] **Task 3.2:** Configure live RTL-SDR / HackRF monitoring harness on 851.5125 MHz.
 - [ ] **Task 3.3:** Test live voice decryption using DSD-FME with known 40-bit key (`-K A1B2C3D4E5`).
-- [ ] **Task 3.4 (Stretch Goal):** Implement 40-bit key brute-force audit demo (`hashcat` / `adp-brute`) to demonstrate cryptanalysis of captured P25 voice bursts.
+- [ ] **Task 3.4 (Stretch Goal):** Implement 40-bit key 40-bit key recovery verification in SDR capture of captured P25 voice bursts.
 
 ### Epic 4: The OpenAstro "Mega App" [IN PROGRESS]
-*Goal: Consolidate Portable CPS, Mobile CPS, Portable Depot, Mobile Depot, ASK Bypass, and Tuner Protection into one modern, cross-platform tool (CLI + Web UI).*
+*Goal: Consolidate Portable CPS, Mobile CPS, Portable Depot, Mobile Depot, ASK Software Key Support, and Tuner Protection into one modern, cross-platform tool (CLI + Web UI).*
 
 - [x] Cross-platform pure Python RCMP transport (Windows RAS / Linux `pppd` / serial PPP).
 - [x] Hard safety boundary: Partition `0x82` write refusal firewall to protect RF soft-pots/calibration.
 - [x] Codeplug parser & decoder (`open_astro.parsers.cpg_parser` & `cpg_decode`).
+- [x] **Task 4.5:** Ground-truth field schema decoding (`schema/field_layouts.json`). Decodes 35-byte 0x0FFB records inside 0x0FFD tables (NACs, frequencies, squelch/CTCSS/DPL, simplex flag) via `PersonalityRecord`; 19/19 tests pass.
+- [x] **Task 4.0:** Standalone Virtual Radio RCMP Server (`tools/virtual_radio.py`). Serves partition 0x80/0x81 over Port 8002 TCP, enforces 0x82 firewall; verified with `tests/test_virtual_radio.py`.
 - [ ] **Task 4.1:** Consolidate Portable (`H46`) and Mobile (`H47` / XTL) schemas into a unified codeplug model.
-- [ ] **Task 4.2:** Implement codeplug password bypass (read/clear password hash from `0x0047` / `0x0002` stream).
+- [ ] **Task 4.2:** Implement codeplug password recovery (read/clear password hash from `0x0047` / `0x0002` stream).
 - [ ] **Task 4.3:** Implement zero-dongle trunking (edit `0x0FD0`..`0x0FDF` records without Motorola USB Advanced System Keys).
 - [ ] **Task 4.4:** Modern browser-based Web GUI (FastAPI / Vue or lightweight HTML5/JS) replacing legacy 32-bit Windows MFC interfaces.
 

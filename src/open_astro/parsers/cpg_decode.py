@@ -51,7 +51,10 @@ structural dump of those streams.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+import json
+import os
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import re
 
@@ -60,6 +63,7 @@ from .cpg_parser import CpgParser, rc4, derive_rc4_key
 
 TAG_CHANNEL_NAMES = 0x0FFF
 TAG_CHANNEL_FREQS = 0x0FFD
+TAG_PERSONALITY_REC = 0x0FFB # conventional personality record tag (in 0x0FFD tables)
 TAG_TALKGROUPS = 0x0FF8   # ISH name list, entries like "TG 00002"
 TAG_SITES = 0x0FDC        # ISH name list, trunking system/site aliases
 TAG_SCAN_LISTS = (0x004C, 0x004D, 0x004F, 0x006C, 0x006E)  # "LIST N" tables
@@ -205,6 +209,344 @@ def _decode_squelch(byte: int) -> Dict[str, Any]:
     return {"kind": "DPL", "pl_tone": None, "dpl_code": code}
 
 
+# ---------------------------------------------------------------------------
+# Field-Level Schema & Record Decoders (schema/field_layouts.json)
+# ---------------------------------------------------------------------------
+
+_FIELD_LAYOUTS_CACHE: Optional[Dict[str, Any]] = None
+
+
+def get_default_schema_path() -> Path:
+    """Find the field_layouts.json schema file."""
+    env_path = os.environ.get("OPEN_ASTRO_SCHEMA_PATH")
+    if env_path and os.path.exists(env_path):
+        return Path(env_path)
+    repo_schema = Path(__file__).resolve().parents[3] / "schema" / "field_layouts.json"
+    if repo_schema.exists():
+        return repo_schema
+    cwd_schema = Path.cwd() / "schema" / "field_layouts.json"
+    if cwd_schema.exists():
+        return cwd_schema
+    return repo_schema
+
+
+def validate_field_layouts(schema: Dict[str, Any]) -> bool:
+    """Validate structure and integrity of field layouts schema."""
+    if not isinstance(schema, dict):
+        raise ValueError("Schema must be a dictionary")
+
+    if "0x0FFB" not in schema:
+        raise ValueError("Schema missing mandatory '0x0FFB' record definition")
+
+    rec_layout = schema["0x0FFB"]
+    rec_len = rec_layout.get("_record_len")
+    if rec_len != FREQ_REC_LEN:
+        raise ValueError(f"0x0FFB _record_len must be {FREQ_REC_LEN}, got {rec_len}")
+
+    fields = rec_layout.get("fields")
+    if not isinstance(fields, list) or not fields:
+        raise ValueError("0x0FFB must define non-empty 'fields' list")
+
+    expected_offset = 0
+    for f in fields:
+        name = f.get("name")
+        off = f.get("offset")
+        flen = f.get("length")
+        ftype = f.get("type")
+        if not name or off is None or flen is None or not ftype:
+            raise ValueError(f"Field definition missing required attributes: {f}")
+        if off != expected_offset:
+            raise ValueError(f"Field '{name}' offset mismatch: expected {expected_offset}, got {off}")
+        expected_offset += flen
+
+    if expected_offset != rec_len:
+        raise ValueError(f"Sum of field lengths {expected_offset} != _record_len {rec_len}")
+
+    if "0x0FFD" in schema:
+        tbl_layout = schema["0x0FFD"]
+        tbl_fields = tbl_layout.get("fields")
+        if not isinstance(tbl_fields, list):
+            raise ValueError("0x0FFD fields must be a list")
+
+    return True
+
+
+def load_field_layouts(path: Optional[Union[str, Path]] = None,
+                       reload: bool = False,
+                       validate: bool = True) -> Dict[str, Any]:
+    """Load field-level decoding schema (schema/field_layouts.json)."""
+    global _FIELD_LAYOUTS_CACHE
+    if not reload and path is None and _FIELD_LAYOUTS_CACHE is not None:
+        return _FIELD_LAYOUTS_CACHE
+
+    schema_file = Path(path) if path is not None else get_default_schema_path()
+    if not schema_file.exists():
+        raise FileNotFoundError(f"Field layouts schema not found at: {schema_file}")
+
+    data = json.loads(schema_file.read_text(encoding="utf-8"))
+    if validate:
+        validate_field_layouts(data)
+
+    if path is None:
+        _FIELD_LAYOUTS_CACHE = data
+    return data
+
+
+def normalize_tag(tag: Union[int, str]) -> str:
+    """Normalize integer or string tag to '0xXXXX' format."""
+    if isinstance(tag, int):
+        return f"0x{tag:04X}"
+    tag_str = str(tag).strip()
+    if tag_str.startswith(("0x", "0X")):
+        return f"0x{int(tag_str, 16):04X}"
+    return f"0x{int(tag_str, 16):04X}"
+
+
+def get_schema_layout(tag: Union[int, str] = "0x0FFB",
+                      schema: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Get field layout dictionary for a specific tag."""
+    tag_key = normalize_tag(tag)
+    if schema is None:
+        schema = load_field_layouts()
+    if tag_key not in schema:
+        raise KeyError(f"Tag {tag_key} not defined in field layouts schema")
+    return schema[tag_key]
+
+
+class SquelchValue(int):
+    """Per-channel squelch byte (0=CSQ, 1..42=CTCSS index, >42=DPL).
+
+    Inherits from int so integer comparisons work directly (e.g. sq == 0x1A or sq == 0),
+    while exposing decoded squelch properties.
+    """
+    _decoded: Dict[str, Any]
+
+    def __new__(cls, val: int):
+        obj = super().__new__(cls, val & 0xFF)
+        obj._decoded = _decode_squelch(val & 0xFF)
+        return obj
+
+    @property
+    def kind(self) -> str:
+        return self._decoded["kind"]
+
+    @property
+    def pl_tone(self) -> Optional[float]:
+        return self._decoded["pl_tone"]
+
+    @property
+    def dpl_code(self) -> Optional[int]:
+        return self._decoded["dpl_code"]
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"raw": int(self), **self._decoded}
+
+    def __repr__(self) -> str:
+        if self.kind == "CTCSS":
+            return f"SquelchValue(0x{int(self):02X}, CTCSS {self.pl_tone} Hz)"
+        elif self.kind == "DPL":
+            return f"SquelchValue(0x{int(self):02X}, DPL {self.dpl_code})"
+        return f"SquelchValue(0x{int(self):02X}, CSQ)"
+
+
+class NacValue(str):
+    """P25 Network Access Code formatted as '$NNN' with .raw integer access."""
+    raw: int
+
+    def __new__(cls, raw: int):
+        s = _nac(raw & 0xFFFF)
+        obj = super().__new__(cls, s)
+        obj.raw = raw & 0xFFFF
+        return obj
+
+    def __repr__(self) -> str:
+        return f"NacValue('{self}', raw=0x{self.raw:03X})"
+
+
+class PersonalityRecord(dict):
+    """Decoded 35-byte 0x0FFB conventional personality record.
+
+    Provides both dictionary item access (rec['freq_rx'], rec['rx_frequency'])
+    and attribute access (rec.freq_rx, rec.rx_frequency, rec.simplex).
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._populate_convenience_fields()
+
+    def _populate_convenience_fields(self) -> None:
+        flags = self.get("flags", 0)
+        freq_rx = self.get("freq_rx", 0.0)
+        freq_tx = self.get("freq_tx", 0.0)
+
+        # Fallback for tx when not in band
+        if not _is_band(freq_tx) and _is_band(freq_rx):
+            freq_tx = freq_rx
+            self["freq_tx"] = freq_rx
+
+        # Simplex flag
+        if "simplex" not in self:
+            if flags & SIMPLEX_BIT:
+                self["simplex"] = True
+            elif flags == 0 and abs(freq_rx - freq_tx) < 1e-6 and freq_rx > 0:
+                self["simplex"] = True
+            else:
+                self["simplex"] = False
+
+        # Channel model aliases for backwards compatibility
+        if "rx_frequency" not in self:
+            self["rx_frequency"] = freq_rx
+        if "tx_frequency" not in self:
+            self["tx_frequency"] = freq_tx
+        if "rx_nac" not in self and "nac_rx" in self:
+            self["rx_nac"] = str(self["nac_rx"])
+        if "tx_nac" not in self and "nac_tx" in self:
+            self["tx_nac"] = str(self["nac_tx"])
+
+        sq_rx = self.get("squelch_rx")
+        sq_tx = self.get("squelch_tx")
+        if "rx_pl_tone" not in self:
+            self["rx_pl_tone"] = sq_rx.pl_tone if isinstance(sq_rx, SquelchValue) else None
+        if "tx_pl_tone" not in self:
+            self["tx_pl_tone"] = sq_tx.pl_tone if isinstance(sq_tx, SquelchValue) else None
+        if "rx_dpl_code" not in self:
+            self["rx_dpl_code"] = sq_rx.dpl_code if isinstance(sq_rx, SquelchValue) else None
+        if "tx_dpl_code" not in self:
+            self["tx_dpl_code"] = sq_tx.dpl_code if isinstance(sq_tx, SquelchValue) else None
+
+        if "voice_type" not in self:
+            rx_kind = sq_rx.kind if isinstance(sq_rx, SquelchValue) else "CSQ"
+            tx_kind = sq_tx.kind if isinstance(sq_tx, SquelchValue) else "CSQ"
+            has_tone = rx_kind != "CSQ" or tx_kind != "CSQ"
+            self["voice_type"] = "Analog" if has_tone else "Unknown"
+
+    def __getattr__(self, name: str) -> Any:
+        if name in self:
+            return self[name]
+        raise AttributeError(f"'PersonalityRecord' object has no attribute '{name}'")
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name.startswith("_"):
+            super().__setattr__(name, value)
+        else:
+            self[name] = value
+
+    def to_dict(self, hex_bytes: bool = False) -> Dict[str, Any]:
+        """Convert to standard dictionary, optionally converting bytes to hex strings."""
+        out: Dict[str, Any] = {}
+        for k, v in self.items():
+            if isinstance(v, bytes):
+                out[k] = v.hex() if hex_bytes else v
+            elif isinstance(v, SquelchValue):
+                out[k] = v.to_dict() if hex_bytes else int(v)
+            elif isinstance(v, NacValue):
+                out[k] = str(v)
+            else:
+                out[k] = v
+        return out
+
+    def as_dict(self, hex_bytes: bool = False) -> Dict[str, Any]:
+        return self.to_dict(hex_bytes=hex_bytes)
+
+
+def decode_record_with_schema(record_bytes: bytes,
+                              tag: Union[int, str] = "0x0FFB",
+                              strict: bool = False,
+                              schema: Optional[Dict[str, Any]] = None) -> Optional[PersonalityRecord]:
+    """Decode a record buffer using the field definitions from field_layouts.json.
+
+    Args:
+        record_bytes: The raw byte buffer for the record.
+        tag: Schema tag identifying the layout (default: 0x0FFB).
+        strict: When True, raises ValueError on length/tag mismatches; when False, returns None.
+        schema: Optional pre-loaded schema dictionary.
+    """
+    tag_key = normalize_tag(tag)
+    try:
+        layout = get_schema_layout(tag_key, schema=schema)
+    except KeyError:
+        if strict:
+            raise
+        return None
+
+    expected_len = layout.get("_record_len", FREQ_REC_LEN)
+    if len(record_bytes) < expected_len:
+        if strict:
+            raise ValueError(f"Buffer length {len(record_bytes)} < expected record length {expected_len}")
+        return None
+
+    if tag_key == "0x0FFB":
+        rec_tag = int.from_bytes(record_bytes[0:2], "big")
+        rec_term = record_bytes[34]
+        if strict:
+            if rec_tag != 0x0FFB:
+                raise ValueError(f"Record tag mismatch: expected 0x0FFB, got 0x{rec_tag:04X}")
+            if rec_term != 0x01:
+                raise ValueError(f"Record terminator mismatch: expected 0x01, got 0x{rec_term:02X}")
+
+    field_values: Dict[str, Any] = {}
+    for f in layout.get("fields", []):
+        name = f["name"]
+        off = f["offset"]
+        flen = f["length"]
+        ftype = f["type"]
+        raw = record_bytes[off:off + flen]
+
+        if ftype == "u16be":
+            val = int.from_bytes(raw, "big")
+        elif ftype == "u8":
+            val = raw[0]
+        elif ftype == "u32be":
+            val = int.from_bytes(raw, "big")
+        elif ftype == "bytes":
+            val = bytes(raw)
+        elif ftype == "nac":
+            val = NacValue(int.from_bytes(raw, "big"))
+        elif ftype == "freq_x5hz":
+            val = _freq_mhz(int.from_bytes(raw, "big"))
+        elif ftype == "squelch":
+            val = SquelchValue(raw[0])
+        else:
+            val = bytes(raw)
+        field_values[name] = val
+
+    if tag_key == "0x0FFB":
+        return PersonalityRecord(field_values)
+    return field_values  # type: ignore[return-value]
+
+
+def decode_table_with_schema(payload: bytes,
+                             tag: Union[int, str] = "0x0FFD",
+                             strict: bool = False,
+                             schema: Optional[Dict[str, Any]] = None) -> List[PersonalityRecord]:
+    """Decode a container table payload (tag 0x0FFD) into a list of PersonalityRecords."""
+    tag_key = normalize_tag(tag)
+    if tag_key != "0x0FFD":
+        if strict:
+            raise ValueError(f"decode_table_with_schema currently supports container 0x0FFD, got {tag_key}")
+        return []
+
+    if len(payload) < NAME_TABLE_PREFIX:
+        if strict:
+            raise ValueError(f"Payload length {len(payload)} < table header prefix {NAME_TABLE_PREFIX}")
+        return []
+
+    count = int.from_bytes(payload[4:6], "big")
+    body = payload[NAME_TABLE_PREFIX:]
+    if count <= 0 or len(body) < count * FREQ_REC_LEN:
+        if strict and count > 0:
+            raise ValueError(f"Payload body length {len(body)} < expected {count * FREQ_REC_LEN}")
+        return []
+
+    records: List[PersonalityRecord] = []
+    for i in range(count):
+        chunk = body[i * FREQ_REC_LEN:(i + 1) * FREQ_REC_LEN]
+        rec = decode_record_with_schema(chunk, tag="0x0FFB", strict=strict, schema=schema)
+        if rec is not None:
+            records.append(rec)
+    return records
+
+
 class CpgDecoder:
     """Decode a .cpg into a typed RadioCodeplug (conventional channels)."""
 
@@ -298,46 +640,25 @@ class CpgDecoder:
                 names.append(text)
         return names
 
-    @staticmethod
-    def _decode_freq_rec(rec: bytes) -> Optional[Dict[str, Any]]:
-        if len(rec) < OFF_FREQ_TX + 4:
+    @classmethod
+    def _decode_freq_rec(cls, rec: bytes) -> Optional[PersonalityRecord]:
+        if len(rec) < FREQ_REC_LEN:
             return None
-        rx = _freq_mhz(int.from_bytes(rec[OFF_FREQ_RX:OFF_FREQ_RX + 4], "big"))
-        tx = _freq_mhz(int.from_bytes(rec[OFF_FREQ_TX:OFF_FREQ_TX + 4], "big"))
-        if not _is_band(rx):
+        tag = int.from_bytes(rec[:2], "big")
+        # Real conventional records carry 0x0FFB; synthetic tests may carry 0x0000.
+        if tag not in (TAG_PERSONALITY_REC, 0):
             return None
-        if not _is_band(tx):
-            tx = rx
+        decoded = decode_record_with_schema(rec, tag=TAG_PERSONALITY_REC, strict=False)
+        if decoded is None:
+            return None
+        if not _is_band(decoded.freq_rx):
+            return None
+        return decoded
 
-        # Option field: rec[24]=RX squelch byte, rec[26]=TX squelch byte,
-        # rec[27] bit 0x80 = simplex/direct (rx==tx). rec[25] is a squelch
-        # mode byte that is not yet fully resolved (it mirrors the tone on some
-        # channels and is 0 on others) -- left undecoded.
-        opt = rec[OFF_OPTIONS:OFF_OPTIONS + 4] if len(rec) >= OFF_OPTIONS + 4 else b"\x00\x00\x00\x00"
-        rx_sq = _decode_squelch(opt[0])
-        tx_sq = _decode_squelch(opt[2])
-        simplex = bool(opt[3] & SIMPLEX_BIT) if len(opt) >= 4 else (abs(rx - tx) < 1e-6)
-
-        # Modulation: a CTCSS or DPL squelch code proves analog FM. CSQ is
-        # ambiguous (analog carrier squelch OR a P25 channel squelching on NAC),
-        # so we do NOT claim digital -- that stays "Unknown" until a real
-        # per-channel modulation field is found. (The earlier "zero => digital"
-        # guess was wrong: zero means carrier squelch, which is analog.)
-        has_tone = rx_sq["kind"] != "CSQ" or tx_sq["kind"] != "CSQ"
-        voice_type = "Analog" if has_tone else "Unknown"
-
-        return {
-            "rx_frequency": rx,
-            "tx_frequency": tx,
-            "rx_nac": _nac(int.from_bytes(rec[OFF_NAC_RX:OFF_NAC_RX + 2], "big")),
-            "tx_nac": _nac(int.from_bytes(rec[OFF_NAC_TX:OFF_NAC_TX + 2], "big")),
-            "voice_type": voice_type,
-            "rx_pl_tone": rx_sq["pl_tone"],
-            "tx_pl_tone": tx_sq["pl_tone"],
-            "rx_dpl_code": rx_sq["dpl_code"],
-            "tx_dpl_code": tx_sq["dpl_code"],
-            "simplex": simplex,
-        }
+    PersonalityRecord = PersonalityRecord
+    decode_record_with_schema = staticmethod(decode_record_with_schema)
+    decode_table_with_schema = staticmethod(decode_table_with_schema)
+    load_field_layouts = staticmethod(load_field_layouts)
 
     # -- public ----------------------------------------------------------
     def decode(self) -> RadioCodeplug:

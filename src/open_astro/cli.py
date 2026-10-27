@@ -6,6 +6,17 @@ import os
 import sys
 from .models import RadioCodeplug, Zone, Channel, EncryptionKey
 from .parsers import JsonParser, CsvParser, CpgParser, CpgDecoder
+from .parsers.button_edit import (
+    ButtonPatcher,
+    BUTTON_POSITIONS,
+    BUTTON_ALIASES,
+    FUNCTION_TOKENS,
+    resolve_function,
+    resolve_position,
+    function_label,
+    ButtonPatchError,
+)
+from .exporters.sdr_export import export_dsdfme, export_sdrtrunk
 from .protocol import RadioSerialLink, AstroFlasher
 
 def cmd_new(args):
@@ -725,6 +736,111 @@ def cmd_flashcode_upgrade(args):
         print(f"\n[+] Wrote upgrade summary: {args.output}")
 
 
+def cmd_export_sdr(args):
+    """Export codeplug channels and talkgroups to DSD-FME and/or SDRTrunk."""
+    codeplug = JsonParser.load_file(args.input)
+    fmt = args.format
+    if fmt in ("dsdfme", "both"):
+        paths = export_dsdfme(codeplug, args.output_dir)
+        print("[+] Exported DSD-FME files:")
+        print(f"    Channel map: {paths['channel_map']}")
+        print(f"    Group list : {paths['group']}")
+    if fmt in ("sdrtrunk", "both"):
+        path = export_sdrtrunk(codeplug, args.output_dir)
+        print(f"[+] Exported SDRTrunk playlist: {path}")
+
+
+def cmd_buttons(args):
+    """Offline button-assignment editor: patch conventional button functions
+    and generate --edit CLI flags for rcmp_replay_write.py."""
+    if args.list_buttons:
+        print("Supported Physical Buttons:")
+        for slug, (idx, desc) in BUTTON_POSITIONS.items():
+            print(f"  {slug:<15} (index {idx}): {desc}")
+        print("\nAliases:")
+        for alias, target in BUTTON_ALIASES.items():
+            print(f"  {alias:<15} -> {target}")
+        if not args.list_functions:
+            return
+
+    if args.list_functions:
+        print("Known Function Tokens:")
+        for name, token in FUNCTION_TOKENS.items():
+            print(f"  {name:<22} : 0x{token:02x}")
+        return
+
+    if not args.input:
+        print("[-] Error: input codeplug or structural JSON dump is required.")
+        sys.exit(1)
+
+    try:
+        patcher = ButtonPatcher.from_file(args.input)
+    except Exception as e:
+        print(f"[-] Edit failed: {e}")
+        sys.exit(1)
+
+    if not args.set:
+        print(f"[+] Button configuration for {args.input}:")
+        short_tokens = patcher.current_tokens("short")
+        long_tokens = patcher.current_tokens("long")
+        print("\n  Short Press (0x0016):")
+        for slug, (idx, desc) in BUTTON_POSITIONS.items():
+            if idx < len(short_tokens):
+                print(f"    {slug:<14} ({desc}): {function_label(short_tokens[idx])}")
+        print("\n  Long Press (0x0017):")
+        for slug, (idx, desc) in BUTTON_POSITIONS.items():
+            if idx < len(long_tokens):
+                print(f"    {slug:<14} ({desc}): {function_label(long_tokens[idx])}")
+        return
+
+    orig_short = list(patcher.current_tokens("short"))
+    orig_long = list(patcher.current_tokens("long"))
+
+    all_notes = []
+    for item in args.set:
+        if "=" not in item:
+            print(f"[-] Invalid format for --set: '{item}'. Expected <button>=<function> (e.g. orange=monitor)")
+            sys.exit(1)
+        btn, func = item.split("=", 1)
+        btn = btn.strip()
+        func = func.strip()
+        try:
+            notes = patcher.set_button(btn, func, long_press=args.long)
+            if notes:
+                all_notes.extend(notes)
+        except ButtonPatchError as e:
+            print(f"[-] Edit failed: {e}")
+            sys.exit(1)
+
+    new_short = patcher.current_tokens("short")
+    new_long = patcher.current_tokens("long")
+
+    press_label = "Long Press (0x0017)" if args.long else "Short Press (0x0016)"
+    print(f"[+] Modified button assignments ({press_label}):")
+    changed = False
+    for slug, (idx, desc) in BUTTON_POSITIONS.items():
+        if idx < len(orig_short) and idx < len(new_short) and orig_short[idx] != new_short[idx]:
+            print(f"    [Short] {slug} ({desc}): {function_label(orig_short[idx])} -> {function_label(new_short[idx])}")
+            changed = True
+        if idx < len(orig_long) and idx < len(new_long) and orig_long[idx] != new_long[idx]:
+            print(f"    [Long]  {slug} ({desc}): {function_label(orig_long[idx])} -> {function_label(new_long[idx])}")
+            changed = True
+    if not changed:
+        print("    (no changes detected; values already matched)")
+
+    for note in all_notes:
+        print(f"[!] Note: {note}")
+
+    edits = patcher.generate_edits()
+    print(f"[+] Generated {len(edits)} object edit(s) for live replay write:")
+    for e in edits:
+        print(f"    --edit {e}")
+
+    if args.output:
+        patcher.save_json(args.output)
+        print(f"[+] Saved patched objects to {args.output}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpenAstro: Open Source Motorola ASTRO 25 Codeplug Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -885,6 +1001,27 @@ def main():
                       help="List all feature switch names + profiles and exit")
     p_fc.add_argument("-o", "--output", help="Write upgrade summary to this JSON file")
     p_fc.set_defaults(func=cmd_flashcode_upgrade)
+
+    # export-sdr
+    p_sdr = subparsers.add_parser("export-sdr", help="Export codeplug to DSD-FME CSVs and SDRTrunk playlist XML")
+    p_sdr.add_argument("input", help="Path to codeplug JSON file")
+    p_sdr.add_argument("--format", choices=["dsdfme", "sdrtrunk", "both"], default="both",
+                       help="Export format (default: both)")
+    p_sdr.add_argument("-o", "--output-dir", default=".", help="Output directory for generated files (default: .)")
+    p_sdr.set_defaults(func=cmd_export_sdr)
+
+    # buttons
+    p_btn = subparsers.add_parser("buttons",
+        help="Modify button assignments (short/long press) and generate --edit replay flags")
+    p_btn.add_argument("input", nargs="?", help="Path to source .cpg or structural JSON dump")
+    p_btn.add_argument("--list-buttons", action="store_true", help="List supported physical buttons and exit")
+    p_btn.add_argument("--list-functions", action="store_true", help="List known function tokens and exit")
+    p_btn.add_argument("--set", action="append", metavar="BUTTON=FUNCTION",
+                       help="Set button function (e.g. orange=monitor, side2=scan); repeatable")
+    p_btn.add_argument("--long", action="store_true",
+                       help="Target long-press (0x0017) instead of short-press (0x0016)")
+    p_btn.add_argument("-o", "--output", help="Path to write patched JSON dump")
+    p_btn.set_defaults(func=cmd_buttons)
 
     args = parser.parse_args()
     args.func(args)

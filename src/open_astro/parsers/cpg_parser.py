@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 HEADER_SIZE = 0x320            # CFhAdkFileHeader::GetHeaderSize
 HEADER_STREAM = "AdkFileHeader"   # confirmed from real .cpg samples (plaintext)
@@ -118,6 +118,26 @@ def _guess_serial(fields: List[str]) -> Optional[str]:
         if f != model and re.fullmatch(r"\d{3}[A-Z]{2,3}\d{3,4}", f):
             return f
     return None
+
+
+class CpgData(dict):
+    """Container for decoded .cpg objects, indexed by (partition, tag, instance).
+    Also exposes metadata attributes: model, serial, flashcode, header, objects."""
+
+    def __init__(self, objects_map: Dict[Tuple[int, int, int], bytes],
+                 header: Optional[Dict[str, Any]] = None,
+                 model: Optional[str] = None,
+                 serial: Optional[str] = None,
+                 flashcode: Optional[str] = None):
+        super().__init__(objects_map)
+        self.objects = self
+        self.header = header or {}
+        self.model = model or self.header.get("model") or "UNKNOWN"
+        self.serial = serial or self.header.get("serial") or "UNKNOWN"
+        self.flashcode = flashcode or "UNKNOWN"
+
+    def get_object(self, partition: int, tag: int, instance: int = 0) -> Optional[bytes]:
+        return self.get((partition, tag, instance))
 
 
 class CpgParser:
@@ -271,6 +291,42 @@ class CpgParser:
                 "serial": parsed.get("serial") or _guess_serial(fields),
             }
         return result
+
+    @classmethod
+    def load_file(cls, path: str) -> CpgData:
+        """Extract raw decrypted Partition 0x80/0x81 objects and metadata."""
+        import re
+        with cls(path) as parser:
+            parsed = parser.parse()
+            header = parsed.get("header") or {}
+            objs = parser.objects()
+            obj_map: Dict[Tuple[int, int, int], bytes] = {}
+            for o in objs:
+                p = o.get("partition") or 0x80
+                t = o["tag"]
+                i = o["instance"]
+                obj_map[(p, t, i)] = o["payload"]
+
+            model = header.get("model")
+            serial = header.get("serial")
+            flashcode = None
+
+            if (0x81, 0x1004, 0) in obj_map:
+                p1004 = obj_map[(0x81, 0x1004, 0)]
+                m = re.search(rb"\x02\x12([A-Z0-9]+)\x00([A-Z0-9]+)\x00", p1004)
+                if m:
+                    if not serial:
+                        serial = m.group(1).decode("ascii", errors="replace")
+                    if not model:
+                        model = m.group(2).decode("ascii", errors="replace")
+
+            if (0x81, 0x1006, 0) in obj_map:
+                p1006 = obj_map[(0x81, 0x1006, 0)]
+                m = re.search(rb"([0-9A-Z]{6}-[0-9A-Z]{6}-[0-9A-Z])", p1006)
+                if m:
+                    flashcode = m.group(1).decode("ascii", errors="replace")
+
+            return CpgData(obj_map, header=header, model=model, serial=serial, flashcode=flashcode)
 
     def to_json(self, filepath: str, decrypt: bool = True) -> Dict[str, Any]:
         data = self.parse(decrypt=decrypt)
