@@ -74,3 +74,6 @@ captures/backup_*.json
 captures/at_*
 captures/read_plan_codeplug.json
 live_codeplug.json
+
+# machine-local RE binary root override
+re_sources.local.json
