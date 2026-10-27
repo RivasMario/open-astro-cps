@@ -1,0 +1,679 @@
+{
+  "radio_serial": "721CLZ0655",
+  "codeplug_name": "REPD-XTS5000-2P_20151208",
+  "systems": [
+    {
+      "index": 0,
+      "name": "SEATTLE",
+      "system_id": 1,
+      "control_channels": [
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1326,
+          "frequency_mhz": 859.2875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1414,
+          "frequency_mhz": 859.8375,
+          "flags": 0
+        },
+        {
+          "channel_id": 1204,
+          "frequency_mhz": 858.525,
+          "flags": 0
+        },
+        {
+          "channel_id": 1252,
+          "frequency_mhz": 858.825,
+          "flags": 0
+        },
+        {
+          "channel_id": 1244,
+          "frequency_mhz": 858.775,
+          "flags": 0
+        },
+        {
+          "channel_id": 1614,
+          "frequency_mhz": 861.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "name": "APPLE CV",
+      "system_id": 2,
+      "control_channels": [
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1090,
+          "frequency_mhz": 857.8125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1090,
+          "frequency_mhz": 857.8125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1090,
+          "frequency_mhz": 857.8125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1090,
+          "frequency_mhz": 857.8125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1090,
+          "frequency_mhz": 857.8125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1090,
+          "frequency_mhz": 857.8125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1090,
+          "frequency_mhz": 857.8125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1090,
+          "frequency_mhz": 857.8125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1090,
+          "frequency_mhz": 857.8125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "name": "EPSCA",
+      "system_id": 3,
+      "control_channels": [
+        {
+          "channel_id": 942,
+          "frequency_mhz": 856.8875,
+          "flags": 0
+        },
+        {
+          "channel_id": 942,
+          "frequency_mhz": 856.8875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1090,
+          "frequency_mhz": 857.8125,
+          "flags": 0
+        },
+        {
+          "channel_id": 942,
+          "frequency_mhz": 856.8875,
+          "flags": 0
+        },
+        {
+          "channel_id": 942,
+          "frequency_mhz": 856.8875,
+          "flags": 0
+        },
+        {
+          "channel_id": 942,
+          "frequency_mhz": 856.8875,
+          "flags": 0
+        },
+        {
+          "channel_id": 802,
+          "frequency_mhz": 856.0125,
+          "flags": 128
+        },
+        {
+          "channel_id": 802,
+          "frequency_mhz": 856.0125,
+          "flags": 128
+        },
+        {
+          "channel_id": 802,
+          "frequency_mhz": 856.0125,
+          "flags": 128
+        },
+        {
+          "channel_id": 802,
+          "frequency_mhz": 856.0125,
+          "flags": 128
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 802,
+          "frequency_mhz": 856.0125,
+          "flags": 0
+        },
+        {
+          "channel_id": 802,
+          "frequency_mhz": 856.0125,
+          "flags": 0
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "name": "EDHILL",
+      "system_id": 40,
+      "control_channels": [
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 802,
+          "frequency_mhz": 856.0125,
+          "flags": 128
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1698,
+          "frequency_mhz": 861.6125,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "name": "COALCRK",
+      "system_id": 41,
+      "control_channels": [
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1326,
+          "frequency_mhz": 859.2875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1414,
+          "frequency_mhz": 859.8375,
+          "flags": 0
+        },
+        {
+          "channel_id": 1204,
+          "frequency_mhz": 858.525,
+          "flags": 0
+        },
+        {
+          "channel_id": 1252,
+          "frequency_mhz": 858.825,
+          "flags": 0
+        },
+        {
+          "channel_id": 1244,
+          "frequency_mhz": 858.775,
+          "flags": 0
+        },
+        {
+          "channel_id": 1614,
+          "frequency_mhz": 861.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "name": "KCVC",
+      "system_id": 6,
+      "control_channels": [
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1326,
+          "frequency_mhz": 859.2875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1414,
+          "frequency_mhz": 859.8375,
+          "flags": 0
+        },
+        {
+          "channel_id": 1204,
+          "frequency_mhz": 858.525,
+          "flags": 0
+        },
+        {
+          "channel_id": 1252,
+          "frequency_mhz": 858.825,
+          "flags": 0
+        },
+        {
+          "channel_id": 1244,
+          "frequency_mhz": 858.775,
+          "flags": 0
+        },
+        {
+          "channel_id": 1614,
+          "frequency_mhz": 861.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        },
+        {
+          "channel_id": 1774,
+          "frequency_mhz": 862.0875,
+          "flags": 0
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "name": "CAN PRK",
+      "system_id": 7,
+      "control_channels": [
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        },
+        {
+          "channel_id": 1152,
+          "frequency_mhz": 858.2,
+          "flags": 0
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "name": "SNOQ",
+      "system_id": 13,
+      "control_channels": [
+        {
+          "channel_id": 1606,
+          "frequency_mhz": 861.0375,
+          "flags": 0
+        },
+        {
+          "channel_id": 1606,
+          "frequency_mhz": 861.0375,
+          "flags": 0
+        }
+      ]
+    }
+  ],
+  "talkgroups": [
+    {
+      "tgid": 870,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1102,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1726,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1318,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1188,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 930,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1192,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1742,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1148,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 866,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1338,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1228,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 2354,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 2282,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1998,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1958,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 2394,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 2314,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 2154,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 2074,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1834,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1994,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1224,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1264,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1276,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1930,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1116,
+      "flags": 0,
+      "priority_flags": 0
+    },
+    {
+      "tgid": 1778,
+      "flags": 0,
+      "priority_flags": 0
+    }
+  ]
+}

@@ -189,7 +189,10 @@ RTTI/trace strings in the binary; signatures from prior RE.)
    run on an alphanumeric payload. **Bug fixed:** the repo's default template flashcode was
    `500008-000488-4` (invalid) everywhere (`cli.py`, `models/codeplug.py`, `examples/*.json`,
    `cleanroom_flasher/comm_pair_*.json`); corrected to the Luhn-valid `-2` (`100008-000488` → `-1`).
-2. **`0x1005` bitmask byte layout `[OPEN]` — not statically recoverable.** RE this
+2. **`0x1005` bitmask byte layout `[VERIFIED-HW]` — read live from Radio 4 (`721CLZ0655`).**
+   Read live over RCMP partition 0x81 on 2026-10-27 for FLASHcode `400008-002000-0`:
+   `1d17325b7ef5b534fbebb9e20218c520008000801000000310e8000000000c040000000008000002000000` (43 bytes).
+   RE this RE this
    session (static pefile/capstone over PatPort.exe + cgIsh10c) found both partition-`0x81`
    builders: item `0x1006` (ASCII string) builder @ `0x91e8cc` (ATTR ctor `0x91e8fe`,
    data-layout `0x3749/0x374a`); item `0x1005` (license bitmask) builder @ `0xa11a68`
