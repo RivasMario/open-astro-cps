@@ -214,6 +214,63 @@ def test_serial_and_flashcode_overrides():
         server.stop()
 
 
+def test_lock_security_gates_partition_81_writes():
+    """With lock_security=True, 0x81 writes are refused until a 0x0107 UnlockSecurity.
+
+    Also verifies that 0x82 stays refused regardless of the unlock (independent
+    firewall), and that the 0x0107 request is acknowledged with 0x8107 status 0.
+    """
+    cpg_data = load_codeplug(DEFAULT_CPG)
+    server = VirtualRadioServer(cpg_data, host="127.0.0.1", port=0,
+                                verbose=False, lock_security=True)
+    server.start()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((server.host, server.port))
+    try:
+        # 1. Write to Partition 0x81 BEFORE unlock -> refused (status 1)
+        sec_data = b"LOCKED_SERIAL\x00"
+        write_81_req = struct.pack(">BHHH", PART_SECURITY, 0x1004, 0, len(sec_data)) + sec_data
+        _send_rcmp_frame(sock, 0x0002, write_81_req)
+        resp_op, resp_body = _recv_rcmp_frame(sock)
+        assert resp_op == 0x8002
+        assert resp_body == b"\x01"  # Refused: security locked
+
+        # 2. 0x82 is always refused, even while locked
+        write_82_req = struct.pack(">BHHH", PART_TUNING, 0x0001, 0, 4) + b"\xDE\xAD\xBE\xEF"
+        _send_rcmp_frame(sock, 0x0002, write_82_req)
+        resp_op, resp_body = _recv_rcmp_frame(sock)
+        assert resp_op == 0x8002
+        assert resp_body == b"\x01"
+
+        # 3. Send UnlockSecurity (0x0107) -> acknowledged with 0x8107 status 0
+        _send_rcmp_frame(sock, 0x0107, b"")
+        resp_op, resp_body = _recv_rcmp_frame(sock)
+        assert resp_op == 0x8107
+        assert resp_body == b"\x00"
+
+        # 4. Write to Partition 0x81 AFTER unlock -> accepted (status 0)
+        _send_rcmp_frame(sock, 0x0002, write_81_req)
+        resp_op, resp_body = _recv_rcmp_frame(sock)
+        assert resp_op == 0x8002
+        assert resp_body == b"\x00"
+
+        # Confirm the write actually landed
+        read_81_req = struct.pack(">BHHHH", PART_SECURITY, 0x1004, 0, 0, len(sec_data))
+        _send_rcmp_frame(sock, 0x0001, read_81_req)
+        resp_op, resp_body = _recv_rcmp_frame(sock)
+        assert resp_op == 0x8001
+        assert resp_body == sec_data
+
+        # 5. 0x82 STILL refused after unlock (firewall independent of lock_security)
+        _send_rcmp_frame(sock, 0x0002, write_82_req)
+        resp_op, resp_body = _recv_rcmp_frame(sock)
+        assert resp_op == 0x8002
+        assert resp_body == b"\x01"
+    finally:
+        sock.close()
+        server.stop()
+
+
 def test_load_structural_json():
     """Test loading codeplug from structural JSON file."""
     json_path = os.path.join(REPO_ROOT, "backups", "205CFR2930_structural.json")

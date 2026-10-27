@@ -16,7 +16,12 @@ from .parsers.button_edit import (
     function_label,
     ButtonPatchError,
 )
-from .exporters.sdr_export import export_dsdfme, export_sdrtrunk
+from .exporters.sdr_export import (
+    export_dsdfme,
+    export_sdrtrunk,
+    export_dsdfme_launch,
+    SDRTRUNK_KEY_NOTE,
+)
 from .protocol import RadioSerialLink, AstroFlasher
 
 def cmd_new(args):
@@ -380,6 +385,7 @@ def cmd_decode_cpg(args):
         sys.exit(1)
     try:
         codeplug = decoder.decode()
+        personalities = decoder.personality_records()
     finally:
         decoder.close()
 
@@ -388,6 +394,8 @@ def cmd_decode_cpg(args):
           f"from {codeplug.radio_model} (Serial: {codeplug.serial_number})")
     print(f"[+] Talkgroups: {len(codeplug.talkgroups)}  "
           f"Sites: {len(codeplug.sites)}  Scan lists: {len(codeplug.scan_lists)}")
+    print(f"[+] Conventional personalities (unique 0x0FFB across all 0x0FFD instances): "
+          f"{len(personalities)}")
     print(f"[+] Wrote typed codeplug JSON: {args.output}")
     if args.csv:
         CsvParser.export_csv(codeplug, args.csv)
@@ -749,6 +757,17 @@ def cmd_export_sdr(args):
         path = export_sdrtrunk(codeplug, args.output_dir)
         print(f"[+] Exported SDRTrunk playlist: {path}")
 
+    if getattr(args, "emit_launch", False):
+        try:
+            launch_path = export_dsdfme_launch(codeplug, args.output_dir, key=args.key)
+        except ValueError as e:
+            print(f"[-] Could not emit DSD-FME launch command: {e}")
+            sys.exit(1)
+        print(f"[+] Emitted DSD-FME launch command: {launch_path}")
+        if args.key:
+            print(f"    (ADP key passed to DSD-FME via -K; keep the .sh out of public repos)")
+        print(f"[!] {SDRTRUNK_KEY_NOTE}")
+
 
 def cmd_buttons(args):
     """Offline button-assignment editor: patch conventional button functions
@@ -1008,6 +1027,12 @@ def main():
     p_sdr.add_argument("--format", choices=["dsdfme", "sdrtrunk", "both"], default="both",
                        help="Export format (default: both)")
     p_sdr.add_argument("-o", "--output-dir", default=".", help="Output directory for generated files (default: .)")
+    p_sdr.add_argument("--key", metavar="HEX",
+                       help="ADP/RC4 key (hex, e.g. A1B2C3D4E5) passed to the emitted DSD-FME "
+                            "launch command via -K. Only used with --emit-launch.")
+    p_sdr.add_argument("--emit-launch", action="store_true",
+                       help="Also emit a best-effort DSD-FME launch script (<base>_dsdfme_run.sh) "
+                            "referencing the generated CSVs, P25 Phase 1 flags, and --key if given.")
     p_sdr.set_defaults(func=cmd_export_sdr)
 
     # buttons

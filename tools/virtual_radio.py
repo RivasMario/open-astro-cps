@@ -25,7 +25,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import socket
 import struct
 import sys
@@ -163,11 +162,12 @@ class VirtualRadioServer:
     """Virtual ASTRO 25 Radio RCMP Server."""
 
     def __init__(self, cpg_data: CpgData, host: str = "127.0.0.1", port: int = 8002,
-                 verbose: bool = False):
+                 verbose: bool = False, lock_security: bool = False):
         self.cpg_data = cpg_data
         self.host = host
         self.port = port
         self.verbose = verbose
+        self.lock_security = lock_security
         self.running = False
         self.server_sock: Optional[socket.socket] = None
         self._thread: Optional[threading.Thread] = None
@@ -212,11 +212,18 @@ class VirtualRadioServer:
                 break
             self._log(f"Connection accepted from {addr[0]}:{addr[1]}")
             ct = threading.Thread(target=self._handle_client, args=(client_sock, addr), daemon=True)
-            self.client_threads.append(ct)
+            # Prune finished client threads so the list cannot grow unbounded.
+            with self._lock:
+                self.client_threads = [t for t in self.client_threads if t.is_alive()]
+                self.client_threads.append(ct)
             ct.start()
 
     def _handle_client(self, client_sock: socket.socket, addr: Tuple[str, int]) -> None:
         buf = bytearray()
+        # Per-connection session state (e.g. UnlockSecurity grant for this client).
+        session: Dict[str, Any] = {"unlocked": False}
+        # Guard against idle / half-open clients blocking a thread forever.
+        client_sock.settimeout(30.0)
         try:
             while self.running:
                 # Need at least 2-byte length prefix
@@ -240,10 +247,12 @@ class VirtualRadioServer:
                 record = bytes(buf[2:2 + length])
                 del buf[:2 + length]
 
-                resp_payload = self.process_record(record)
+                resp_payload = self.process_record(record, session)
                 if resp_payload:
                     resp_frame = struct.pack(">H", len(resp_payload)) + resp_payload
                     client_sock.sendall(resp_frame)
+        except socket.timeout:
+            self._log(f"Client idle timeout, closing: {addr[0]}:{addr[1]}")
         except (ConnectionResetError, BrokenPipeError):
             pass
         finally:
@@ -253,8 +262,15 @@ class VirtualRadioServer:
                 pass
             self._log(f"Client disconnected: {addr[0]}:{addr[1]}")
 
-    def process_record(self, record: bytes) -> bytes:
-        """Process one incoming RCMP record and return response record payload."""
+    def process_record(self, record: bytes,
+                       session: Optional[Dict[str, Any]] = None) -> bytes:
+        """Process one incoming RCMP record and return response record payload.
+
+        ``session`` carries per-connection state (e.g. the UnlockSecurity grant).
+        A direct call without a session gets a throwaway one.
+        """
+        if session is None:
+            session = {"unlocked": False}
         if len(record) < 2:
             return b""
 
@@ -346,6 +362,10 @@ class VirtualRadioServer:
                 # Error status 1
                 return struct.pack(">HB", 0x8002, 0x01)
 
+            if self.lock_security and part == PART_SECURITY and not session.get("unlocked"):
+                self._log("[-] Refusing WriteObject to partition 0x81 (security locked; send 0x0107 UnlockSecurity first)")
+                return struct.pack(">HB", 0x8002, 0x01)
+
             if len(payload) >= 5:
                 obj = (payload[1] << 8) | payload[2]
                 inst = (payload[3] << 8) | payload[4]
@@ -368,12 +388,22 @@ class VirtualRadioServer:
                 self._log("[-] Refusing OP_WRITE to partition 0x82 (Tuning Firewall active)!")
                 return struct.pack(">HB", 0x8101, 0x01)
 
+            if self.lock_security and part == PART_SECURITY and not session.get("unlocked"):
+                self._log("[-] Refusing OP_WRITE to partition 0x81 (security locked; send 0x0107 UnlockSecurity first)")
+                return struct.pack(">HB", 0x8101, 0x01)
+
             if len(payload) >= 13:
                 obj = (payload[1] << 8) | payload[2]
                 inst = (payload[3] << 8) | payload[4]
                 # In rcmp.build_write:
                 # part(1), obj(2), inst(2), len(2), 0000(2), len(2), data(len-2), crc(2)
                 data = payload[11:-2]
+                # Verify the trailing CRC-16 over the written data; accept either way
+                # (this is a test double, not a strict validator).
+                frame_crc = (payload[-2] << 8) | payload[-1]
+                calc_crc = crc16_ccitt(data)
+                if calc_crc != frame_crc:
+                    self._log(f"[!] OP_WRITE CRC mismatch: frame=0x{frame_crc:04X} calc=0x{calc_crc:04X} (accepting anyway)")
                 with self._lock:
                     self.cpg_data.objects[(part, obj, inst)] = data
                 self._log(f"[+] Wrote {len(data)} bytes to 0x{part:02X}:0x{obj:04X}:{inst}")
@@ -384,6 +414,13 @@ class VirtualRadioServer:
         elif opcode == 0x0103:
             self._log("REQ 0x0103 (OP_PREPARE)")
             return struct.pack(">HB", 0x8103, 0x00)
+
+        # Opcode 0x0107: UnlockSecurity (grants partition 0x81 writes for this session)
+        elif opcode == 0x0107:
+            self._log("REQ 0x0107 (UnlockSecurity)")
+            session["unlocked"] = True
+            self._log("RESP 0x8107 (status 0 = security unlocked for this session)")
+            return struct.pack(">HB", 0x8107, 0x00)
 
         # Opcode 0x0011: Query Serial Number
         elif opcode == 0x0011:
@@ -473,6 +510,11 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         action="store_true",
         help="Log all RCMP requests and responses to stderr",
     )
+    parser.add_argument(
+        "--lock-security",
+        action="store_true",
+        help="Refuse partition 0x81 writes until the client sends a 0x0107 UnlockSecurity",
+    )
     return parser.parse_args(argv)
 
 
@@ -493,6 +535,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         host=args.host,
         port=args.port,
         verbose=args.verbose,
+        lock_security=args.lock_security,
     )
 
     try:

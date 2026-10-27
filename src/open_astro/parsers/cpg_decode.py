@@ -777,6 +777,54 @@ class CpgDecoder:
             scan_lists=scan_lists,
         )
 
+    # -- conventional personalities (ALL 0x0FFD instances) ---------------
+    @classmethod
+    def personality_records_from_streams(
+        cls,
+        streams: List[Tuple[int, int, bytes]],
+        schema: Optional[Dict[str, Any]] = None,
+    ) -> List[PersonalityRecord]:
+        """Every 0x0FFB conventional personality record across ALL 0x0FFD instances.
+
+        This returns the full set of UNIQUE conventional personalities, a
+        different view from the zone-walking channel decoder in decode() (which
+        yields per-zone channel instances and may repeat a personality across
+        zones). The personalities are spread across many 0x0FFD instances. On a
+        fully flashed fleet codeplug (backups/Radio1_205CMB2249_codeplug.cpg,
+        partition 0x80) they span 19 instances of (0x80, 0x0FFD, *): even
+        instances carry up to a 10-record table, odd instances a 6-record table,
+        and the last instance is short -- 43 0x0FFB records in all. The 800 MHz
+        ADP SECURE personality (851.5125 MHz) lives in insts 4/14.
+
+        This walks every (0x0FFD) instance in stream order, slices each 35-byte
+        record, and keeps only records that self-tag as 0x0FFB -- any slot whose
+        first u16 != 0x0FFB is skipped. Records are returned in (instance, slot)
+        order. NO de-duplication is applied: the odd/even tables are distinct
+        physical personalities (43 unique slots: 3+6+10+6+10+6+2), not mirror
+        copies of one table, so all 43 are returned. The per-record decode is the
+        same schema-driven PersonalityRecord path used everywhere else, so field
+        offsets stay governed by schema/field_layouts.json.
+        """
+        records: List[PersonalityRecord] = []
+        for tag, _inst, payload in streams:
+            if tag != TAG_CHANNEL_FREQS:
+                continue
+            for raw in cls._freq_records(payload):
+                if int.from_bytes(raw[:2], "big") != TAG_PERSONALITY_REC:
+                    continue  # skip non-0x0FFB slots (padding / foreign records)
+                rec = decode_record_with_schema(
+                    raw, tag=TAG_PERSONALITY_REC, strict=False, schema=schema
+                )
+                if rec is not None:
+                    records.append(rec)
+        return records
+
+    def personality_records(
+        self, schema: Optional[Dict[str, Any]] = None
+    ) -> List[PersonalityRecord]:
+        """All 0x0FFB personality records decoded from this .cpg (every 0x0FFD instance)."""
+        return self.personality_records_from_streams(self._decoded_streams(), schema=schema)
+
     def close(self) -> None:
         self._parser.close()
 

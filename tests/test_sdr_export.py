@@ -6,6 +6,10 @@ import xml.etree.ElementTree as ET
 
 from open_astro.models import RadioCodeplug, Zone, Channel
 from open_astro.exporters import export_dsdfme, export_sdrtrunk
+from open_astro.exporters.sdr_export import (
+    export_dsdfme_launch,
+    SDRTRUNK_KEY_NOTE,
+)
 
 
 def _fixture():
@@ -88,6 +92,53 @@ class TestSdrTrunkExport(unittest.TestCase):
         self.assertTrue(all(i.get("type") == "TALKGROUP" for i in ids))
         self.assertTrue(all(i.get("protocol") == "APCO25" for i in ids))
         self.assertEqual({i.get("value") for i in ids}, {"1", "2"})
+
+
+class TestDsdFmeLaunch(unittest.TestCase):
+    def test_launch_file_written_with_key_and_csv_names(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = export_dsdfme_launch(_fixture(), d, key="A1B2C3D4E5")
+            self.assertTrue(os.path.isfile(path))
+            self.assertTrue(path.endswith("_dsdfme_run.sh"))
+            text = open(path, encoding="utf-8").read()
+        # the ADP key is passed on the command line via -K, not in a CSV
+        self.assertIn("-K A1B2C3D4E5", text)
+        # the launch command references both generated CSV filenames
+        self.assertIn("205CFR2930_dsdfme_channel_map.csv", text)
+        self.assertIn("205CFR2930_dsdfme_group.csv", text)
+        self.assertIn("-C ", text)
+        self.assertIn("-G ", text)
+        # SDRTrunk note is included (keys live in the GUI, not the XML)
+        self.assertIn(SDRTRUNK_KEY_NOTE, text)
+
+    def test_launch_without_key_has_no_K_flag(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = export_dsdfme_launch(_fixture(), d)
+            text = open(path, encoding="utf-8").read()
+        self.assertNotIn("-K ", text)
+        self.assertIn("205CFR2930_dsdfme_channel_map.csv", text)
+
+    def test_invalid_key_odd_length_raises(self):
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(ValueError):
+                export_dsdfme_launch(_fixture(), d, key="A1B2C")      # 5 chars = odd
+
+    def test_invalid_key_non_hex_raises(self):
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(ValueError):
+                export_dsdfme_launch(_fixture(), d, key="ZZZZ")       # not hex
+
+    def test_existing_exports_unchanged_without_launch(self):
+        # Exporters are independent of the launch emitter: no extra files, same output.
+        with tempfile.TemporaryDirectory() as d:
+            paths = export_dsdfme(_fixture(), d)
+            xml_path = export_sdrtrunk(_fixture(), d)
+            files = sorted(os.listdir(d))
+            self.assertTrue(os.path.isfile(paths["channel_map"]))
+            self.assertTrue(os.path.isfile(paths["group"]))
+            self.assertTrue(os.path.isfile(xml_path))
+        # no launch script is created unless export_dsdfme_launch is called
+        self.assertFalse(any(f.endswith("_dsdfme_run.sh") for f in files))
 
 
 if __name__ == "__main__":

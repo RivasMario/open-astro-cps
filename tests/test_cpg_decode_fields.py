@@ -431,3 +431,69 @@ def test_real_backup_radio1_205cmb2249_fields():
         for r in simplex_channels:
             assert r.simplex is True
             assert r.freq_rx == r.freq_tx
+
+
+@pytest.mark.skipif(not BACKUP_RADIO1.exists(), reason="Radio1_205CMB2249_codeplug.cpg backup not found")
+def test_radio1_aggregates_all_0ffd_instances():
+    """The conventional personalities span MANY 0x0FFD instances, not just inst 1.
+
+    The full flashed fleet codeplug carries 43 0x0FFB records across 19 instances
+    (even=10-rec tables, odd=6-rec tables, last short). An earlier reader looked at
+    a single instance and saw only 2; personality_records() must walk them all.
+    """
+    with CpgDecoder(str(BACKUP_RADIO1)) as dec:
+        recs = dec.personality_records()
+
+    # NOT 2 (the single-instance count) -- all 43 across every 0x0FFD instance.
+    assert len(recs) == 43
+
+    # Every aggregated record is a real 0x0FFB personality obeying schema invariants.
+    for r in recs:
+        assert isinstance(r, PersonalityRecord)
+        assert r.record_tag == 0x0FFB
+        assert r.rec_terminator == 0x01
+        assert r.reserved_tail == b"\x00" * 6
+
+
+@pytest.mark.skipif(not BACKUP_RADIO1.exists(), reason="Radio1_205CMB2249_codeplug.cpg backup not found")
+def test_radio1_adp_secure_channel_present():
+    """The 800 MHz ADP SECURE channel (851.5125) lives in later 0x0FFD instances.
+
+    Two forms exist: a duplex/repeater pair (806.5125 rx / 851.5125 tx, flags 0x40)
+    and a simplex/talkaround channel (851.5125 rx==tx, flags 0x80). Both are absent
+    from a single-instance read; aggregation across all instances surfaces them.
+    """
+    # freq_x5hz encoding: stored value = Hz / 5 as a 4-byte big-endian word.
+    def mhz(value_hz_over_5: int) -> float:
+        return round(value_hz_over_5 * 5 / 1_000_000, 5)
+
+    rx_806 = mhz(806_512_500 // 5)  # 806.5125 MHz
+    tx_851 = mhz(851_512_500 // 5)  # 851.5125 MHz
+    assert rx_806 == 806.5125
+    assert tx_851 == 851.5125
+
+    with CpgDecoder(str(BACKUP_RADIO1)) as dec:
+        recs = dec.personality_records()
+
+    tol = 1e-4
+    # Duplex ADP repeater pair: distinct rx/tx on the standard 45 MHz 800 split.
+    duplex = [
+        r for r in recs
+        if abs(r.freq_rx - rx_806) < tol and abs(r.freq_tx - tx_851) < tol
+    ]
+    assert duplex, "ADP duplex channel (806.5125 rx / 851.5125 tx) not found"
+    for r in duplex:
+        assert r.flags == 0x40
+        assert r.simplex is False
+        assert r.freq_rx != r.freq_tx
+
+    # Simplex/talkaround ADP channel: rx == tx == 851.5125, flags 0x80.
+    simplex = [
+        r for r in recs
+        if abs(r.freq_rx - tx_851) < tol and abs(r.freq_tx - tx_851) < tol
+    ]
+    assert simplex, "ADP simplex channel (851.5125 rx==tx) not found"
+    for r in simplex:
+        assert r.flags == 0x80
+        assert r.simplex is True
+        assert abs(r.freq_rx - r.freq_tx) < tol
