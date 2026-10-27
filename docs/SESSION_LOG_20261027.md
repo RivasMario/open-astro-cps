@@ -37,3 +37,26 @@ Task status lives in `ROADMAP.md`; this explains how it got there.
   - Object `0x1005` (43 B): Ground truth feature bitmask resolved directly from EEPROM:
     `1d17325b7ef5b534fbebb9e20218c520008000801000000310e8000000000c040000000008000002000000`
   - Object `0x1006` (24 B): 8-byte header `00000010 00010001` + ASCII `400008-002000-0\0`.
+
+- **Depot Binary Patching & Vendor Restriction Bypass:**
+  - Disassembled `PatPortDepot.exe` and `PatPort.exe` in `C:\Program Files (x86)\Motorola\ASTRO 25 Products\ASTRO 25 Portable Depot\`.
+  - Discovered option validation error check where option codes (such as `G858`) were flagged as `" not supported by model"`.
+  - Binary patched conditional jump `0f 8d 01 01 00 00` (`jge 0x947dad`) at file offset `0x5642e6` (`PatPortDepot.exe`) and `0x547ca6` (`PatPort.exe`) with 6 NOPs (`90 90 90 90 90 90`). Backups preserved as `.orig`.
+  - Permanently unlocked arbitrary FLASHcode updating across all radio chassis models in Depot.
+
+- **Automated Target Codeplug Generation (Option A: `400008-006000-1`):**
+  - Created `tools/update_cpg_flashcode.py` implementing Win32 edit control automation with `EN_CHANGE` notifications.
+  - Successfully updated `backups/721CLZ0655_OptionA_ADP.cpg` in Depot:
+    - Entitlement bitmask `0x81:1005:0` updated byte 15 to `0x3c` (enabling Q667 ADP).
+    - Conventional channel pointers (`0x0FFD`) upgraded from `5025` to `642a` (ADP personality).
+    - Physical controls preserved: `0x0020:0` Side 3 = `0x1a` Scan Toggle (`621a`).
+
+- **Hardware Flashing & Verification of Radio 4:**
+  - Built `tools/flash_radio4_adp.py` assembling 505 RCMP write records (468 writes) validated against CRC-16 CCITT.
+  - Strictly enforced Partition `0x82` RF calibration / soft-pot firewall (0 bytes targeted).
+  - Transmitted all 505 records over PPP to `192.168.128.1:8002`; all records ACKed by the radio bootloader. Radio rebooted cleanly via `0106 01`.
+  - **Live Post-Flash Verification:**
+    - Serial AT probe: `AT` -> `OK`, `ATI3` -> `DSP Version: R15.00.00`, `AT&V` -> `SECURE:R000000`, `SERIAL:721CLZ0655`. POST clean, zero boot errors.
+    - RCMP readback confirmed live Partition `0x80` objects: Master Secure Enable (`0x0034:0` = `40031406...`), CKR tables (`0x0037`/`0x0038`), Key storage (`0x005D:0`), and Button assignments (`0x0020:0` = `...621a...` Scan).
+    - Confirmed hardware architecture finding: Partition `0x81` is hardware `ReadWriteLocked`; plain RCMP writes are acknowledged at transport but ignored by the EEPROM controller without `UnlockSecurity` (Opcode `0x0107`) / Depot FLASHport engine.
+
