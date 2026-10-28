@@ -3,50 +3,25 @@ ASTRO 25 Clean-Room Codeplug Writer for Radio 1 (XTS 2500 Model II, SN 205CMB224
 Directly patches Radio 1's native 501-stream layout with P25 TALK and ANALOG simplex,
 computes exact relational CRC-16 integrity, and commits via authenticated OP_LOCK (0x000D) with 16-byte UUID token.
 """
-import ctypes
-from ctypes import wintypes
 import struct
 import time
 import sys
 
-from open_astro.parsers.cpg_parser import CpgArchive
-from open_astro.protocol.ppp_flasher import AstroPppFlasher, serialize_rcmp_mode, serialize_rcmp_ish_write
-
-# CryptoAPI RC4/MD5 Master Decryptor/Encryptor
-advapi32 = ctypes.windll.advapi32
-PROV_RSA_FULL = 1
-CRYPT_VERIFYCONTEXT = 0xF0000000
-CALG_MD5 = 0x8003
-CALG_RC4 = 0x6801
-
-hProv = wintypes.HANDLE()
-advapi32.CryptAcquireContextA(ctypes.byref(hProv), None, b'Microsoft Base Cryptographic Provider v1.0', PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)
+try:
+    from .cpg_parser import CpgArchive, rc4_crypt, MASTER_ASTRO25_40BIT_RC4_KEY
+    from .ppp_flasher import AstroPppFlasher, serialize_rcmp_mode, serialize_rcmp_ish_write
+except ImportError:
+    import os as _os
+    if _os.path.dirname(_os.path.abspath(__file__)) not in sys.path:
+        sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+    from cpg_parser import CpgArchive, rc4_crypt, MASTER_ASTRO25_40BIT_RC4_KEY
+    from ppp_flasher import AstroPppFlasher, serialize_rcmp_mode, serialize_rcmp_ish_write
 
 def decrypt_stream(raw: bytes) -> bytes:
-    hHash = wintypes.HANDLE()
-    advapi32.CryptCreateHash(hProv, CALG_MD5, 0, 0, ctypes.byref(hHash))
-    advapi32.CryptHashData(hHash, b'A8Z6J9QP5', 9, 0)
-    hKey = wintypes.HANDLE()
-    advapi32.CryptDeriveKey(hProv, CALG_RC4, hHash, 0, ctypes.byref(hKey))
-    buf = ctypes.create_string_buffer(raw)
-    buf_len = wintypes.DWORD(len(raw))
-    advapi32.CryptDecrypt(hKey, 0, True, 0, buf, ctypes.byref(buf_len))
-    advapi32.CryptDestroyKey(hKey)
-    advapi32.CryptDestroyHash(hHash)
-    return bytes(buf[:buf_len.value])
+    return rc4_crypt(MASTER_ASTRO25_40BIT_RC4_KEY, raw)
 
 def encrypt_stream(plain: bytes) -> bytes:
-    hHash = wintypes.HANDLE()
-    advapi32.CryptCreateHash(hProv, CALG_MD5, 0, 0, ctypes.byref(hHash))
-    advapi32.CryptHashData(hHash, b'A8Z6J9QP5', 9, 0)
-    hKey = wintypes.HANDLE()
-    advapi32.CryptDeriveKey(hProv, CALG_RC4, hHash, 0, ctypes.byref(hKey))
-    buf = ctypes.create_string_buffer(plain)
-    buf_len = wintypes.DWORD(len(plain))
-    advapi32.CryptEncrypt(hKey, 0, True, 0, buf, ctypes.byref(buf_len), len(plain))
-    advapi32.CryptDestroyKey(hKey)
-    advapi32.CryptDestroyHash(hHash)
-    return bytes(buf[:buf_len.value])
+    return rc4_crypt(MASTER_ASTRO25_40BIT_RC4_KEY, plain)
 
 # Exact CRC-16 CCITT (poly 0x1021, init 0x0000, no reflect, no XOR out)
 crc_table = []

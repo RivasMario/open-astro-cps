@@ -9,6 +9,1036 @@
     "model": "H46UCF9PW6AN",
     "serial": "205CFR2930"
   },
+  "directory": {
+    "stream": "DataStg/Strm_0",
+    "record_count": 146,
+    "matched_streams": 146,
+    "all_matched": true,
+    "records": [
+      {
+        "tag": "0x1005",
+        "instance": 0,
+        "flags": 129,
+        "stream_crc": 3643,
+        "stream_id": 1
+      },
+      {
+        "tag": "0x1004",
+        "instance": 0,
+        "flags": 129,
+        "stream_crc": 11118,
+        "stream_id": 2
+      },
+      {
+        "tag": "0x1006",
+        "instance": 0,
+        "flags": 129,
+        "stream_crc": 44272,
+        "stream_id": 3
+      },
+      {
+        "tag": "0x0034",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 23778,
+        "stream_id": 4
+      },
+      {
+        "tag": "0x0FF0",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 32225,
+        "stream_id": 5
+      },
+      {
+        "tag": "0x0FF1",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 40039,
+        "stream_id": 6
+      },
+      {
+        "tag": "0x0018",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 6595,
+        "stream_id": 7
+      },
+      {
+        "tag": "0x0FCF",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 59420,
+        "stream_id": 8
+      },
+      {
+        "tag": "0x0049",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 739,
+        "stream_id": 9
+      },
+      {
+        "tag": "0x004A",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 15806,
+        "stream_id": 10
+      },
+      {
+        "tag": "0x0FCE",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 33657,
+        "stream_id": 11
+      },
+      {
+        "tag": "0x0057",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 54763,
+        "stream_id": 12
+      },
+      {
+        "tag": "0x0070",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 21531,
+        "stream_id": 13
+      },
+      {
+        "tag": "0x0FAB",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 26842,
+        "stream_id": 14
+      },
+      {
+        "tag": "0x0071",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 24478,
+        "stream_id": 15
+      },
+      {
+        "tag": "0x0FAA",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 12309,
+        "stream_id": 16
+      },
+      {
+        "tag": "0x001B",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 63552,
+        "stream_id": 17
+      },
+      {
+        "tag": "0x000B",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 58373,
+        "stream_id": 18
+      },
+      {
+        "tag": "0x0048",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 16844,
+        "stream_id": 19
+      },
+      {
+        "tag": "0x000A",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 834,
+        "stream_id": 20
+      },
+      {
+        "tag": "0x000C",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 59901,
+        "stream_id": 21
+      },
+      {
+        "tag": "0x0FFD",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 50874,
+        "stream_id": 22
+      },
+      {
+        "tag": "0x0FFD",
+        "instance": 1,
+        "flags": 128,
+        "stream_crc": 18524,
+        "stream_id": 23
+      },
+      {
+        "tag": "0x0FFC",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 43281,
+        "stream_id": 24
+      },
+      {
+        "tag": "0x0FFC",
+        "instance": 1,
+        "flags": 128,
+        "stream_crc": 57253,
+        "stream_id": 25
+      },
+      {
+        "tag": "0x000D",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 40716,
+        "stream_id": 26
+      },
+      {
+        "tag": "0x0FFE",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 21300,
+        "stream_id": 27
+      },
+      {
+        "tag": "0x0FFF",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 37249,
+        "stream_id": 28
+      },
+      {
+        "tag": "0x0FFE",
+        "instance": 1,
+        "flags": 128,
+        "stream_crc": 17173,
+        "stream_id": 29
+      },
+      {
+        "tag": "0x0FFF",
+        "instance": 1,
+        "flags": 128,
+        "stream_crc": 37249,
+        "stream_id": 30
+      },
+      {
+        "tag": "0x0054",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 46404,
+        "stream_id": 31
+      },
+      {
+        "tag": "0x0030",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 16718,
+        "stream_id": 32
+      },
+      {
+        "tag": "0x002F",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 16718,
+        "stream_id": 33
+      },
+      {
+        "tag": "0x0032",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 16718,
+        "stream_id": 34
+      },
+      {
+        "tag": "0x0031",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 42385,
+        "stream_id": 35
+      },
+      {
+        "tag": "0x0033",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 42385,
+        "stream_id": 36
+      },
+      {
+        "tag": "0x004B",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 53979,
+        "stream_id": 37
+      },
+      {
+        "tag": "0x0FC2",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 24403,
+        "stream_id": 38
+      },
+      {
+        "tag": "0x0058",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 28725,
+        "stream_id": 39
+      },
+      {
+        "tag": "0x0059",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 35464,
+        "stream_id": 40
+      },
+      {
+        "tag": "0x005A",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 50530,
+        "stream_id": 41
+      },
+      {
+        "tag": "0x0FC1",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 31716,
+        "stream_id": 42
+      },
+      {
+        "tag": "0x005B",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 10971,
+        "stream_id": 43
+      },
+      {
+        "tag": "0x0019",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 11415,
+        "stream_id": 44
+      },
+      {
+        "tag": "0x0016",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 13299,
+        "stream_id": 45
+      },
+      {
+        "tag": "0x0020",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 20856,
+        "stream_id": 46
+      },
+      {
+        "tag": "0x0014",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 7787,
+        "stream_id": 47
+      },
+      {
+        "tag": "0x0026",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 31487,
+        "stream_id": 48
+      },
+      {
+        "tag": "0x0FFB",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 41046,
+        "stream_id": 49
+      },
+      {
+        "tag": "0x0FFB",
+        "instance": 1,
+        "flags": 128,
+        "stream_crc": 39280,
+        "stream_id": 50
+      },
+      {
+        "tag": "0x0FCD",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 0,
+        "stream_id": 51
+      },
+      {
+        "tag": "0x0FCD",
+        "instance": 1,
+        "flags": 128,
+        "stream_crc": 0,
+        "stream_id": 52
+      },
+      {
+        "tag": "0x0027",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 64219,
+        "stream_id": 53
+      },
+      {
+        "tag": "0x0028",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 2942,
+        "stream_id": 54
+      },
+      {
+        "tag": "0x0040",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 1663,
+        "stream_id": 55
+      },
+      {
+        "tag": "0x0029",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 37076,
+        "stream_id": 56
+      },
+      {
+        "tag": "0x002C",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 31246,
+        "stream_id": 57
+      },
+      {
+        "tag": "0x002A",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 19888,
+        "stream_id": 58
+      },
+      {
+        "tag": "0x002D",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 2081,
+        "stream_id": 59
+      },
+      {
+        "tag": "0x0FF9",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 28391,
+        "stream_id": 60
+      },
+      {
+        "tag": "0x0FFA",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 45153,
+        "stream_id": 61
+      },
+      {
+        "tag": "0x0FF6",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 43601,
+        "stream_id": 62
+      },
+      {
+        "tag": "0x0FF7",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 22446,
+        "stream_id": 63
+      },
+      {
+        "tag": "0x0FF5",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 16346,
+        "stream_id": 64
+      },
+      {
+        "tag": "0x0FF4",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 16765,
+        "stream_id": 65
+      },
+      {
+        "tag": "0x004C",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 40847,
+        "stream_id": 66
+      },
+      {
+        "tag": "0x0FF2",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 33715,
+        "stream_id": 67
+      },
+      {
+        "tag": "0x0FF3",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 12330,
+        "stream_id": 68
+      },
+      {
+        "tag": "0x0FF8",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 41616,
+        "stream_id": 69
+      },
+      {
+        "tag": "0x0FCC",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 43134,
+        "stream_id": 70
+      },
+      {
+        "tag": "0x0FCB",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 10138,
+        "stream_id": 71
+      },
+      {
+        "tag": "0x0FC9",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 14128,
+        "stream_id": 72
+      },
+      {
+        "tag": "0x0FCA",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 17200,
+        "stream_id": 73
+      },
+      {
+        "tag": "0x0FC8",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 41775,
+        "stream_id": 74
+      },
+      {
+        "tag": "0x0FC7",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 16765,
+        "stream_id": 75
+      },
+      {
+        "tag": "0x004F",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 40847,
+        "stream_id": 76
+      },
+      {
+        "tag": "0x0FB4",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 218,
+        "stream_id": 77
+      },
+      {
+        "tag": "0x0FAE",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 37112,
+        "stream_id": 78
+      },
+      {
+        "tag": "0x0FAF",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 34501,
+        "stream_id": 79
+      },
+      {
+        "tag": "0x0FAD",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 51381,
+        "stream_id": 80
+      },
+      {
+        "tag": "0x0FAC",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 16765,
+        "stream_id": 81
+      },
+      {
+        "tag": "0x006E",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 40847,
+        "stream_id": 82
+      },
+      {
+        "tag": "0x0FB5",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 63655,
+        "stream_id": 83
+      },
+      {
+        "tag": "0x006C",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 40847,
+        "stream_id": 84
+      },
+      {
+        "tag": "0x0FB3",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 33893,
+        "stream_id": 85
+      },
+      {
+        "tag": "0x0FB2",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 7805,
+        "stream_id": 86
+      },
+      {
+        "tag": "0x0FB1",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 65207,
+        "stream_id": 87
+      },
+      {
+        "tag": "0x0FB0",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 16765,
+        "stream_id": 88
+      },
+      {
+        "tag": "0x0050",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 17320,
+        "stream_id": 89
+      },
+      {
+        "tag": "0x0FBE",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 14357,
+        "stream_id": 90
+      },
+      {
+        "tag": "0x005F",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 43424,
+        "stream_id": 91
+      },
+      {
+        "tag": "0x001A",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 17143,
+        "stream_id": 92
+      },
+      {
+        "tag": "0x0017",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 28493,
+        "stream_id": 93
+      },
+      {
+        "tag": "0x0022",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 35115,
+        "stream_id": 94
+      },
+      {
+        "tag": "0x0015",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 7787,
+        "stream_id": 95
+      },
+      {
+        "tag": "0x003E",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 62186,
+        "stream_id": 96
+      },
+      {
+        "tag": "0x003F",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 46013,
+        "stream_id": 97
+      },
+      {
+        "tag": "0x0FDD",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 10390,
+        "stream_id": 98
+      },
+      {
+        "tag": "0x0FDE",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 15337,
+        "stream_id": 99
+      },
+      {
+        "tag": "0x0FDC",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 45361,
+        "stream_id": 100
+      },
+      {
+        "tag": "0x0FD1",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 20150,
+        "stream_id": 101
+      },
+      {
+        "tag": "0x003C",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 13026,
+        "stream_id": 102
+      },
+      {
+        "tag": "0x003D",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 16024,
+        "stream_id": 103
+      },
+      {
+        "tag": "0x003A",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 42133,
+        "stream_id": 104
+      },
+      {
+        "tag": "0x003B",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 65247,
+        "stream_id": 105
+      },
+      {
+        "tag": "0x0FE7",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 15603,
+        "stream_id": 106
+      },
+      {
+        "tag": "0x0FE6",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 62695,
+        "stream_id": 107
+      },
+      {
+        "tag": "0x0FE5",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 33984,
+        "stream_id": 108
+      },
+      {
+        "tag": "0x0FE4",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 46147,
+        "stream_id": 109
+      },
+      {
+        "tag": "0x0FE3",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 0,
+        "stream_id": 110
+      },
+      {
+        "tag": "0x0FEE",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 30388,
+        "stream_id": 111
+      },
+      {
+        "tag": "0x0FEF",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 49131,
+        "stream_id": 112
+      },
+      {
+        "tag": "0x0FED",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 40618,
+        "stream_id": 113
+      },
+      {
+        "tag": "0x0FEC",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 16765,
+        "stream_id": 114
+      },
+      {
+        "tag": "0x004D",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 40847,
+        "stream_id": 115
+      },
+      {
+        "tag": "0x0FD0",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 57724,
+        "stream_id": 116
+      },
+      {
+        "tag": "0x0FD5",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 59524,
+        "stream_id": 117
+      },
+      {
+        "tag": "0x0FD4",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 54353,
+        "stream_id": 118
+      },
+      {
+        "tag": "0x0FD8",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 28526,
+        "stream_id": 119
+      },
+      {
+        "tag": "0x0FD7",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 8976,
+        "stream_id": 120
+      },
+      {
+        "tag": "0x0FD6",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 34142,
+        "stream_id": 121
+      },
+      {
+        "tag": "0x0FDF",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 14042,
+        "stream_id": 122
+      },
+      {
+        "tag": "0x0FE0",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 30470,
+        "stream_id": 123
+      },
+      {
+        "tag": "0x0FDA",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 8976,
+        "stream_id": 124
+      },
+      {
+        "tag": "0x0FD9",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 64092,
+        "stream_id": 125
+      },
+      {
+        "tag": "0x0FDB",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 9447,
+        "stream_id": 126
+      },
+      {
+        "tag": "0x0FA9",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 64426,
+        "stream_id": 127
+      },
+      {
+        "tag": "0x0FA8",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 30594,
+        "stream_id": 128
+      },
+      {
+        "tag": "0x0FD2",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 17785,
+        "stream_id": 129
+      },
+      {
+        "tag": "0x0FD3",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 55701,
+        "stream_id": 130
+      },
+      {
+        "tag": "0x0FE2",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 52383,
+        "stream_id": 131
+      },
+      {
+        "tag": "0x0FE1",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 13215,
+        "stream_id": 132
+      },
+      {
+        "tag": "0x0051",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 0,
+        "stream_id": 133
+      },
+      {
+        "tag": "0x0073",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 4614,
+        "stream_id": 134
+      },
+      {
+        "tag": "0x0065",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 50907,
+        "stream_id": 135
+      },
+      {
+        "tag": "0x0FBC",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 24807,
+        "stream_id": 136
+      },
+      {
+        "tag": "0x0FBD",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 43601,
+        "stream_id": 137
+      },
+      {
+        "tag": "0x0064",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 9485,
+        "stream_id": 138
+      },
+      {
+        "tag": "0x0FA6",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 57954,
+        "stream_id": 139
+      },
+      {
+        "tag": "0x0074",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 2466,
+        "stream_id": 140
+      },
+      {
+        "tag": "0x0075",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 51177,
+        "stream_id": 141
+      },
+      {
+        "tag": "0x0FA1",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 35403,
+        "stream_id": 142
+      },
+      {
+        "tag": "0x0FA1",
+        "instance": 1,
+        "flags": 128,
+        "stream_crc": 37255,
+        "stream_id": 143
+      },
+      {
+        "tag": "0x0FA1",
+        "instance": 2,
+        "flags": 128,
+        "stream_crc": 26844,
+        "stream_id": 144
+      },
+      {
+        "tag": "0x0FA1",
+        "instance": 3,
+        "flags": 128,
+        "stream_crc": 60824,
+        "stream_id": 145
+      },
+      {
+        "tag": "0x0047",
+        "instance": 0,
+        "flags": 128,
+        "stream_crc": 7133,
+        "stream_id": 146
+      }
+    ]
+  },
   "streams": [
     {
       "name": "AdkFileHeader",
@@ -17,28 +1047,40 @@
     {
       "name": "DataStg/Strm_0",
       "size": 1462,
-      "crc_ok": false,
+      "tag": "0x1005",
+      "instance": 0,
+      "payload_len": 129,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "1005000000810e3b00011004000000812b6e0002100600000081acf000030034000000805ce200040ff0000000807de100050ff1000000809c67000600180000"
     },
     {
       "name": "DataStg/Strm_1",
       "size": 51,
-      "crc_ok": false,
+      "tag": "0x1005",
+      "instance": 0,
+      "payload_len": 45,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "10050000002d1d16325b7ef5b534fbebb9e20298c53400000080100000831066000000000c0000000000080000020401000e3b"
     },
     {
       "name": "DataStg/Strm_10",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x004A",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "004a0000000e00010011003200140fce00003dbe"
     },
     {
       "name": "DataStg/Strm_100",
       "size": 33,
-      "crc_ok": false,
+      "tag": "0x0FDC",
+      "instance": 0,
+      "payload_len": 27,
+      "crc_ok": true,
       "ascii": [
         "SITE 1"
       ],
@@ -47,70 +1089,100 @@
     {
       "name": "DataStg/Strm_101",
       "size": 25,
-      "crc_ok": false,
+      "tag": "0x0FD1",
+      "instance": 0,
+      "payload_len": 19,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fd10000001300000009000800010000000001000000004eb6"
     },
     {
       "name": "DataStg/Strm_102",
       "size": 120,
-      "crc_ok": false,
+      "tag": "0x003C",
+      "instance": 0,
+      "payload_len": 114,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "003c000000720000000d00080008000000000001000000ffff0000000000000001000000ffff0000000000000001000000ffff0000000000000001000000ffff"
     },
     {
       "name": "DataStg/Strm_103",
       "size": 31,
-      "crc_ok": false,
+      "tag": "0x003D",
+      "instance": 0,
+      "payload_len": 25,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "003d00000019000000050003000300ffff000000ffff000000ffff00003e98"
     },
     {
       "name": "DataStg/Strm_104",
       "size": 224,
-      "crc_ok": false,
+      "tag": "0x003A",
+      "instance": 0,
+      "payload_len": 218,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "003a000000da0000000d0010001000000000000000000f0fff000000000000000000000f0fff000000000000000000000f0fff000000000000000000000f0fff"
     },
     {
       "name": "DataStg/Strm_105",
       "size": 31,
-      "crc_ok": false,
+      "tag": "0x003B",
+      "instance": 0,
+      "payload_len": 25,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "003b0000001900000005000300030f0fff00000f0fff00000f0fff0000fedf"
     },
     {
       "name": "DataStg/Strm_106",
       "size": 142,
-      "crc_ok": false,
+      "tag": "0x0FE7",
+      "instance": 0,
+      "payload_len": 136,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fe700000088020fe600000fe500000fe000000fd0000095641c200001000c00000000000a010fdb00000fd800000fde00002601260126012601000100010001"
     },
     {
       "name": "DataStg/Strm_107",
       "size": 51,
-      "crc_ok": false,
+      "tag": "0x0FE6",
+      "instance": 0,
+      "payload_len": 45,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fe60000002d00010178000005150028280000000000000000000000000000000000000000000000000000000000000000f4e7"
     },
     {
       "name": "DataStg/Strm_108",
       "size": 26,
-      "crc_ok": false,
+      "tag": "0x0FE5",
+      "instance": 0,
+      "payload_len": 20,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fe5000000140000000000000000000000000000ffff000084c0"
     },
     {
       "name": "DataStg/Strm_109",
       "size": 41,
-      "crc_ok": false,
+      "tag": "0x0FE4",
+      "instance": 0,
+      "payload_len": 35,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fe400000023020fe300000fe700000fe200002210000000000fef00000fd500000fd100000000b443"
     },
     {
       "name": "DataStg/Strm_11",
       "size": 337,
-      "crc_ok": false,
+      "tag": "0x0FCE",
+      "instance": 0,
+      "payload_len": 331,
+      "crc_ok": true,
       "ascii": [
         "PHONE 1",
         "PHONE 2",
@@ -126,35 +1198,50 @@
     {
       "name": "DataStg/Strm_110",
       "size": 10,
-      "crc_ok": false,
+      "tag": "0x0FE3",
+      "instance": 0,
+      "payload_len": 4,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fe30000000400000000"
     },
     {
       "name": "DataStg/Strm_111",
       "size": 17,
-      "crc_ok": false,
+      "tag": "0x0FEE",
+      "instance": 0,
+      "payload_len": 11,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fee0000000b00000000000100000076b4"
     },
     {
       "name": "DataStg/Strm_112",
       "size": 27,
-      "crc_ok": false,
+      "tag": "0x0FEF",
+      "instance": 0,
+      "payload_len": 21,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fef0000001500010003006400640fee00000fed0000000000bfeb"
     },
     {
       "name": "DataStg/Strm_113",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0FED",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fed0000000e00010011006400140fec00009eaa"
     },
     {
       "name": "DataStg/Strm_114",
       "size": 31,
-      "crc_ok": false,
+      "tag": "0x0FEC",
+      "instance": 0,
+      "payload_len": 25,
+      "crc_ok": true,
       "ascii": [
         "CALL 1"
       ],
@@ -163,7 +1250,10 @@
     {
       "name": "DataStg/Strm_115",
       "size": 33,
-      "crc_ok": false,
+      "tag": "0x004D",
+      "instance": 0,
+      "payload_len": 27,
+      "crc_ok": true,
       "ascii": [
         "LIST 1"
       ],
@@ -172,49 +1262,70 @@
     {
       "name": "DataStg/Strm_116",
       "size": 176,
-      "crc_ok": false,
+      "tag": "0x0FD0",
+      "instance": 0,
+      "payload_len": 170,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fd0000000aa0000000a00100010006400b400320a2510a2006440b400320a2510a2006440b400320a2510a2006440b400320a2510a2006440b400320a2510a2"
     },
     {
       "name": "DataStg/Strm_117",
       "size": 36,
-      "crc_ok": false,
+      "tag": "0x0FD5",
+      "instance": 0,
+      "payload_len": 30,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fd50000001e0001000b003000300fd40000000fff0000010fd30000000000000000e884"
     },
     {
       "name": "DataStg/Strm_118",
       "size": 25,
-      "crc_ok": false,
+      "tag": "0x0FD4",
+      "instance": 0,
+      "payload_len": 19,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fd4000000130000000000010001000001000000000000d451"
     },
     {
       "name": "DataStg/Strm_119",
       "size": 24,
-      "crc_ok": false,
+      "tag": "0x0FD8",
+      "instance": 0,
+      "payload_len": 18,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fd80000001200010001001000100fd700000fd600006f6e"
     },
     {
       "name": "DataStg/Strm_12",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0057",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00570000000e0000000400130001a1cba1cbd5eb"
     },
     {
       "name": "DataStg/Strm_120",
       "size": 15,
-      "crc_ok": false,
+      "tag": "0x0FD7",
+      "instance": 0,
+      "payload_len": 9,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fd700000009000000000001012310"
     },
     {
       "name": "DataStg/Strm_121",
       "size": 33,
-      "crc_ok": false,
+      "tag": "0x0FD6",
+      "instance": 0,
+      "payload_len": 27,
+      "crc_ok": true,
       "ascii": [
         "MESSAGE 1"
       ],
@@ -223,28 +1334,40 @@
     {
       "name": "DataStg/Strm_122",
       "size": 19,
-      "crc_ok": false,
+      "tag": "0x0FDF",
+      "instance": 0,
+      "payload_len": 13,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fdf0000000d000000000001000322000036da"
     },
     {
       "name": "DataStg/Strm_123",
       "size": 24,
-      "crc_ok": false,
+      "tag": "0x0FE0",
+      "instance": 0,
+      "payload_len": 18,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fe00000001200010005000800080fdf0000000000007706"
     },
     {
       "name": "DataStg/Strm_124",
       "size": 15,
-      "crc_ok": false,
+      "tag": "0x0FDA",
+      "instance": 0,
+      "payload_len": 9,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fda00000009000000000001012310"
     },
     {
       "name": "DataStg/Strm_125",
       "size": 33,
-      "crc_ok": false,
+      "tag": "0x0FD9",
+      "instance": 0,
+      "payload_len": 27,
+      "crc_ok": true,
       "ascii": [
         "STATUS 1"
       ],
@@ -253,84 +1376,120 @@
     {
       "name": "DataStg/Strm_126",
       "size": 24,
-      "crc_ok": false,
+      "tag": "0x0FDB",
+      "instance": 0,
+      "payload_len": 18,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fdb0000001200010001000800080fda00000fd9000024e7"
     },
     {
       "name": "DataStg/Strm_127",
       "size": 32,
-      "crc_ok": false,
+      "tag": "0x0FA9",
+      "instance": 0,
+      "payload_len": 26,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fa90000001a000000010010001000000000000000000000000000000000fbaa"
     },
     {
       "name": "DataStg/Strm_128",
       "size": 40,
-      "crc_ok": false,
+      "tag": "0x0FA8",
+      "instance": 0,
+      "payload_len": 34,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fa80000002200000003000800089896809896809896809896809896809896809896809896807782"
     },
     {
       "name": "DataStg/Strm_129",
       "size": 19,
-      "crc_ok": false,
+      "tag": "0x0FD2",
+      "instance": 0,
+      "payload_len": 13,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fd20000000d00000000000180032203224579"
     },
     {
       "name": "DataStg/Strm_13",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0070",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00700000000e00010029006400080fab0000541b"
     },
     {
       "name": "DataStg/Strm_130",
       "size": 25,
-      "crc_ok": false,
+      "tag": "0x0FD3",
+      "instance": 0,
+      "payload_len": 19,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fd30000001300010005003000300fd200000003220322d995"
     },
     {
       "name": "DataStg/Strm_131",
       "size": 19,
-      "crc_ok": false,
+      "tag": "0x0FE2",
+      "instance": 0,
+      "payload_len": 13,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fe20000000d020fe1000080011f010001cc9f"
     },
     {
       "name": "DataStg/Strm_132",
       "size": 21,
-      "crc_ok": false,
+      "tag": "0x0FE1",
+      "instance": 0,
+      "payload_len": 15,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fe10000000f0100010000010fff0000010000339f"
     },
     {
       "name": "DataStg/Strm_133",
       "size": 41,
-      "crc_ok": false,
+      "tag": "0x0051",
+      "instance": 0,
+      "payload_len": 35,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0051000000230000000000000000000000000000000000000000000000000000000000000000000000"
     },
     {
       "name": "DataStg/Strm_134",
       "size": 55,
-      "crc_ok": false,
+      "tag": "0x0073",
+      "instance": 0,
+      "payload_len": 49,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00730000003100000003000d000d0000000000000000000000000000000000000000000000000000000000000000000000000000001206"
     },
     {
       "name": "DataStg/Strm_135",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0065",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00650000000e0001000f004000100fbc0000c6db"
     },
     {
       "name": "DataStg/Strm_136",
       "size": 29,
-      "crc_ok": false,
+      "tag": "0x0FBC",
+      "instance": 0,
+      "payload_len": 23,
+      "crc_ok": true,
       "ascii": [
         "MPL 1"
       ],
@@ -339,28 +1498,40 @@
     {
       "name": "DataStg/Strm_137",
       "size": 18,
-      "crc_ok": false,
+      "tag": "0x0FBD",
+      "instance": 0,
+      "payload_len": 12,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fbd0000000c00000000000100000000aa51"
     },
     {
       "name": "DataStg/Strm_138",
       "size": 23,
-      "crc_ok": false,
+      "tag": "0x0064",
+      "instance": 0,
+      "payload_len": 17,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00640000001100010004004000100fbd0000000101250d"
     },
     {
       "name": "DataStg/Strm_139",
       "size": 21,
-      "crc_ok": false,
+      "tag": "0x0FA6",
+      "instance": 0,
+      "payload_len": 15,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fa60000000f00000005002800010000000000e262"
     },
     {
       "name": "DataStg/Strm_14",
       "size": 55,
-      "crc_ok": false,
+      "tag": "0x0FAB",
+      "instance": 0,
+      "payload_len": 49,
+      "crc_ok": true,
       "ascii": [
         "USERNAME 1"
       ],
@@ -369,63 +1540,90 @@
     {
       "name": "DataStg/Strm_140",
       "size": 40,
-      "crc_ok": false,
+      "tag": "0x0074",
+      "instance": 0,
+      "payload_len": 34,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "007400000022000000080003000301cc348001ee6c440210908002112cc00504ca40059a538009a2"
     },
     {
       "name": "DataStg/Strm_141",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0075",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00750000000e0001000f004000100fa10000c7e9"
     },
     {
       "name": "DataStg/Strm_142",
       "size": 254,
-      "crc_ok": false,
+      "tag": "0x0FA1",
+      "instance": 0,
+      "payload_len": 248,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fa1000000f80fa10001001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
     },
     {
       "name": "DataStg/Strm_143",
       "size": 254,
-      "crc_ok": false,
+      "tag": "0x0FA1",
+      "instance": 1,
+      "payload_len": 248,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fa1000100f80fa10002001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
     },
     {
       "name": "DataStg/Strm_144",
       "size": 254,
-      "crc_ok": false,
+      "tag": "0x0FA1",
+      "instance": 2,
+      "payload_len": 248,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fa1000200f80fa10003001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
     },
     {
       "name": "DataStg/Strm_145",
       "size": 254,
-      "crc_ok": false,
+      "tag": "0x0FA1",
+      "instance": 3,
+      "payload_len": 248,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fa1000300f800000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
     },
     {
       "name": "DataStg/Strm_146",
       "size": 52,
-      "crc_ok": false,
+      "tag": "0x0047",
+      "instance": 0,
+      "payload_len": 46,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00470000002e26101812370300240000010000000000000000000000000000000000000000000000000000000000000000141bdd"
     },
     {
       "name": "DataStg/Strm_15",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0071",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00710000000e00010033009600060faa00005f9e"
     },
     {
       "name": "DataStg/Strm_16",
       "size": 65,
-      "crc_ok": false,
+      "tag": "0x0FAA",
+      "instance": 0,
+      "payload_len": 59,
+      "crc_ok": true,
       "ascii": [
         "MESSAGE 1"
       ],
@@ -434,7 +1632,10 @@
     {
       "name": "DataStg/Strm_17",
       "size": 112,
-      "crc_ok": false,
+      "tag": "0x001B",
+      "instance": 0,
+      "payload_len": 106,
+      "crc_ok": true,
       "ascii": [
         "30\"1\"2\"3\"4\"5\"6\"7\"8\"9\":\";\"C",
         "PWQXR@SAp"
@@ -444,14 +1645,20 @@
     {
       "name": "DataStg/Strm_18",
       "size": 24,
-      "crc_ok": false,
+      "tag": "0x000B",
+      "instance": 0,
+      "payload_len": 18,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "000b00000012020a140a032828050100080020000000e405"
     },
     {
       "name": "DataStg/Strm_19",
       "size": 31,
-      "crc_ok": false,
+      "tag": "0x0048",
+      "instance": 0,
+      "payload_len": 25,
+      "crc_ok": true,
       "ascii": [
         "ID: ",
         "EM: ",
@@ -462,7 +1669,10 @@
     {
       "name": "DataStg/Strm_2",
       "size": 76,
-      "crc_ok": false,
+      "tag": "0x1004",
+      "instance": 0,
+      "payload_len": 70,
+      "crc_ok": true,
       "ascii": [
         "205CFR2930",
         "H46UCF9PW6AN"
@@ -472,7 +1682,10 @@
     {
       "name": "DataStg/Strm_20",
       "size": 166,
-      "crc_ok": false,
+      "tag": "0x000A",
+      "instance": 0,
+      "payload_len": 160,
+      "crc_ok": true,
       "ascii": [
         "7F32"
       ],
@@ -481,7 +1694,10 @@
     {
       "name": "DataStg/Strm_21",
       "size": 282,
-      "crc_ok": false,
+      "tag": "0x000C",
+      "instance": 0,
+      "payload_len": 276,
+      "crc_ok": true,
       "ascii": [
         "01234567"
       ],
@@ -490,49 +1706,70 @@
     {
       "name": "DataStg/Strm_22",
       "size": 84,
-      "crc_ok": false,
+      "tag": "0x0FFD",
+      "instance": 0,
+      "payload_len": 78,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ffd0000004e0000000000020fe40000010000000000000000000000000000000000000000000000000000000000000fe4000001000000000000000000000000"
     },
     {
       "name": "DataStg/Strm_23",
       "size": 84,
-      "crc_ok": false,
+      "tag": "0x0FFD",
+      "instance": 1,
+      "payload_len": 78,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ffd0001004e0000000000020ffb0001322f0293029302930a2849d40a2849d40a2849d400000080000000000000010ffb0000642a0293029302930a2b57140a"
     },
     {
       "name": "DataStg/Strm_24",
       "size": 23,
-      "crc_ok": false,
+      "tag": "0x0FFC",
+      "instance": 0,
+      "payload_len": 17,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ffc000000110001002300ff000a0ffd0000000001a911"
     },
     {
       "name": "DataStg/Strm_25",
       "size": 23,
-      "crc_ok": false,
+      "tag": "0x0FFC",
+      "instance": 1,
+      "payload_len": 17,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ffc000100110001002300ff000a0ffd0001000001dfa5"
     },
     {
       "name": "DataStg/Strm_26",
       "size": 50,
-      "crc_ok": false,
+      "tag": "0x000D",
+      "instance": 0,
+      "payload_len": 44,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "000d0000002c00000011003200025a310000000000000000000000000000005a320000000000000000000000000000009f0c"
     },
     {
       "name": "DataStg/Strm_27",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0FFE",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ffe0000000e0001001100ff00140fff00005334"
     },
     {
       "name": "DataStg/Strm_28",
       "size": 48,
-      "crc_ok": false,
+      "tag": "0x0FFF",
+      "instance": 0,
+      "payload_len": 42,
+      "crc_ok": true,
       "ascii": [
         "CHAN 1",
         "CHAN 2"
@@ -542,14 +1779,20 @@
     {
       "name": "DataStg/Strm_29",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0FFE",
+      "instance": 1,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ffe0001000e0001001100ff00140fff00014315"
     },
     {
       "name": "DataStg/Strm_3",
       "size": 32,
-      "crc_ok": false,
+      "tag": "0x1006",
+      "instance": 0,
+      "payload_len": 26,
+      "crc_ok": true,
       "ascii": [
         "000008-002410-2"
       ],
@@ -558,7 +1801,10 @@
     {
       "name": "DataStg/Strm_30",
       "size": 48,
-      "crc_ok": false,
+      "tag": "0x0FFF",
+      "instance": 1,
+      "payload_len": 42,
+      "crc_ok": true,
       "ascii": [
         "CHAN 1",
         "CHAN 2"
@@ -568,77 +1814,110 @@
     {
       "name": "DataStg/Strm_31",
       "size": 24,
-      "crc_ok": false,
+      "tag": "0x0054",
+      "instance": 0,
+      "payload_len": 18,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00540000001200000008001000010000000000000000b544"
     },
     {
       "name": "DataStg/Strm_32",
       "size": 16,
-      "crc_ok": false,
+      "tag": "0x0030",
+      "instance": 0,
+      "payload_len": 10,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00300000000a0000000800100000414e"
     },
     {
       "name": "DataStg/Strm_33",
       "size": 16,
-      "crc_ok": false,
+      "tag": "0x002F",
+      "instance": 0,
+      "payload_len": 10,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "002f0000000a0000000800100000414e"
     },
     {
       "name": "DataStg/Strm_34",
       "size": 16,
-      "crc_ok": false,
+      "tag": "0x0032",
+      "instance": 0,
+      "payload_len": 10,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00320000000a0000000800100000414e"
     },
     {
       "name": "DataStg/Strm_35",
       "size": 16,
-      "crc_ok": false,
+      "tag": "0x0031",
+      "instance": 0,
+      "payload_len": 10,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00310000000a0000000500200000a591"
     },
     {
       "name": "DataStg/Strm_36",
       "size": 16,
-      "crc_ok": false,
+      "tag": "0x0033",
+      "instance": 0,
+      "payload_len": 10,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00330000000a0000000500200000a591"
     },
     {
       "name": "DataStg/Strm_37",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x004B",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "004b0000000e00000004001000010a3e1200d2db"
     },
     {
       "name": "DataStg/Strm_38",
       "size": 22,
-      "crc_ok": false,
+      "tag": "0x0FC2",
+      "instance": 0,
+      "payload_len": 16,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fc20000001000000000000801020304050607085f53"
     },
     {
       "name": "DataStg/Strm_39",
       "size": 21,
-      "crc_ok": false,
+      "tag": "0x0058",
+      "instance": 0,
+      "payload_len": 15,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00580000000f00010001001000100fc20000007035"
     },
     {
       "name": "DataStg/Strm_4",
       "size": 24,
-      "crc_ok": false,
+      "tag": "0x0034",
+      "instance": 0,
+      "payload_len": 18,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "003400000012400314060000070c230b0a06015700035ce2"
     },
     {
       "name": "DataStg/Strm_40",
       "size": 152,
-      "crc_ok": false,
+      "tag": "0x0059",
+      "instance": 0,
+      "payload_len": 146,
+      "crc_ok": true,
       "ascii": [
         "STATUS  1",
         "STATUS  2",
@@ -654,21 +1933,30 @@
     {
       "name": "DataStg/Strm_41",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x005A",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "005a0000000e00010001001000100fc10000c562"
     },
     {
       "name": "DataStg/Strm_42",
       "size": 30,
-      "crc_ok": false,
+      "tag": "0x0FC1",
+      "instance": 0,
+      "payload_len": 24,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fc1000000180000000000100102030405060708090a0b0c0d0e0f107be4"
     },
     {
       "name": "DataStg/Strm_43",
       "size": 288,
-      "crc_ok": false,
+      "tag": "0x005B",
+      "instance": 0,
+      "payload_len": 282,
+      "crc_ok": true,
       "ascii": [
         "MESSAGE 1",
         "MESSAGE 2",
@@ -684,28 +1972,40 @@
     {
       "name": "DataStg/Strm_44",
       "size": 13,
-      "crc_ok": false,
+      "tag": "0x0019",
+      "instance": 0,
+      "payload_len": 7,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00190000000701002000002c97"
     },
     {
       "name": "DataStg/Strm_45",
       "size": 23,
-      "crc_ok": false,
+      "tag": "0x0016",
+      "instance": 0,
+      "payload_len": 17,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00160000001100000001001000071e2136371c1a8e33f3"
     },
     {
       "name": "DataStg/Strm_46",
       "size": 30,
-      "crc_ok": false,
+      "tag": "0x0020",
+      "instance": 0,
+      "payload_len": 24,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0020000000180000000200070007031f041d601861196225941f86235178"
     },
     {
       "name": "DataStg/Strm_47",
       "size": 40,
-      "crc_ok": false,
+      "tag": "0x0014",
+      "instance": 0,
+      "payload_len": 34,
+      "crc_ok": true,
       "ascii": [
         "&H&&&",
         "&&&&&",
@@ -716,7 +2016,10 @@
     {
       "name": "DataStg/Strm_48",
       "size": 18,
-      "crc_ok": false,
+      "tag": "0x0026",
+      "instance": 0,
+      "payload_len": 12,
+      "crc_ok": true,
       "ascii": [
         "&&&&P"
       ],
@@ -725,7 +2028,10 @@
     {
       "name": "DataStg/Strm_49",
       "size": 83,
-      "crc_ok": false,
+      "tag": "0x0FFB",
+      "instance": 0,
+      "payload_len": 77,
+      "crc_ok": true,
       "ascii": [
         "&&&&"
       ],
@@ -734,14 +2040,20 @@
     {
       "name": "DataStg/Strm_5",
       "size": 59,
-      "crc_ok": false,
+      "tag": "0x0FF0",
+      "instance": 0,
+      "payload_len": 53,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ff00000003500000000000f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007de1"
     },
     {
       "name": "DataStg/Strm_50",
       "size": 83,
-      "crc_ok": false,
+      "tag": "0x0FFB",
+      "instance": 1,
+      "payload_len": 77,
+      "crc_ok": true,
       "ascii": [
         "&&&&"
       ],
@@ -750,63 +2062,90 @@
     {
       "name": "DataStg/Strm_51",
       "size": 18,
-      "crc_ok": false,
+      "tag": "0x0FCD",
+      "instance": 0,
+      "payload_len": 12,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fcd0000000c000000000000000000000000"
     },
     {
       "name": "DataStg/Strm_52",
       "size": 18,
-      "crc_ok": false,
+      "tag": "0x0FCD",
+      "instance": 1,
+      "payload_len": 12,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fcd0001000c000000000000000000000000"
     },
     {
       "name": "DataStg/Strm_53",
       "size": 71,
-      "crc_ok": false,
+      "tag": "0x0027",
+      "instance": 0,
+      "payload_len": 65,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "002700000041ff0028000040740000010d0000000000010001302000010040038000010100000000000000000101010140000000000000000000000000000000"
     },
     {
       "name": "DataStg/Strm_54",
       "size": 17,
-      "crc_ok": false,
+      "tag": "0x0028",
+      "instance": 0,
+      "payload_len": 11,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00280000000b20930000000c0500000b7e"
     },
     {
       "name": "DataStg/Strm_55",
       "size": 32,
-      "crc_ok": false,
+      "tag": "0x0040",
+      "instance": 0,
+      "payload_len": 26,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00400000001a6402029302930293098c7540098c7540098c754001010100067f"
     },
     {
       "name": "DataStg/Strm_56",
       "size": 88,
-      "crc_ok": false,
+      "tag": "0x0029",
+      "instance": 0,
+      "payload_len": 82,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00290000005200000008000e0009091b94c4091bbbd4092ad704092afe140940203c093ff92c097722440a253c9409a4e9040a40b3d409d29c3c0a5ed6ac0a25"
     },
     {
       "name": "DataStg/Strm_57",
       "size": 53,
-      "crc_ok": false,
+      "tag": "0x002C",
+      "instance": 0,
+      "payload_len": 47,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "002c0000002f0000000000000f281401020004210e98968098968098968098968098968098968098968098968090000a0000007a0e"
     },
     {
       "name": "DataStg/Strm_58",
       "size": 13,
-      "crc_ok": false,
+      "tag": "0x002A",
+      "instance": 0,
+      "payload_len": 7,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "002a00000007fefefefe404db0"
     },
     {
       "name": "DataStg/Strm_59",
       "size": 41,
-      "crc_ok": false,
+      "tag": "0x002D",
+      "instance": 0,
+      "payload_len": 35,
+      "crc_ok": true,
       "ascii": [
         "        ",
         "                    "
@@ -816,49 +2155,70 @@
     {
       "name": "DataStg/Strm_6",
       "size": 38,
-      "crc_ok": false,
+      "tag": "0x0FF1",
+      "instance": 0,
+      "payload_len": 32,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ff10000002000010003000f000f0ff0000000ffffff000fe7000000000000000000000a9c67"
     },
     {
       "name": "DataStg/Strm_60",
       "size": 22,
-      "crc_ok": false,
+      "tag": "0x0FF9",
+      "instance": 0,
+      "payload_len": 16,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ff9000000100100010001010001010001f510106ee7"
     },
     {
       "name": "DataStg/Strm_61",
       "size": 68,
-      "crc_ok": false,
+      "tag": "0x0FFA",
+      "instance": 0,
+      "payload_len": 62,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ffa0000003e50020000010001000003000ff90000060a0a05350a0000061900000000000000000000000000001e0f1000010001000102060403000100010500"
     },
     {
       "name": "DataStg/Strm_62",
       "size": 18,
-      "crc_ok": false,
+      "tag": "0x0FF6",
+      "instance": 0,
+      "payload_len": 12,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ff60000000c00000000000100000000aa51"
     },
     {
       "name": "DataStg/Strm_63",
       "size": 32,
-      "crc_ok": false,
+      "tag": "0x0FF7",
+      "instance": 0,
+      "payload_len": 26,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ff70000001a00010004003200320ff600000ff50000000000000000000057ae"
     },
     {
       "name": "DataStg/Strm_64",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0FF5",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ff50000000e00010011003200140ff400003fda"
     },
     {
       "name": "DataStg/Strm_65",
       "size": 31,
-      "crc_ok": false,
+      "tag": "0x0FF4",
+      "instance": 0,
+      "payload_len": 25,
+      "crc_ok": true,
       "ascii": [
         "CALL 1"
       ],
@@ -867,7 +2227,10 @@
     {
       "name": "DataStg/Strm_66",
       "size": 33,
-      "crc_ok": false,
+      "tag": "0x004C",
+      "instance": 0,
+      "payload_len": 27,
+      "crc_ok": true,
       "ascii": [
         "LIST 1"
       ],
@@ -876,21 +2239,30 @@
     {
       "name": "DataStg/Strm_67",
       "size": 19,
-      "crc_ok": false,
+      "tag": "0x0FF2",
+      "instance": 0,
+      "payload_len": 13,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ff20000000d000000000001000280000183b3"
     },
     {
       "name": "DataStg/Strm_68",
       "size": 31,
-      "crc_ok": false,
+      "tag": "0x0FF3",
+      "instance": 0,
+      "payload_len": 25,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0ff30000001900010005001000100ff200000001010ff8000000000000302a"
     },
     {
       "name": "DataStg/Strm_69",
       "size": 33,
-      "crc_ok": false,
+      "tag": "0x0FF8",
+      "instance": 0,
+      "payload_len": 27,
+      "crc_ok": true,
       "ascii": [
         "TG 00002"
       ],
@@ -899,49 +2271,70 @@
     {
       "name": "DataStg/Strm_7",
       "size": 13,
-      "crc_ok": false,
+      "tag": "0x0018",
+      "instance": 0,
+      "payload_len": 7,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00180000000701001b000019c3"
     },
     {
       "name": "DataStg/Strm_70",
       "size": 41,
-      "crc_ok": false,
+      "tag": "0x0FCC",
+      "instance": 0,
+      "payload_len": 35,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fcc0000002380b50a0a02240000000000003c0305151509050101013c0fcb0000250100000000a87e"
     },
     {
       "name": "DataStg/Strm_71",
       "size": 23,
-      "crc_ok": false,
+      "tag": "0x0FCB",
+      "instance": 0,
+      "payload_len": 17,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fcb000000110100010001010001010001f5100a0a279a"
     },
     {
       "name": "DataStg/Strm_72",
       "size": 16,
-      "crc_ok": false,
+      "tag": "0x0FC9",
+      "instance": 0,
+      "payload_len": 10,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fc90000000a00000000000100003730"
     },
     {
       "name": "DataStg/Strm_73",
       "size": 27,
-      "crc_ok": false,
+      "tag": "0x0FCA",
+      "instance": 0,
+      "payload_len": 21,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fca0000001500010002003200320fc900000fc800000000004330"
     },
     {
       "name": "DataStg/Strm_74",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0FC8",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fc80000000e00010011003200140fc70000a32f"
     },
     {
       "name": "DataStg/Strm_75",
       "size": 31,
-      "crc_ok": false,
+      "tag": "0x0FC7",
+      "instance": 0,
+      "payload_len": 25,
+      "crc_ok": true,
       "ascii": [
         "CALL 1"
       ],
@@ -950,7 +2343,10 @@
     {
       "name": "DataStg/Strm_76",
       "size": 33,
-      "crc_ok": false,
+      "tag": "0x004F",
+      "instance": 0,
+      "payload_len": 27,
+      "crc_ok": true,
       "ascii": [
         "LIST 1"
       ],
@@ -959,42 +2355,60 @@
     {
       "name": "DataStg/Strm_77",
       "size": 21,
-      "crc_ok": false,
+      "tag": "0x0FB4",
+      "instance": 0,
+      "payload_len": 15,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fb40000000f6005090e0223480b450b450a3c00da"
     },
     {
       "name": "DataStg/Strm_78",
       "size": 19,
-      "crc_ok": false,
+      "tag": "0x0FAE",
+      "instance": 0,
+      "payload_len": 13,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fae0000000d0000000000010035071d2990f8"
     },
     {
       "name": "DataStg/Strm_79",
       "size": 24,
-      "crc_ok": false,
+      "tag": "0x0FAF",
+      "instance": 0,
+      "payload_len": 18,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0faf0000001200010005003200320fae00000fad000086c5"
     },
     {
       "name": "DataStg/Strm_8",
       "size": 356,
-      "crc_ok": false,
+      "tag": "0x0FCF",
+      "instance": 0,
+      "payload_len": 350,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fcf0000015e000000000013ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     },
     {
       "name": "DataStg/Strm_80",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0FAD",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fad0000000e00010011003200140fac0000c8b5"
     },
     {
       "name": "DataStg/Strm_81",
       "size": 31,
-      "crc_ok": false,
+      "tag": "0x0FAC",
+      "instance": 0,
+      "payload_len": 25,
+      "crc_ok": true,
       "ascii": [
         "CALL 1"
       ],
@@ -1003,7 +2417,10 @@
     {
       "name": "DataStg/Strm_82",
       "size": 33,
-      "crc_ok": false,
+      "tag": "0x006E",
+      "instance": 0,
+      "payload_len": 27,
+      "crc_ok": true,
       "ascii": [
         "LIST 1"
       ],
@@ -1012,14 +2429,20 @@
     {
       "name": "DataStg/Strm_83",
       "size": 26,
-      "crc_ok": false,
+      "tag": "0x0FB5",
+      "instance": 0,
+      "payload_len": 20,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fb500000014a012345678111111112a050a00641203013cf8a7"
     },
     {
       "name": "DataStg/Strm_84",
       "size": 33,
-      "crc_ok": false,
+      "tag": "0x006C",
+      "instance": 0,
+      "payload_len": 27,
+      "crc_ok": true,
       "ascii": [
         "LIST 1"
       ],
@@ -1028,28 +2451,40 @@
     {
       "name": "DataStg/Strm_85",
       "size": 29,
-      "crc_ok": false,
+      "tag": "0x0FB3",
+      "instance": 0,
+      "payload_len": 23,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fb30000001700010004003200320fb200000fb1000000ffffffff8465"
     },
     {
       "name": "DataStg/Strm_86",
       "size": 18,
-      "crc_ok": false,
+      "tag": "0x0FB2",
+      "instance": 0,
+      "payload_len": 12,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fb20000000c000000000001123456781e7d"
     },
     {
       "name": "DataStg/Strm_87",
       "size": 20,
-      "crc_ok": false,
+      "tag": "0x0FB1",
+      "instance": 0,
+      "payload_len": 14,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fb10000000e00010011003200140fb00000feb7"
     },
     {
       "name": "DataStg/Strm_88",
       "size": 31,
-      "crc_ok": false,
+      "tag": "0x0FB0",
+      "instance": 0,
+      "payload_len": 25,
+      "crc_ok": true,
       "ascii": [
         "CALL 1"
       ],
@@ -1058,49 +2493,70 @@
     {
       "name": "DataStg/Strm_89",
       "size": 18,
-      "crc_ok": false,
+      "tag": "0x0050",
+      "instance": 0,
+      "payload_len": 12,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00500000000c0000000200100001000143a8"
     },
     {
       "name": "DataStg/Strm_9",
       "size": 39,
-      "crc_ok": false,
+      "tag": "0x0049",
+      "instance": 0,
+      "payload_len": 33,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00490000002100010012003200140fcf000000ffffffffffffffffffffffffffffffffffff02e3"
     },
     {
       "name": "DataStg/Strm_90",
       "size": 11,
-      "crc_ok": false,
+      "tag": "0x0FBE",
+      "instance": 0,
+      "payload_len": 5,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fbe000000050a14033815"
     },
     {
       "name": "DataStg/Strm_91",
       "size": 18,
-      "crc_ok": false,
+      "tag": "0x005F",
+      "instance": 0,
+      "payload_len": 12,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "005f0000000c00000002001000010bb8a9a0"
     },
     {
       "name": "DataStg/Strm_92",
       "size": 13,
-      "crc_ok": false,
+      "tag": "0x001A",
+      "instance": 0,
+      "payload_len": 7,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "001a00000007010022000042f7"
     },
     {
       "name": "DataStg/Strm_93",
       "size": 22,
-      "crc_ok": false,
+      "tag": "0x0017",
+      "instance": 0,
+      "payload_len": 16,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "00170000001000000001001000061e2136371c8e6f4d"
     },
     {
       "name": "DataStg/Strm_94",
       "size": 30,
-      "crc_ok": false,
+      "tag": "0x0022",
+      "instance": 0,
+      "payload_len": 24,
+      "crc_ok": true,
       "ascii": [
         "a8b)"
       ],
@@ -1109,7 +2565,10 @@
     {
       "name": "DataStg/Strm_95",
       "size": 40,
-      "crc_ok": false,
+      "tag": "0x0015",
+      "instance": 0,
+      "payload_len": 34,
+      "crc_ok": true,
       "ascii": [
         "&H&&&",
         "&&&&&",
@@ -1120,14 +2579,20 @@
     {
       "name": "DataStg/Strm_96",
       "size": 37,
-      "crc_ok": false,
+      "tag": "0x003E",
+      "instance": 0,
+      "payload_len": 31,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "003e0000001f0affc00165300a95804a3c141438873d1e000400210e28144d000f0100f2ea"
     },
     {
       "name": "DataStg/Strm_97",
       "size": 27,
-      "crc_ok": false,
+      "tag": "0x003F",
+      "instance": 0,
+      "payload_len": 21,
+      "crc_ok": true,
       "ascii": [
         "4@FPxP",
         "#(Jf"
@@ -1137,14 +2602,20 @@
     {
       "name": "DataStg/Strm_98",
       "size": 23,
-      "crc_ok": false,
+      "tag": "0x0FDD",
+      "instance": 0,
+      "payload_len": 17,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fdd000000110000000000010001000000000000002896"
     },
     {
       "name": "DataStg/Strm_99",
       "size": 24,
-      "crc_ok": false,
+      "tag": "0x0FDE",
+      "instance": 0,
+      "payload_len": 18,
+      "crc_ok": true,
       "ascii": [],
       "decrypted_hex": "0fde0000001200010009003200320fdd00000fdc00003be9"
     }

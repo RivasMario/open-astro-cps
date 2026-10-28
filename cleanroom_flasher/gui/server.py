@@ -11,10 +11,18 @@ import webbrowser
 import threading
 from typing import Dict, Any, Optional
 
-from ..parsers.json_parser import JsonParser
-from ..models import RadioCodeplug, Zone, Channel
-from ..protocol.serial_link import RadioSerialLink
-from ..protocol.ppp_flasher import AstroPppFlasher
+from open_astro.parsers.json_parser import JsonParser
+from open_astro.models import RadioCodeplug, Zone, Channel
+from open_astro.protocol.serial_link import RadioSerialLink
+try:
+    from ..ppp_flasher import AstroPppFlasher
+    from .. import kvl_probe
+except ImportError:
+    _parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if _parent_dir not in sys.path:
+        sys.path.insert(0, _parent_dir)
+    from ppp_flasher import AstroPppFlasher
+    import kvl_probe
 
 ACTIVE_CODEPLUG_PATH = "comm_pair_codeplug.json"
 DEFAULT_PORT = 8080
@@ -59,14 +67,20 @@ class OpenAstroApiHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def get_ports(self) -> Dict[str, Any]:
-        detected = RadioSerialLink.auto_detect_radio_port()
+        detected = getattr(RadioSerialLink, "auto_detect_radio_port", RadioSerialLink.auto_detect_port)()
+        kvl_fn = getattr(RadioSerialLink, "auto_detect_kvl_port", None)
+        if kvl_fn is not None:
+            kvl_port = kvl_fn()
+        else:
+            cands = kvl_probe.candidate_ports(None)
+            kvl_port = cands[0] if cands else None
         return {
             "detected_radio_port": detected,
-            "detected_kvl_port": RadioSerialLink.auto_detect_kvl_port()
+            "detected_kvl_port": kvl_port
         }
 
     def get_radio_status(self) -> Dict[str, Any]:
-        port = RadioSerialLink.auto_detect_radio_port()
+        port = getattr(RadioSerialLink, "auto_detect_radio_port", RadioSerialLink.auto_detect_port)()
         status = {
             "online": False,
             "port": port,
@@ -111,7 +125,7 @@ class OpenAstroApiHandler(http.server.SimpleHTTPRequestHandler):
             json.dump(data, f, indent=2)
 
     def trigger_write(self) -> Dict[str, Any]:
-        port = RadioSerialLink.auto_detect_radio_port() or "COM7"
+        port = getattr(RadioSerialLink, "auto_detect_radio_port", RadioSerialLink.auto_detect_port)() or "COM7"
         try:
             with AstroPppFlasher(port=port) as flasher:
                 id_info = flasher.query_at_identity()

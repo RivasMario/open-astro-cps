@@ -1,6 +1,13 @@
 import unittest
 import os
-from open_astro.parsers.cpg_parser import CpgArchive, AdkLcgCipher, rc4_crypt
+import sys
+
+try:
+    from .cpg_parser import CpgArchive, AdkLcgCipher, rc4_crypt
+except ImportError:
+    if os.path.dirname(os.path.abspath(__file__)) not in sys.path:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from cpg_parser import CpgArchive, AdkLcgCipher, rc4_crypt
 
 class TestCpgParser(unittest.TestCase):
     def setUp(self):

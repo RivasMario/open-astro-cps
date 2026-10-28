@@ -87,3 +87,30 @@ Two encryption backends, selected by `EncryptType`:
 3. **CRC-16-CCITT (`cgIsh10c.dll:0x100077AA`)**:
    * Polynomial: `0x1021`, initial value: `0x0000`, non-reflected, final XOR: `0x0000`.
    * Computed over `Payload` (excluding the 6-byte header and 2-byte trailer).
+
+## Key ISH Stream Tags (Calibrated from Real Codeplugs)
+
+| Tag | Stream Role | Layout Summary |
+|---|---|---|
+| `0x1005` | Codeplug Header / Metadata (`Strm_1`) | 43-byte binary configuration header (contains 6-byte packed flashcode nibbles). |
+| `0x1004` | Radio Identity (`Strm_2`) | Serial number at `payload[2:12]` (ASCII), model number at `payload[13:25]` (ASCII). |
+| `0x1006` | Feature / Flashcode (`Strm_3`) | 13-character ASCII flashcode at `payload[8:]` (e.g. `000008-002410-2\x00`). |
+| `0x000D` | Zone Name Table | ISH name-list table (`stride=17` at `[2:4]`, `count` at `[6:8]`) of zone aliases (`Z1`, `Z2`, or `A`..`RB`). |
+| `0x0FFE` | Zone Descriptor | One instance per zone; points to `0x0FFF` channel-name table (`ref_tag` at `[8:10]`, `ref_inst` at `[10:12]`). |
+| `0x0FFF` | Zone Channel Names | One instance per zone (`count` at `[4:6]`, followed by `count * 17` null-padded ASCII labels). |
+| `0x0FFC` | Zone Channel Ref | One instance per zone; points to head of `0x0FFD` channel record chain (`ref_tag=0x0FFD` at `[8:10]`, `ref_inst` at `[10:12]`). |
+| `0x0FFD` | Channel Record Table | Linked list (`next_tag` at `[0:2]`, `next_inst` at `[2:4]`, `count` at `[4:6]`, then `count * 35`-byte records). Conventional records (`owner=0x0FFB`) carry RX/TX NAC and 32-bit frequency words ($\times 5\text{ Hz}$); trunked records (`owner=0x0FE4`) carry trunked personality instance at `rec[2:4]` and 1-based talkgroup slot at `rec[4]`. |
+| `0x0FD5` / `0x0FD4` | Trunked Talkgroup Tables | Per trunked personality (`0x0FE4` instance): `0x0FD5` holds slot-1 default talkgroup ID at `[13:15]` and points to `0x0FD4`, which holds slots $2\dots N$ as 11-byte records (`tg_id` at `rec[0:2]`). |
+
+## `.tun` Radio Tuner Backup File Format
+
+Verified against `backups/Radio1_205CMB2249_restored_tuning.tun` and `backups/Radio3_205CFR2930_tuning.tun` (4,686 bytes each):
+
+* **Not an OLE Compound File**: Unlike `.cpg` files, `.tun` files saved by the ASTRO 25 Tuner application are **unencrypted raw binary MFC `CArchive` streams** (`olefile.isOleFile()` returns `False`, and `CpgParser` raises `ValueError`).
+* **Header Layout (Cleartext MFC `CString` + `CObject` Serialization)**:
+  * Offset `0x00`: Length-prefixed ASCII serial number (`0x0A` + 10-byte serial, e.g. `205CMB2249` or `205CFR2930`).
+  * Offset `0x0B`: Length-prefixed ASCII model number (`0x0C` + 12-byte model, e.g. `H46UCF9PW6BN` or `H46UCF9PW6AN`).
+  * Offset `0x18`: Length-prefixed flag string (`0x02` + `"No"`).
+  * Offset `0x50`: MFC class tag `FF FF 01 00 0B 00 "CSaveValues"` followed by the band edge word (`9C AF 5E 0A` LE = `0x0A5EAF9C` $\times$ 5 Hz = **870.00000 MHz**).
+* **Calibration Blocks (`0x010A` .. EOF)**:
+  * Contains 26 fixed-size 170-byte (`0xAA`) softpot calibration tables, each starting with the marker `01 80`, a 32-bit little-endian parameter type ID (`1`..`28`), a 32-bit little-endian sub-index, and up to 16 calibration point pairs `(freq_word_le: u32, dac_value_le: u32)` where `freq_hz = freq_word_le * 5` (spanning 764.0125 MHz to 870.0000 MHz).

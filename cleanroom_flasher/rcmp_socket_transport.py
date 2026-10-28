@@ -70,6 +70,32 @@ def partition_is_writable(access_rights: int) -> bool:
     Soft-pot calibration and security partitions are ReadOnly / ReadWriteLocked."""
     return access_rights == ACCESS_READ_WRITE
 
+
+def serialize_rcmp_ish_read(partition: int, item_id: int, offset: int = 0, length: int = 880) -> bytes:
+    """Constructs the ASTRO 25 RCMP TLV binary payload for Opcode 0x0100 (Read ISH Item).
+    Mirrors the TLV header structure of Write ISH (0x0101) without trailing write data:
+      [Tag 1: 0x01] [Partition: 1 byte (e.g. 0x80)]
+      [Tag 0: 0x00] [Item ID: 2 bytes BE]
+      [Tag 0: 0x00] [Offset: 2 bytes BE]
+      [Tag 0: 0x00] [Length: 2 bytes BE]
+      [Tag 0: 0x00] [0x0000: 2 bytes BE]
+      [Tag 0: 0x00] [Length: 2 bytes BE]
+    """
+    buf = bytearray()
+    buf.append(1)
+    buf.append(partition & 0xFF)
+    buf.append(0)
+    buf.extend(struct.pack("!H", item_id))
+    buf.append(0)
+    buf.extend(struct.pack("!H", offset))
+    buf.append(0)
+    buf.extend(struct.pack("!H", length))
+    buf.append(0)
+    buf.extend(struct.pack("!H", 0))
+    buf.append(0)
+    buf.extend(struct.pack("!H", length))
+    return bytes(buf)
+
 DEFAULT_RADIO_IP = "192.168.128.1"
 FLASH_PORT = 8002         # confirmed: ByteData10 Nopen remote port (0x1F42)
 LOCAL_PORT = 8001         # confirmed: ByteData10 Nopen local port  (0x1F41)
@@ -193,12 +219,33 @@ class RcmpSocketTransport:
         callee -- read-only, safe to probe."""
         return self._send(OP_READ_ISH, item_tlv)
 
-    def probe(self) -> dict:
-        """Minimal end-to-end transport proof: connect, unlock, query UUID.
+    def read_ish_item(self, item_id: int, partition: int = 0x80,
+                      offset: int = 0, length: int = 880) -> Tuple[int, bytes]:
+        """Convenience wrapper around read_ish() using serialize_rcmp_ish_read()."""
+        tlv = serialize_rcmp_ish_read(partition=partition, item_id=item_id,
+                                      offset=offset, length=length)
+        return self.read_ish(tlv)
+
+    def probe(self, read_ish_id: Optional[int] = None,
+              partition: int = 0x80, read_len: int = 880) -> dict:
+        """Minimal end-to-end transport proof: connect, unlock, query UUID,
+        and optionally perform a read-only ISH item read (e.g. item 2 = radio identity).
         No state change, no write. Use this as the first hardware test."""
         info = {"radio_ip": self.radio_ip, "port": self.port}
         info["unlock_status"] = self.unlock()
         info["uuid"] = self.query_uuid().hex()
+        if read_ish_id is not None:
+            status, data = self.read_ish_item(item_id=read_ish_id,
+                                              partition=partition,
+                                              offset=0,
+                                              length=read_len)
+            info["read_ish"] = {
+                "item_id": read_ish_id,
+                "partition": f"0x{partition:02X}",
+                "status": status,
+                "length": len(data),
+                "data_hex": data.hex(),
+            }
         return info
 
     # -- WRITE PATH: hard-gated ------------------------------------------
@@ -222,15 +269,63 @@ class RcmpSocketTransport:
                         "allowlist exists -- see write_ish().")
 
 
-if __name__ == "__main__":
-    # Read-only transport proof. Assumes `pppd` has ppp0 up (see module docstring).
-    import sys
-    ip = sys.argv[1] if len(sys.argv) > 1 else None
+def main(argv: Optional[list] = None) -> int:
+    """Read-only CLI transport probe for Fedora/Linux hardware bringup."""
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(
+        description="Read-only RCMP-over-TCP hardware probe (requires ppp0 up via pppd)"
+    )
+    parser.add_argument("ip", nargs="?", default=None,
+                        help="Radio IP address (default: auto-detect from --iface or 192.168.128.1)")
+    parser.add_argument("--ip", dest="ip_flag", default=None,
+                        help="Explicit radio IP address (overrides positional ip)")
+    parser.add_argument("--iface", default="ppp0",
+                        help="PPP interface to query peer IP from (default: ppp0)")
+    parser.add_argument("--port", type=int, default=FLASH_PORT,
+                        help=f"Remote TCP flasher port (default: {FLASH_PORT})")
+    parser.add_argument("--bind-local", action="store_true",
+                        help=f"Bind local TCP port {LOCAL_PORT} (matches CPS ByteData10)")
+    parser.add_argument("--read-ish", type=int, default=None, metavar="ITEM_ID",
+                        help="Perform a safe read-only OP_READ_ISH test for ITEM_ID (e.g., 2 for Radio Identity)")
+    parser.add_argument("--partition", type=lambda x: int(x, 0), default=0x80,
+                        help="ISH partition ID for --read-ish (default: 0x80)")
+    parser.add_argument("--length", type=int, default=880,
+                        help="Max bytes to request in --read-ish (default: 880)")
+    parser.add_argument("--json", action="store_true",
+                        help="Print probe result as formatted JSON")
+
+    args = parser.parse_args(argv)
+    target_ip = args.ip_flag or args.ip or detect_radio_ip(args.iface)
+
     try:
-        with RcmpSocketTransport(radio_ip=ip) as t:
-            print("[+] connected to", t.radio_ip, "port", t.port)
-            print("[+] probe:", t.probe())
+        with RcmpSocketTransport(radio_ip=target_ip, port=args.port,
+                                 bind_local=args.bind_local) as t:
+            if not args.json:
+                print(f"[+] Connected to {t.radio_ip}:{t.port}")
+            res = t.probe(read_ish_id=args.read_ish,
+                          partition=args.partition,
+                          read_len=args.length)
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                print(f"[+] Unlock status : 0x{res['unlock_status']:02X}")
+                print(f"[+] Radio UUID    : {res['uuid']}")
+                if "read_ish" in res:
+                    rish = res["read_ish"]
+                    print(f"[+] Read ISH #{rish['item_id']} ({rish['partition']}): "
+                          f"status=0x{rish['status']:02X}, {rish['length']} bytes")
+                    if rish["data_hex"]:
+                        print(f"    Hex preview   : {rish['data_hex'][:64]}"
+                              f"{'...' if len(rish['data_hex']) > 64 else ''}")
+            return 0
     except Exception as e:
-        print("[-] transport probe failed:", e)
+        print(f"[-] Transport probe failed: {e}")
         print("    Is ppp0 up? Run the pppd command in this module's docstring.")
-        sys.exit(1)
+        return 1
+
+
+if __name__ == "__main__":
+    import sys
+    raise SystemExit(main())

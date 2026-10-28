@@ -6,17 +6,19 @@ Immediately backs up current codeplug and writes clean 800MHz fleet codeplug.
 import sys
 import time
 import json
-import winsound
+try:
+    import winsound
+except ImportError:
+    winsound = None
 try:
     import serial
 except ImportError:
-    print("pyserial is required.")
-    sys.exit(1)
+    serial = None
 
-from open_astro.protocol.astro_link import AstroRadioLink
+from open_astro.protocol.serial_link import RadioSerialLink
 from open_astro.protocol.framing import PacketFramer
 from open_astro.parsers.json_parser import JsonParser
-from open_astro.models import CodeplugValidator
+from open_astro.models import RadioCodeplug
 
 # SB9600 CRC Table
 TABLE = [

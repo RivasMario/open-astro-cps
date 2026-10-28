@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional
 HEADER_SIZE = 0x320            # CFhAdkFileHeader::GetHeaderSize
 HEADER_STREAM = "AdkFileHeader"   # confirmed from real .cpg samples (plaintext)
 MASTER_PASSPHRASE = b"A8Z6J9QP5"  # fhAdk10c.dll @0x10012018
+DIR_RECORD_SIZE = 10
 
 
 def derive_rc4_key(passphrase: bytes = MASTER_PASSPHRASE) -> bytes:
@@ -101,6 +102,36 @@ def parse_header(blob: bytes) -> Dict[str, Any]:
     return h
 
 
+def parse_directory(payload: bytes) -> List[Dict[str, Any]]:
+    """Parse DataStg/Strm_0 directory payload into 10-byte stream descriptors.
+
+    Accepts either a full decrypted Strm_0 stream (10*N + 2-byte trailer) or
+    a raw multiple of 10 bytes. Each 10-byte record is:
+      [tag: u16_be, instance: u16_be, flags: u16_be, stream_crc: u16_be, stream_id: u16_be]
+    """
+    if len(payload) >= 2 and len(payload) % DIR_RECORD_SIZE == 2:
+        body = payload[:-2]
+    else:
+        body = payload[: (len(payload) // DIR_RECORD_SIZE) * DIR_RECORD_SIZE]
+
+    records: List[Dict[str, Any]] = []
+    for off in range(0, len(body), DIR_RECORD_SIZE):
+        rec = body[off:off + DIR_RECORD_SIZE]
+        tag = int.from_bytes(rec[0:2], "big")
+        inst = int.from_bytes(rec[2:4], "big")
+        flags = int.from_bytes(rec[4:6], "big")
+        scrc = int.from_bytes(rec[6:8], "big")
+        sid = int.from_bytes(rec[8:10], "big")
+        records.append({
+            "tag": f"0x{tag:04X}",
+            "instance": inst,
+            "flags": flags,
+            "stream_crc": scrc,
+            "stream_id": sid,
+        })
+    return records
+
+
 def _guess_model(fields: List[str]) -> Optional[str]:
     """Fallback model heuristic from scanned ASCII fields."""
     import re
@@ -144,11 +175,12 @@ class CpgParser:
             return s.read()
 
     def parse(self, decrypt: bool = True) -> Dict[str, Any]:
-        """Return a structural dict: header + per-stream info (decrypted + CRC)."""
+        """Return a structural dict: header + directory + per-stream info (decrypted + CRC)."""
         result: Dict[str, Any] = {
             "format": "cpg/ole-compound",
             "rc4_key": self.key[:5].hex(),
             "header": None,
+            "directory": None,
             "streams": [],
             "note": "Structural dump. Field->channel mapping needs a sample to "
                     "calibrate; if every crc is bad the stream crypto differs "
@@ -157,6 +189,9 @@ class CpgParser:
         header_raw = None
         header_name = None
         size_best = None
+        dir_records: Optional[List[Dict[str, Any]]] = None
+        actual_by_sid: Dict[int, Dict[str, Any]] = {}
+
         for p in self._streams():
             raw = self._read(p)
             # Header: the stream literally named "AdkFileHeader" (plaintext),
@@ -174,16 +209,47 @@ class CpgParser:
                 length = int.from_bytes(dec[4:6], "big")
                 payload = dec[6:-2]
                 tail = dec[-2:]
+                tail_crc = int.from_bytes(tail, "big")
                 entry["tag"] = f"0x{tag:04X}"
                 entry["instance"] = inst
                 entry["payload_len"] = length
                 if p and p[-1] == "Strm_0":
                     entry["crc_ok"] = True  # Directory stream index
+                    dir_records = parse_directory(dec)
                 else:
-                    entry["crc_ok"] = crc16_ccitt(payload) == int.from_bytes(tail, "big")
+                    entry["crc_ok"] = crc16_ccitt(payload) == tail_crc
+                    if p and p[-1].startswith("Strm_"):
+                        try:
+                            sid = int(p[-1].split("_", 1)[1])
+                            actual_by_sid[sid] = {
+                                "tag": entry["tag"],
+                                "instance": inst,
+                                "stream_crc": tail_crc,
+                            }
+                        except ValueError:
+                            pass
                 entry["ascii"] = _ascii_fields(dec, 4)[:8]
                 entry["decrypted_hex"] = dec[:64].hex()
             result["streams"].append(entry)
+
+        if dir_records is not None:
+            matched = 0
+            for r in dir_records:
+                act = actual_by_sid.get(r["stream_id"])
+                if (
+                    act is not None
+                    and act["tag"] == r["tag"]
+                    and act["instance"] == r["instance"]
+                    and act["stream_crc"] == r["stream_crc"]
+                ):
+                    matched += 1
+            result["directory"] = {
+                "stream": "DataStg/Strm_0",
+                "record_count": len(dir_records),
+                "matched_streams": matched,
+                "all_matched": matched == len(dir_records),
+                "records": dir_records,
+            }
 
         if header_raw is None and size_best is not None:
             header_name, _, header_raw = size_best

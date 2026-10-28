@@ -5,7 +5,7 @@ import argparse
 import os
 import sys
 from .models import RadioCodeplug, Zone, Channel, EncryptionKey
-from .parsers import JsonParser, CsvParser, CpgParser, CpgDecoder
+from .parsers import JsonParser, CsvParser, CpgParser, CpgDecoder, CpgWriter
 from .protocol import RadioSerialLink, AstroFlasher
 
 def cmd_new(args):
@@ -381,8 +381,20 @@ def cmd_decode_cpg(args):
     if args.csv:
         CsvParser.export_csv(codeplug, args.csv)
         print(f"[+] Wrote channel CSV: {args.csv}")
-    print("    (zone 1 carries conventional freq/NAC; channel->talkgroup linkage "
-          "and key material not yet mapped -- use read-cpg for the full dump)")
+
+
+def cmd_write_cpg(args):
+    try:
+        if args.input.lower().endswith(".csv"):
+            codeplug = CsvParser.import_csv(args.input)
+        else:
+            codeplug = JsonParser.load_file(args.input)
+        CpgWriter.write_codeplug(codeplug, args.output, template_path=args.template)
+    except Exception as e:
+        print(f"[-] {e}")
+        sys.exit(1)
+    print(f"[+] Patched {len(codeplug.zones)} zones / {codeplug.total_channels()} channels "
+          f"into .cpg: {args.output} (template: {args.template})")
 
 
 def main():
@@ -465,12 +477,21 @@ def main():
 
     # decode-cpg
     p_decode_cpg = subparsers.add_parser("decode-cpg",
-        help="Decode a .cpg into a typed RadioCodeplug JSON (conventional channels)")
+        help="Decode a .cpg into a typed RadioCodeplug JSON (zones, conventional/trunked channels, talkgroups)")
     p_decode_cpg.add_argument("input", help="Path to the .cpg file")
     p_decode_cpg.add_argument("-o", "--output", default="codeplug.json",
                               help="Output typed JSON codeplug (default: codeplug.json)")
     p_decode_cpg.add_argument("--csv", help="Also export channels to this CSV file")
     p_decode_cpg.set_defaults(func=cmd_decode_cpg)
+
+    # write-cpg
+    p_write_cpg = subparsers.add_parser("write-cpg",
+        help="Apply a JSON or CSV codeplug onto a template .cpg file with CRC-16 and RC4")
+    p_write_cpg.add_argument("input", help="Input JSON or CSV codeplug file")
+    p_write_cpg.add_argument("output", help="Output .cpg file path")
+    p_write_cpg.add_argument("-t", "--template", default="backups/205CFR2930.cpg",
+                             help="Donor/template .cpg file (default: backups/205CFR2930.cpg)")
+    p_write_cpg.set_defaults(func=cmd_write_cpg)
 
     args = parser.parse_args()
     args.func(args)

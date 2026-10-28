@@ -3,14 +3,33 @@ Unit tests for AstroPppFlasher, RFC 1661 PPP framing, and TCP packet builders.
 """
 import unittest
 import struct
-from open_astro.protocol.ppp_flasher import (
-    ppp_fcs16,
-    ppp_escape,
-    ppp_unescape,
-    parse_ppp_frames,
-    ip_checksum,
-    AstroPppFlasher
-)
+import os
+import sys
+
+try:
+    from .ppp_flasher import (
+        ppp_fcs16,
+        ppp_escape,
+        ppp_unescape,
+        parse_ppp_frames,
+        ip_checksum,
+        AstroPppFlasher,
+        serialize_rcmp_ish_write,
+        serialize_rcmp_mode,
+    )
+except ImportError:
+    if os.path.dirname(os.path.abspath(__file__)) not in sys.path:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from ppp_flasher import (
+        ppp_fcs16,
+        ppp_escape,
+        ppp_unescape,
+        parse_ppp_frames,
+        ip_checksum,
+        AstroPppFlasher,
+        serialize_rcmp_ish_write,
+        serialize_rcmp_mode,
+    )
 
 
 class TestAstroPppFlasher(unittest.TestCase):
@@ -60,7 +79,6 @@ class TestAstroPppFlasher(unittest.TestCase):
         self.assertEqual(dst_p, 8002)
 
     def test_serialize_rcmp_ish_write(self):
-        from open_astro.protocol.ppp_flasher import serialize_rcmp_ish_write
         test_data = b"Hello Astro 25"
         payload = serialize_rcmp_ish_write(partition=0x80, item_id=22, offset=0, length=len(test_data), data=test_data)
         # Check header structure
@@ -75,7 +93,6 @@ class TestAstroPppFlasher(unittest.TestCase):
         self.assertTrue(payload.endswith(test_data))
 
     def test_serialize_rcmp_mode(self):
-        from open_astro.protocol.ppp_flasher import serialize_rcmp_mode
         payload = serialize_rcmp_mode(mode=4, timeout_sec=120)
         self.assertEqual(payload[0], 1) # Tag 1
         self.assertEqual(payload[1], 4) # Mode 4 (Write Mode)

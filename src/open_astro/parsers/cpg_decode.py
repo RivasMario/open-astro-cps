@@ -3,30 +3,42 @@ Typed .cpg -> RadioCodeplug decoder (offline).
 
 Builds on the structural reader in cpg_parser.py. Where cpg_parser dumps every
 stream generically (tag / instance / payload / CRC), this module maps the
-conventional-channel ISH records into the typed RadioCodeplug / Zone / Channel
+ISH records into the typed RadioCodeplug / Zone / Channel / Talkgroup / ScanList
 models so the result round-trips through JsonParser and CsvParser.
 
 Calibration (from backups/205CFR2930.cpg and Radio1_205CMB2249_codeplug.cpg):
 
+  * tag 0x1004  = radio identity record: serial at payload[2:12] (null-padded
+        ASCII), model at payload[13:25] (null-padded ASCII).
+  * tag 0x1006  = feature/flashcode record: 13-digit flashcode string at
+        payload[8:] (null-terminated ASCII, e.g. "000008-002410-2").
+  * tag 0x000D  = ISH name-list table of zone labels (e.g. ["Z1", "Z2"] or
+        ["A", "B", "C", "E", "F", "G", "H", "I", "J", "RB"]).
+  * tag 0x0FFE  = per-zone descriptor pointing to the zone's channel-name table
+        (ref_tag=0x0FFF, ref_inst at payload[10:12]).
   * tag 0x0FFF  = per-zone channel-name table. ONE INSTANCE PER ZONE (the
         stream's instance index is the zone index); on the Kent PD codeplug
         there are 10 instances, each a 16-slot table (VC KNT..., KC CALL...).
         payload = 00 00 00 00 | count(u16_be) | count * NAME_SLOT bytes
         each NAME_SLOT is a null-padded ASCII channel label (empty = unused).
-  * tag 0x0FFD  = conventional personality (freq + NAC) table, overlaid
-        positionally onto the first zone's channels. The real data lives in
-        the instance whose records carry non-zero frequencies.
-        payload = 00 00 00 00 | count(u16_be) | count * FREQ_REC bytes
+  * tag 0x0FFC  = per-zone channel->personality reference record pointing to the
+        zone's first 0x0FFD table instance (ref_tag=0x0FFD, ref_inst at
+        payload[10:12], stepping by 2 when a zone spans two 0x0FFD instances).
+  * tag 0x0FFD  = per-zone channel record table (up to 10 records per stream;
+        payload[0:2]=next_tag, payload[2:4]=next_inst when a 16-channel zone
+        chains a 10-record even instance to a 6-record odd instance).
+        payload = next_tag(u16_be) | next_inst(u16_be) | count(u16_be) | count * FREQ_REC bytes
         each FREQ_REC (35 bytes):
             owner(u16) link(u16) field(u16)
             nac_rx(u16) nac_tx(u16) nac3(u16)
             freq_rx(u32) freq_tx(u32) freq3(u32)
             flags(u32) ... tail
-        frequency = u32_be * 5 Hz  (docs/CPG_FILE_FORMAT.md).
-
-Everything the mapping does not yet cover (trunked talkgroups, scan lists, key
-material) is left at model defaults; use `open-astro read-cpg` for the full
-structural dump of those streams.
+        - Conventional channels have owner=0x0FFB and non-zero frequencies:
+          frequency = u32_be * 5 Hz (docs/CPG_FILE_FORMAT.md).
+        - Trunked channels have owner=0x0FE4, link=trunked personality instance,
+          and field[0] (rec[4]) = 1-based talkgroup slot index into the
+          personality's talkgroup list (tag 0x0FD5 default TG at payload[13:15]
+          for slot 1, plus tag 0x0FD4 11-byte records for slots 2..N).
 """
 from __future__ import annotations
 
@@ -37,16 +49,24 @@ import re
 from ..models import RadioCodeplug, Zone, Channel, Talkgroup, ScanList
 from .cpg_parser import CpgParser, rc4, derive_rc4_key
 
+TAG_RADIO_ID = 0x1004      # serial + model record
+TAG_FLASHCODE = 0x1006     # ASCII flashcode record (e.g. "000008-002410-2")
+TAG_ZONE_NAMES = 0x000D    # ISH name-list table of zone aliases
+TAG_ZONE_DESC = 0x0FFE     # per-zone descriptor -> 0x0FFF instance
 TAG_CHANNEL_NAMES = 0x0FFF
 TAG_CHANNEL_FREQS = 0x0FFD
-TAG_TALKGROUPS = 0x0FF8   # ISH name list, entries like "TG 00002"
-TAG_SITES = 0x0FDC        # ISH name list, trunking system/site aliases
+TAG_CHANNEL_REF = 0x0FFC   # per-zone channel -> 0x0FFD chain head pointer
+TAG_TRUNK_PERS = 0x0FE4    # trunked personality owner tag in 0x0FFD records
+TAG_CONV_PERS = 0x0FFB     # conventional personality owner tag in 0x0FFD records
+TAG_TRUNK_TG_HDR = 0x0FD5  # trunked personality talkgroup header (slot 1 default TG + 0x0FD4 pointer)
+TAG_TRUNK_TG_TBL = 0x0FD4  # trunked personality talkgroup table (slots 2..N, 11B records)
+TAG_TALKGROUPS = 0x0FF8    # ISH name list, entries like "TG 00002"
+TAG_SITES = 0x0FDC         # ISH name list, trunking system/site aliases
 TAG_SCAN_LISTS = (0x004C, 0x004D, 0x004F, 0x006C, 0x006E)  # "LIST N" tables
-TAG_CHANNEL_REF = 0x0FFC   # conventional channel -> personality reference record
 
 # A 0x0FFC record is: 0001 0023 00ff 000a <ref_tag:u16> <ref_inst:u16> 00 00 01
 # where ref_tag is the referenced personality tag (0x0FFD freq) and ref_inst is
-# its instance. Channels appear in instance order; ref_inst steps by 2.
+# its head instance for that zone.
 CHREF_TAG_OFF = 8
 CHREF_INST_OFF = 10
 
@@ -55,14 +75,36 @@ CHREF_INST_OFF = 10
 #   then count * stride name slots (null-padded ASCII).
 ISH_LIST_PREFIX = 8
 
-NAME_TABLE_PREFIX = 6   # 4 reserved bytes + 2-byte count
+NAME_TABLE_PREFIX = 6   # 4 header/chain bytes + 2-byte count
 FREQ_REC_LEN = 35
+TRUNK_TG_REC_LEN = 11
 
 # Offsets inside a 35-byte FREQ_REC (big-endian):
+OFF_OWNER_TAG = 0
+OFF_OWNER_INST = 2
+OFF_TG_SLOT = 4
 OFF_NAC_RX = 6
 OFF_NAC_TX = 8
 OFF_FREQ_RX = 12
 OFF_FREQ_TX = 16
+
+BANDSPLIT_BY_PREFIX: Dict[str, str] = {
+    "U": "700/800 MHz (764-870 MHz)",
+    "K": "VHF (136-174 MHz)",
+    "R": "UHF Range 1 (380-470 MHz)",
+    "S": "UHF Range 2 (450-520 MHz)",
+    "F": "700 MHz (764-806 MHz)",
+    "W": "800 MHz (806-870 MHz)",
+}
+
+
+def infer_bandsplit(model: Optional[str]) -> str:
+    """Infer radio bandsplit description from Motorola ASTRO 25 model number."""
+    if model and len(model) >= 4:
+        band_char = model[3].upper()
+        if band_char in BANDSPLIT_BY_PREFIX:
+            return BANDSPLIT_BY_PREFIX[band_char]
+    return "700/800 MHz (764-870 MHz)"
 
 
 def _freq_mhz(raw32: int) -> float:
@@ -81,7 +123,7 @@ def _nac(raw16: int) -> str:
 
 
 class CpgDecoder:
-    """Decode a .cpg into a typed RadioCodeplug (conventional channels)."""
+    """Decode a .cpg into a typed RadioCodeplug."""
 
     def __init__(self, path: str):
         self._parser = CpgParser(path)   # validates OLE + imports olefile
@@ -97,6 +139,8 @@ class CpgDecoder:
             raw = self._parser._read(p)
             if p and p[-1] == "AdkFileHeader":
                 self._header = self._parse_header(raw)
+                continue
+            if p and p[-1] == "Strm_0":
                 continue
             if len(raw) < 8:
                 continue
@@ -156,7 +200,7 @@ class CpgDecoder:
 
     @staticmethod
     def _ish_name_list(payload: bytes) -> List[str]:
-        """Decode an ISH name-list table (tags 0x0FF8 / 0x0FDC / LIST tags)."""
+        """Decode an ISH name-list table (tags 0x000D / 0x0FF8 / 0x0FDC / LIST tags)."""
         if len(payload) < ISH_LIST_PREFIX:
             return []
         stride = int.from_bytes(payload[2:4], "big")
@@ -172,6 +216,76 @@ class CpgDecoder:
             if text:
                 names.append(text)
         return names
+
+    @staticmethod
+    def _decode_radio_id_stream(payload: bytes) -> Dict[str, Optional[str]]:
+        """Decode serial and model number from tag 0x1004 payload."""
+        info: Dict[str, Optional[str]] = {"serial": None, "model": None}
+        if len(payload) >= 12:
+            raw_ser = payload[2:12].split(b"\x00", 1)[0]
+            ser = "".join(chr(b) for b in raw_ser if 0x20 <= b < 0x7F).strip()
+            if ser:
+                info["serial"] = ser
+        if len(payload) >= 25:
+            raw_mod = payload[13:25].split(b"\x00", 1)[0]
+            mod = "".join(chr(b) for b in raw_mod if 0x20 <= b < 0x7F).strip()
+            if mod:
+                info["model"] = mod
+        return info
+
+    @staticmethod
+    def _decode_flashcode_stream(payload: bytes) -> Optional[str]:
+        """Decode the 13-character flashcode string from tag 0x1006 payload."""
+        if len(payload) < 9:
+            return None
+        raw = payload[8:].split(b"\x00", 1)[0]
+        text = "".join(chr(b) for b in raw if 0x20 <= b < 0x7F).strip()
+        if re.fullmatch(r"[0-9A-Fa-f]{6}-[0-9A-Fa-f]{6}-\d", text):
+            return text.upper()
+        return text or None
+
+    @staticmethod
+    def _decode_trunk_tg_tables(
+        by_tag_inst: Dict[Tuple[int, int], bytes]
+    ) -> Dict[int, List[int]]:
+        """Build {trunk_pers_inst: [tg_slot_1, tg_slot_2, ...]} from 0x0FD5 + 0x0FD4."""
+        tables: Dict[int, List[int]] = {}
+        for (tag, inst), pl in sorted(by_tag_inst.items()):
+            if tag != TAG_TRUNK_TG_HDR or len(pl) < 15:
+                continue
+            fd4_tag = int.from_bytes(pl[8:10], "big")
+            fd4_inst = int.from_bytes(pl[10:12], "big")
+            tg0 = int.from_bytes(pl[13:15], "big")
+            tgs: List[int] = [tg0]
+            pl4 = by_tag_inst.get((fd4_tag, fd4_inst))
+            if pl4 and len(pl4) >= NAME_TABLE_PREFIX:
+                cnt4 = int.from_bytes(pl4[4:6], "big")
+                body4 = pl4[NAME_TABLE_PREFIX:]
+                for i in range(cnt4):
+                    rec4 = body4[i * TRUNK_TG_REC_LEN:(i + 1) * TRUNK_TG_REC_LEN]
+                    if len(rec4) >= 2:
+                        tgs.append(int.from_bytes(rec4[0:2], "big"))
+            tables[inst] = tgs
+        return tables
+
+    @classmethod
+    def _follow_ffd_chain(
+        cls,
+        head_inst: int,
+        by_tag_inst: Dict[Tuple[int, int], bytes],
+    ) -> List[bytes]:
+        """Follow a 0x0FFD linked-list chain starting at head_inst."""
+        recs: List[bytes] = []
+        seen: set = set()
+        cur_tag = TAG_CHANNEL_FREQS
+        cur_inst = head_inst
+        while cur_tag == TAG_CHANNEL_FREQS and (cur_tag, cur_inst) in by_tag_inst and cur_inst not in seen:
+            seen.add(cur_inst)
+            pl = by_tag_inst[(cur_tag, cur_inst)]
+            recs.extend(cls._freq_records(pl))
+            cur_tag = int.from_bytes(pl[0:2], "big")
+            cur_inst = int.from_bytes(pl[2:4], "big")
+        return recs
 
     @staticmethod
     def _decode_freq_rec(rec: bytes) -> Optional[Dict[str, Any]]:
@@ -193,44 +307,74 @@ class CpgDecoder:
     # -- public ----------------------------------------------------------
     def decode(self) -> RadioCodeplug:
         streams = self._decoded_streams()
+        by_tag_inst: Dict[Tuple[int, int], bytes] = {
+            (tag, inst): pl for tag, inst, pl in streams
+        }
 
-        # One zone per 0x0FFF instance (instance index == zone index). Keep
-        # instance order; drop exact-duplicate tables (some codeplugs store a
-        # mirror copy under a second instance).
-        zone_tables: List[List[str]] = []
-        for _inst, payload in sorted(
+        # Zone names from tag 0x000D (ISH name list), with fallback to "ZONE N".
+        raw_zone_names: List[str] = []
+        for tag, _inst, payload in sorted(
+            ((t, i, pl) for t, i, pl in streams if t == TAG_ZONE_NAMES),
+            key=lambda x: x[1],
+        ):
+            raw_zone_names.extend(self._ish_name_list(payload))
+
+        # Trunked personality -> talkgroup ID tables (0x0FD5 + 0x0FD4).
+        trunk_tg_tables = self._decode_trunk_tg_tables(by_tag_inst)
+
+        # Zone channel-name tables (0x0FFF), preserving original instance index
+        # while dropping exact-duplicate mirror tables (e.g. 205CFR2930 stores
+        # ["CHAN 1", "CHAN 2"] in both instance 0 and instance 1).
+        zone_entries: List[Tuple[int, List[str]]] = []
+        seen_tables: List[List[str]] = []
+        for inst, payload in sorted(
             ((i, pl) for tag, i, pl in streams if tag == TAG_CHANNEL_NAMES)
         ):
             names = self._name_table(payload)
-            if any(n for n in names) and names not in zone_tables:
-                zone_tables.append(names)
+            if any(n for n in names) and names not in seen_tables:
+                seen_tables.append(names)
+                zone_entries.append((inst, names))
 
-        # Conventional freq/NAC records, overlaid positionally onto zone 0.
-        conv_recs: List[Dict[str, Any]] = []
+        # Per-zone 0x0FFC -> 0x0FFD reference records.
+        channel_refs: Dict[int, Dict[str, int]] = {}
+        for _tag, inst, pl in sorted(
+            ((t, i, pl) for t, i, pl in streams if t == TAG_CHANNEL_REF),
+            key=lambda x: x[1],
+        ):
+            ref = self._channel_ref(pl)
+            if ref:
+                channel_refs[inst] = ref
+
+        # Fallback: highest-count conventional 0x0FFD record list (used when a
+        # single deduplicated zone's own 0x0FFD chain has no conventional freqs,
+        # as in 205CFR2930 where inst 0 and inst 1 share identical channel names
+        # and the conventional freqs live in inst 1).
+        best_conv_recs: List[Dict[str, Any]] = []
         for tag, _inst, payload in streams:
             if tag != TAG_CHANNEL_FREQS:
                 continue
             decoded = [d for d in (self._decode_freq_rec(r)
                                    for r in self._freq_records(payload)) if d]
-            if len(decoded) > len(conv_recs):
-                conv_recs = decoded
-
-        # Conventional channel->personality references (0x0FFC), in channel
-        # order. These confirm the conventional-channel count/order; trunked
-        # zones have no equivalent per-channel personality record in these
-        # samples, so their talkgroup IDs are not resolvable here.
-        channel_refs = [self._channel_ref(pl) for tag, _i, pl in
-                        sorted(((t, i, pl) for t, i, pl in streams
-                                if t == TAG_CHANNEL_REF), key=lambda x: x[1])]
-        channel_refs = [r for r in channel_refs if r]
-
-        # Overlay conventional freq/NAC only onto as many zone-0 channels as the
-        # 0x0FFC reference records vouch for (falls back to the freq-record count
-        # when no reference records are present).
-        conv_count = min(len(conv_recs), len(channel_refs)) if channel_refs else len(conv_recs)
+            if len(decoded) > len(best_conv_recs):
+                best_conv_recs = decoded
 
         zones: List[Zone] = []
-        for zi, names in enumerate(zone_tables):
+        for zi, (orig_inst, names) in enumerate(zone_entries):
+            ref = channel_refs.get(orig_inst)
+            raw_recs: List[bytes] = []
+            if ref and ref["ref_tag"] == TAG_CHANNEL_FREQS:
+                raw_recs = self._follow_ffd_chain(ref["ref_inst"], by_tag_inst)
+
+            # Check if this zone has no conventional frequency records of its
+            # own; for zone 0, fall back to the highest-count conventional
+            # 0x0FFD table so single-zone or CpgWriter-patched codeplugs overlay
+            # conventional frequencies onto zone 0 as calibrated.
+            use_fallback_conv = (
+                zi == 0
+                and best_conv_recs
+                and not any(self._decode_freq_rec(r) for r in raw_recs)
+            )
+
             channels: List[Channel] = []
             cn = 0
             for si, raw_name in enumerate(names):
@@ -238,26 +382,65 @@ class CpgDecoder:
                 if not name:
                     continue
                 cn += 1
-                rec = conv_recs[si] if (zi == 0 and si < conv_count) else None
+                raw_rec = raw_recs[si] if si < len(raw_recs) else None
+                conv_rec = (
+                    best_conv_recs[si]
+                    if (use_fallback_conv and si < len(best_conv_recs))
+                    else (self._decode_freq_rec(raw_rec) if raw_rec else None)
+                )
+
+                tg_id = 1
+                if raw_rec is not None and len(raw_rec) >= OFF_TG_SLOT + 2:
+                    owner = int.from_bytes(raw_rec[OFF_OWNER_TAG:OFF_OWNER_TAG + 2], "big")
+                    link = int.from_bytes(raw_rec[OFF_OWNER_INST:OFF_OWNER_INST + 2], "big")
+                    slot = raw_rec[OFF_TG_SLOT]
+                    if owner == TAG_TRUNK_PERS and link in trunk_tg_tables:
+                        tgs = trunk_tg_tables[link]
+                        if 1 <= slot <= len(tgs):
+                            tg_id = tgs[slot - 1]
+
                 channels.append(Channel(
                     channel_number=cn,
                     name=name[:14],
-                    rx_frequency=rec["rx_frequency"] if rec else 0.0,
-                    tx_frequency=rec["tx_frequency"] if rec else 0.0,
+                    rx_frequency=conv_rec["rx_frequency"] if conv_rec else 0.0,
+                    tx_frequency=conv_rec["tx_frequency"] if conv_rec else 0.0,
                     voice_type="ASTRO P25",
-                    rx_nac=rec["rx_nac"] if rec else "$293",
-                    tx_nac=rec["tx_nac"] if rec else "$293",
+                    rx_nac=conv_rec["rx_nac"] if conv_rec else "$293",
+                    tx_nac=conv_rec["tx_nac"] if conv_rec else "$293",
+                    talkgroup_id=tg_id,
                 ))
             if channels:
-                zones.append(Zone(zone_number=zi + 1, name=f"ZONE {zi + 1}", channels=channels))
+                zlabel = (
+                    raw_zone_names[orig_inst].strip()
+                    if orig_inst < len(raw_zone_names) and raw_zone_names[orig_inst].strip()
+                    else (
+                        raw_zone_names[zi].strip()
+                        if zi < len(raw_zone_names) and raw_zone_names[zi].strip()
+                        else f"ZONE {zi + 1}"
+                    )
+                )
+                zones.append(Zone(zone_number=zi + 1, name=zlabel, channels=channels))
 
-        # Talkgroups (0x0FF8), sites (0x0FDC), scan lists (LIST tags).
+        # Talkgroups (0x0FF8), sites (0x0FDC), scan lists (LIST tags),
+        # plus radio identity (0x1004) and flashcode (0x1006).
         talkgroups: List[Talkgroup] = []
         sites: List[str] = []
         scan_lists: List[ScanList] = []
         seen_scan: set = set()
+        ish_model: Optional[str] = None
+        ish_serial: Optional[str] = None
+        flashcode: str = ""
+
         for tag, _inst, payload in streams:
-            if tag == TAG_TALKGROUPS:
+            if tag == TAG_RADIO_ID:
+                rid = self._decode_radio_id_stream(payload)
+                ish_model = ish_model or rid.get("model")
+                ish_serial = ish_serial or rid.get("serial")
+            elif tag == TAG_FLASHCODE:
+                fc = self._decode_flashcode_stream(payload)
+                if fc:
+                    flashcode = fc
+            elif tag == TAG_TALKGROUPS:
                 for n in self._ish_name_list(payload):
                     m = re.search(r"(\d+)", n)
                     talkgroups.append(Talkgroup(tg_id=int(m.group(1)) if m else None, name=n))
@@ -269,13 +452,14 @@ class CpgDecoder:
                         seen_scan.add(n)
                         scan_lists.append(ScanList(name=n))
 
-        model = self._header.get("model") or "Motorola XTS 2500"
-        serial = self._header.get("serial") or "UNKNOWN"
+        model = self._header.get("model") or ish_model or "Motorola XTS 2500"
+        serial = self._header.get("serial") or ish_serial or "UNKNOWN"
+        bandsplit = infer_bandsplit(model)
         return RadioCodeplug(
             radio_model=model,
-            bandsplit="700/800 MHz (764-870 MHz)",
+            bandsplit=bandsplit,
             serial_number=serial,
-            flashcode="",
+            flashcode=flashcode,
             zones=zones,
             talkgroups=talkgroups,
             sites=sites,

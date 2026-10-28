@@ -92,7 +92,10 @@ class AdkLcgCipher:
 
 
 # Motorola ASTRO 25 Standard Master Codeplug RC4 Stream Key
-# Derived from MD5 of master session key 5838ac3b548e44e920
+# Windows CryptoAPI 40-bit RC4 key derived from MD5(b"A8Z6J9QP5")[:5] + 11 zero bytes
+MASTER_PASSPHRASE = b"A8Z6J9QP5"
+MASTER_ASTRO25_40BIT_RC4_KEY = hashlib.md5(MASTER_PASSPHRASE).digest()[:5] + b"\x00" * 11
+# Legacy 128-bit MD5 of master session key 5838ac3b548e44e920 (retained for backward compatibility)
 MASTER_ASTRO25_RC4_KEY = bytes.fromhex("2fdaa3dadbfc87c5a3e3eb87ff4a7d8f")
 RECORD_MAGIC = b"\x6d\x35\xf1"
 

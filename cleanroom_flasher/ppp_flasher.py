@@ -482,7 +482,13 @@ class AstroPppFlasher:
             if status_cb: status_cb(msg)
 
         import os
-        from ..parsers.cpg_parser import CpgArchive
+        try:
+            from .cpg_parser import CpgArchive
+        except ImportError:
+            import sys as _sys
+            if os.path.dirname(os.path.abspath(__file__)) not in _sys.path:
+                _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from cpg_parser import CpgArchive
 
         cpg_file_to_flash = codeplug_path
         if codeplug_path.endswith(".json"):
