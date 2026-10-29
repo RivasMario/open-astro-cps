@@ -1,0 +1,248 @@
+=== FUNC FUN_10008b95 @10008b95  [opcode-cluster] ===
+
+char FUN_10008b95(int param_1)
+
+{
+  int iVar1;
+  uint uVar2;
+  char cVar3;
+  int local_8;
+  
+  cVar3 = '\0';
+  iVar1 = *(int *)(param_1 + 0x10);
+  local_8 = 0;
+  Ordinal_23(param_1,&local_8);
+  uVar2 = 0;
+  do {
+    if ((CONCAT11(*(undefined1 *)(local_8 + 2 + uVar2),*(undefined1 *)(local_8 + 3 + uVar2)) ==
+         0xff1) &&
+       (CONCAT11(*(undefined1 *)(uVar2 + local_8),*(undefined1 *)(uVar2 + 1 + local_8)) == 0x80)) {
+      cVar3 = -(*(char *)(uVar2 + 0x1d + local_8) >> 7);
+      if (cVar3 != '\0') break;
+    }
+    uVar2 = uVar2 + (CONCAT11(*(undefined1 *)(local_8 + 6 + uVar2),
+                              *(undefined1 *)(local_8 + 7 + uVar2)) + 8 & 0xffff);
+  } while (uVar2 < iVar1 - 5U);
+  Ordinal_24(param_1);
+  return cVar3;
+}
+
+
+=== FUNC FUN_10008c10 @10008c10  [opcode-cluster] ===
+
+undefined2 FUN_10008c10(int param_1)
+
+{
+  int iVar1;
+  undefined2 uVar2;
+  uint uVar3;
+  int local_8;
+  
+  uVar2 = 0;
+  local_8 = 0;
+  iVar1 = *(int *)(param_1 + 0x10);
+  Ordinal_23(param_1,&local_8);
+  uVar3 = 0;
+  while ((CONCAT11(*(undefined1 *)(local_8 + 2 + uVar3),*(undefined1 *)(local_8 + 3 + uVar3)) != 10
+         || (CONCAT11(*(undefined1 *)(uVar3 + local_8),*(undefined1 *)(uVar3 + 1 + local_8)) != 0x80
+            ))) {
+    uVar3 = uVar3 + (CONCAT11(*(undefined1 *)(local_8 + 6 + uVar3),
+                              *(undefined1 *)(local_8 + 7 + uVar3)) + 8 & 0xffff);
+    if (iVar1 - 5U <= uVar3) {
+LAB_10008c7e:
+      Ordinal_24(param_1);
+      return uVar2;
+    }
+  }
+  uVar2 = CONCAT11(*(undefined1 *)(uVar3 + local_8 + 0x66),*(undefined1 *)(uVar3 + local_8 + 0x67));
+  goto LAB_10008c7e;
+}
+
+
+=== FUNC FUN_10008c8f @10008c8f  [opcode-cluster] ===
+
+byte FUN_10008c8f(int param_1)
+
+{
+  int iVar1;
+  uint uVar2;
+  byte bVar3;
+  int local_8;
+  
+  bVar3 = 0;
+  iVar1 = *(int *)(param_1 + 0x10);
+  local_8 = 0;
+  Ordinal_23(param_1,&local_8);
+  uVar2 = 0;
+  while ((CONCAT11(*(undefined1 *)(local_8 + 2 + uVar2),*(undefined1 *)(local_8 + 3 + uVar2)) != 10
+         || (CONCAT11(*(undefined1 *)(uVar2 + local_8),*(undefined1 *)(uVar2 + 1 + local_8)) != 0x80
+            ))) {
+    uVar2 = uVar2 + (CONCAT11(*(undefined1 *)(local_8 + 6 + uVar2),
+                              *(undefined1 *)(local_8 + 7 + uVar2)) + 8 & 0xffff);
+    if (iVar1 - 5U <= uVar2) {
+LAB_10008cf9:
+      Ordinal_24(param_1);
+      return bVar3;
+    }
+  }
+  bVar3 = *(byte *)(uVar2 + 0x4b + local_8) >> 7;
+  goto LAB_10008cf9;
+}
+
+
+=== FUNC FUN_10008d09 @10008d09  [opcode-cluster] ===
+
+byte FUN_10008d09(int param_1)
+
+{
+  int iVar1;
+  uint uVar2;
+  byte bVar3;
+  int local_8;
+  
+  bVar3 = 0;
+  iVar1 = *(int *)(param_1 + 0x10);
+  local_8 = 0;
+  Ordinal_23(param_1,&local_8);
+  uVar2 = 0;
+  while ((CONCAT11(*(undefined1 *)(local_8 + 2 + uVar2),*(undefined1 *)(local_8 + 3 + uVar2)) != 10
+         || (CONCAT11(*(undefined1 *)(uVar2 + local_8),*(undefined1 *)(uVar2 + 1 + local_8)) != 0x80
+            ))) {
+    uVar2 = uVar2 + (CONCAT11(*(undefined1 *)(local_8 + 6 + uVar2),
+                              *(undefined1 *)(local_8 + 7 + uVar2)) + 8 & 0xffff);
+    if (iVar1 - 5U <= uVar2) {
+LAB_10008d73:
+      Ordinal_24(param_1);
+      return bVar3;
+    }
+  }
+  bVar3 = *(byte *)(uVar2 + 0x39 + local_8) >> 7;
+  goto LAB_10008d73;
+}
+
+
+=== FUNC FUN_10008d83 @10008d83  [opcode-cluster] ===
+
+byte FUN_10008d83(int param_1)
+
+{
+  int iVar1;
+  uint uVar2;
+  byte bVar3;
+  int local_8;
+  
+  bVar3 = 0;
+  iVar1 = *(int *)(param_1 + 0x10);
+  local_8 = 0;
+  Ordinal_23(param_1,&local_8);
+  uVar2 = 0;
+  while ((CONCAT11(*(undefined1 *)(local_8 + 2 + uVar2),*(undefined1 *)(local_8 + 3 + uVar2)) != 10
+         || (CONCAT11(*(undefined1 *)(uVar2 + local_8),*(undefined1 *)(uVar2 + 1 + local_8)) != 0x80
+            ))) {
+    uVar2 = uVar2 + (CONCAT11(*(undefined1 *)(local_8 + 6 + uVar2),
+                              *(undefined1 *)(local_8 + 7 + uVar2)) + 8 & 0xffff);
+    if (iVar1 - 5U <= uVar2) {
+LAB_10008df0:
+      Ordinal_24(param_1);
+      return bVar3;
+    }
+  }
+  bVar3 = *(byte *)(uVar2 + 0x2a + local_8) >> 6 & 1;
+  goto LAB_10008df0;
+}
+
+
+=== FUNC FUN_1000cce7 @1000cce7  [UnlockSecurity-string-ref from 1000cd07] ===
+
+/* WARNING: Removing unreachable block (ram,0x1000cd60) */
+
+undefined4 FUN_1000cce7(void)
+
+{
+  undefined4 *puVar1;
+  int *piVar2;
+  AFX_MODULE_STATE *pAVar3;
+  HRESULT HVar4;
+  undefined4 uVar5;
+  int iVar6;
+  int unaff_EBP;
+  
+  FUN_10021490();
+  pAVar3 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x20),pAVar3);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  *(undefined4 *)(unaff_EBP + -0x10) = 0;
+  CString::CString((CString *)(unaff_EBP + -0x14),s_CRcmpBundler__UnlockSecurity_1002c9d0);
+  Ordinal_8(unaff_EBP + -0x30);
+  puVar1 = *(undefined4 **)(unaff_EBP + 0x10);
+  piVar2 = *(int **)(unaff_EBP + 8);
+  *(undefined1 *)(unaff_EBP + -4) = 2;
+  *(undefined2 *)(unaff_EBP + -0x30) = 0x2011;
+  *puVar1 = 0;
+  iVar6 = piVar2[8];
+  *(undefined4 *)(unaff_EBP + -0x28) = 0;
+  *(undefined4 *)(unaff_EBP + -0x18) = 0;
+  if ((char)iVar6 != '\x01') {
+    HVar4 = FUN_1000b2ad();
+    *(HRESULT *)(unaff_EBP + -0x10) = HVar4;
+  }
+  if (piVar2[0x20] == 0xc) {
+    if (piVar2[0xc] != 0) {
+      *(undefined4 *)(unaff_EBP + 0x10) = 0;
+      uVar5 = (**(code **)(*(int *)piVar2[0xc] + 0x50))
+                        ((int *)piVar2[0xc],*(undefined4 *)(unaff_EBP + 0xc),puVar1,unaff_EBP + 0x10
+                        );
+      *(undefined4 *)(unaff_EBP + -0x10) = uVar5;
+      if (*(short *)(unaff_EBP + 0x10) != 0) goto LAB_1000ce18;
+    }
+    *(undefined4 *)(unaff_EBP + -0x10) = 0x80004005;
+  }
+  else {
+    if (-1 < *(int *)(unaff_EBP + -0x10)) {
+      iVar6 = (**(code **)(*piVar2 + 0x60))(piVar2,unaff_EBP + -0x30,puVar1);
+      *(int *)(unaff_EBP + -0x10) = iVar6;
+      if (iVar6 < 0) {
+        *puVar1 = 0x97;
+      }
+      else {
+        Ordinal_23(*(undefined4 *)(unaff_EBP + -0x28),unaff_EBP + -0x18);
+        FUN_1000fd89();
+        Ordinal_24(*(undefined4 *)(unaff_EBP + -0x28));
+        iVar6 = (**(code **)(*piVar2 + 0x5c))(piVar2,unaff_EBP + -0x30,puVar1);
+        *(int *)(unaff_EBP + -0x10) = iVar6;
+        if (iVar6 < 0) {
+          *puVar1 = 0x98;
+        }
+        else {
+          iVar6 = (**(code **)(*piVar2 + 0xb0))(piVar2,*(undefined4 *)(unaff_EBP + 0xc),puVar1);
+          *(int *)(unaff_EBP + -0x10) = iVar6;
+          if (iVar6 < 0) {
+            *puVar1 = 0x99;
+          }
+        }
+      }
+    }
+    if (*(int *)(unaff_EBP + -0x28) != 0) {
+      Ordinal_16(*(undefined4 *)(unaff_EBP + -0x28));
+      *(undefined4 *)(unaff_EBP + -0x28) = 0;
+    }
+  }
+LAB_1000ce18:
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  iVar6 = Ordinal_9(unaff_EBP + -0x30);
+  if (iVar6 < 0) {
+    FUN_10021744(iVar6);
+  }
+  *(undefined1 *)(unaff_EBP + -4) = 0;
+  CString::~CString((CString *)(unaff_EBP + -0x14));
+  *(undefined4 *)(*(int *)(unaff_EBP + -0x1c) + 4) = *(undefined4 *)(unaff_EBP + -0x20);
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return *(undefined4 *)(unaff_EBP + -0x10);
+}
+
+
+INFO  ANALYZING changes made by post scripts: file:///home/mario/re/openastro/ASTRO25 Portable CPS R20.01.00/ASTRO25 Portable CPS R20.01.00/NetworkRadioProgrammer/System32/NextGenNon98/NextGen10.dll (HeadlessAnalyzer)  
+INFO  REPORT: Post-analysis succeeded for file: file:///home/mario/re/openastro/ASTRO25 Portable CPS R20.01.00/ASTRO25 Portable CPS R20.01.00/NetworkRadioProgrammer/System32/NextGenNon98/NextGen10.dll (HeadlessAnalyzer)  
+INFO  /NextGen10.dll: file created (mario) (LocalFileSystem)  
+INFO  REPORT: Save succeeded for: /NextGen10.dll (ng:/NextGen10.dll) (HeadlessAnalyzer)  
+INFO  REPORT: Import succeeded (HeadlessAnalyzer)  

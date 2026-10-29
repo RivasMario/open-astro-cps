@@ -1,0 +1,1155 @@
+# NextGen10.dll RCMP/UnlockSecurity decompiles (Ghidra 12.2, clean-room)
+
+=== FUNC AfxUnlockTempMaps @EXTERNAL:000000ac ===
+(decompile failed)
+=== FUNC AfxUnlockTempMaps @100219c4 ===
+
+int AfxUnlockTempMaps(int param_1)
+
+{
+  int iVar1;
+  
+                    /* WARNING: Could not recover jumptable at 0x100219c4. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  iVar1 = AfxUnlockTempMaps(param_1);
+  return iVar1;
+}
+
+
+=== FUNC FUN_1000cce7 @1000cce7 ===
+
+/* WARNING: Removing unreachable block (ram,0x1000cd60) */
+
+undefined4 FUN_1000cce7(void)
+
+{
+  undefined4 *puVar1;
+  int *piVar2;
+  AFX_MODULE_STATE *pAVar3;
+  HRESULT HVar4;
+  undefined4 uVar5;
+  int iVar6;
+  int unaff_EBP;
+  
+  FUN_10021490();
+  pAVar3 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x20),pAVar3);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  *(undefined4 *)(unaff_EBP + -0x10) = 0;
+  CString::CString((CString *)(unaff_EBP + -0x14),s_CRcmpBundler__UnlockSecurity_1002c9d0);
+  Ordinal_8(unaff_EBP + -0x30);
+  puVar1 = *(undefined4 **)(unaff_EBP + 0x10);
+  piVar2 = *(int **)(unaff_EBP + 8);
+  *(undefined1 *)(unaff_EBP + -4) = 2;
+  *(undefined2 *)(unaff_EBP + -0x30) = 0x2011;
+  *puVar1 = 0;
+  iVar6 = piVar2[8];
+  *(undefined4 *)(unaff_EBP + -0x28) = 0;
+  *(undefined4 *)(unaff_EBP + -0x18) = 0;
+  if ((char)iVar6 != '\x01') {
+    HVar4 = FUN_1000b2ad();
+    *(HRESULT *)(unaff_EBP + -0x10) = HVar4;
+  }
+  if (piVar2[0x20] == 0xc) {
+    if (piVar2[0xc] != 0) {
+      *(undefined4 *)(unaff_EBP + 0x10) = 0;
+      uVar5 = (**(code **)(*(int *)piVar2[0xc] + 0x50))
+                        ((int *)piVar2[0xc],*(undefined4 *)(unaff_EBP + 0xc),puVar1,unaff_EBP + 0x10
+                        );
+      *(undefined4 *)(unaff_EBP + -0x10) = uVar5;
+      if (*(short *)(unaff_EBP + 0x10) != 0) goto LAB_1000ce18;
+    }
+    *(undefined4 *)(unaff_EBP + -0x10) = 0x80004005;
+  }
+  else {
+    if (-1 < *(int *)(unaff_EBP + -0x10)) {
+      iVar6 = (**(code **)(*piVar2 + 0x60))(piVar2,unaff_EBP + -0x30,puVar1);
+      *(int *)(unaff_EBP + -0x10) = iVar6;
+      if (iVar6 < 0) {
+        *puVar1 = 0x97;
+      }
+      else {
+        Ordinal_23(*(undefined4 *)(unaff_EBP + -0x28),unaff_EBP + -0x18);
+        FUN_1000fd89();
+        Ordinal_24(*(undefined4 *)(unaff_EBP + -0x28));
+        iVar6 = (**(code **)(*piVar2 + 0x5c))(piVar2,unaff_EBP + -0x30,puVar1);
+        *(int *)(unaff_EBP + -0x10) = iVar6;
+        if (iVar6 < 0) {
+          *puVar1 = 0x98;
+        }
+        else {
+          iVar6 = (**(code **)(*piVar2 + 0xb0))(piVar2,*(undefined4 *)(unaff_EBP + 0xc),puVar1);
+          *(int *)(unaff_EBP + -0x10) = iVar6;
+          if (iVar6 < 0) {
+            *puVar1 = 0x99;
+          }
+        }
+      }
+    }
+    if (*(int *)(unaff_EBP + -0x28) != 0) {
+      Ordinal_16(*(undefined4 *)(unaff_EBP + -0x28));
+      *(undefined4 *)(unaff_EBP + -0x28) = 0;
+    }
+  }
+LAB_1000ce18:
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  iVar6 = Ordinal_9(unaff_EBP + -0x30);
+  if (iVar6 < 0) {
+    FUN_10021744(iVar6);
+  }
+  *(undefined1 *)(unaff_EBP + -4) = 0;
+  CString::~CString((CString *)(unaff_EBP + -0x14));
+  *(undefined4 *)(*(int *)(unaff_EBP + -0x1c) + 4) = *(undefined4 *)(unaff_EBP + -0x20);
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return *(undefined4 *)(unaff_EBP + -0x10);
+}
+
+
+=== FUNC FUN_10018030 @10018030 ===
+
+undefined4 FUN_10018030(void)
+
+{
+  int iVar1;
+  size_t _Size;
+  AFX_MODULE_STATE *pAVar2;
+  undefined4 uVar3;
+  int iVar4;
+  undefined4 uVar5;
+  int unaff_EBP;
+  
+  FUN_10021490();
+  pAVar2 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x24),pAVar2);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  CString::CString((CString *)(unaff_EBP + -0x1c),s_CRcmpProtocol__GetReply_1002d178);
+  iVar1 = *(int *)(unaff_EBP + 8);
+  _Size = *(size_t *)(*(int *)(*(int *)(iVar1 + 0x20) + 8) + 0x10);
+  uVar3 = Ordinal_411(0x11,1,_Size);
+  *(undefined4 *)(unaff_EBP + -0x10) = uVar3;
+  iVar4 = Ordinal_23(*(undefined4 *)(*(int *)(iVar1 + 0x20) + 8),unaff_EBP + -0x14);
+  *(int *)(unaff_EBP + 8) = iVar4;
+  if (-1 < iVar4) {
+    Ordinal_23(*(undefined4 *)(unaff_EBP + -0x10),unaff_EBP + -0x18);
+    memcpy(*(void **)(unaff_EBP + -0x18),*(void **)(unaff_EBP + -0x14),_Size);
+    uVar3 = *(undefined4 *)(unaff_EBP + -0x10);
+    Ordinal_24(uVar3);
+    iVar4 = Ordinal_24(*(undefined4 *)(*(int *)(iVar1 + 0x20) + 8));
+    *(int *)(unaff_EBP + 8) = iVar4;
+    if (-1 < iVar4) {
+      iVar4 = *(int *)(unaff_EBP + 0xc);
+      if (*(int *)(iVar4 + 8) != 0) {
+        uVar5 = Ordinal_16(*(int *)(iVar4 + 8));
+        *(undefined4 *)(iVar4 + 8) = 0;
+        *(undefined4 *)(unaff_EBP + 8) = uVar5;
+      }
+      if (-1 < *(int *)(unaff_EBP + 8)) {
+        *(undefined4 *)(iVar4 + 8) = uVar3;
+      }
+    }
+  }
+  iVar4 = *(int *)(*(int *)(iVar1 + 0x20) + 8);
+  if (iVar4 != 0) {
+    Ordinal_16(iVar4);
+    *(undefined4 *)(*(int *)(iVar1 + 0x20) + 8) = 0;
+  }
+  CString::~CString((CString *)(unaff_EBP + -0x1c));
+  *(undefined4 *)(*(int *)(unaff_EBP + -0x20) + 4) = *(undefined4 *)(unaff_EBP + -0x24);
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return *(undefined4 *)(unaff_EBP + 8);
+}
+
+
+=== FUNC FUN_10018123 @10018123 ===
+
+int FUN_10018123(void)
+
+{
+  int iVar1;
+  void *_Dst;
+  char *pcVar2;
+  AFX_MODULE_STATE *pAVar3;
+  int iVar4;
+  int iVar5;
+  CString *pCVar6;
+  CString *this;
+  int unaff_EBP;
+  int iVar7;
+  
+  FUN_10021490();
+  pAVar3 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x30),pAVar3);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  CString::CString((CString *)(unaff_EBP + -0x24),s_CRcmpProtocol__SendRequest_1002d1c4);
+  *(undefined4 *)(unaff_EBP + -0x1c) = 0;
+  *(undefined4 *)(unaff_EBP + -0x10) = 0;
+  iVar1 = *(int *)(*(int *)(unaff_EBP + 0xc) + 8);
+  *(undefined4 *)(unaff_EBP + -0x18) = 0x410;
+  *(undefined4 *)(unaff_EBP + -0x28) = 2000;
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  *(undefined4 *)(unaff_EBP + -0x10) = *(undefined4 *)(iVar1 + 0x10);
+  Ordinal_23(iVar1,unaff_EBP + -0x1c);
+  iVar7 = *(int *)(unaff_EBP + 8);
+  _Dst = *(void **)(iVar7 + 0x14);
+  *(void **)(unaff_EBP + 8) = _Dst;
+  memcpy(_Dst,*(void **)(unaff_EBP + -0x1c),*(size_t *)(unaff_EBP + -0x10));
+  pcVar2 = *(char **)(unaff_EBP + -0x1c);
+  if ((*pcVar2 == '\x01') && (pcVar2[1] == '\x01')) {
+    DAT_1002f810 = DAT_1002f810 + (uint)CONCAT11(pcVar2[7],pcVar2[8]);
+  }
+  if (*(int *)(unaff_EBP + 0x10) == 0) {
+    FUN_100188bd(*(undefined1 **)(unaff_EBP + 8),(int *)(unaff_EBP + -0x28));
+    *(undefined4 *)(unaff_EBP + 0x10) = *(undefined4 *)(unaff_EBP + -0x28);
+  }
+  iVar4 = *(int *)(iVar7 + 0x30);
+  if ((((iVar4 == 4) || (iVar4 == 8)) || (iVar4 == 9)) ||
+     (((iVar4 == 10 || (iVar4 == 0xc)) || (iVar4 == 0xd)))) {
+    FUN_100187b6();
+  }
+  *(undefined4 *)(unaff_EBP + -0x14) = 0x410;
+  if (*(int *)(unaff_EBP + -0x10) < 0x411) {
+    *(int *)(unaff_EBP + -0x14) = *(int *)(unaff_EBP + -0x10);
+  }
+  do {
+    if (*(int *)(iVar7 + 0x30) == 0xd) {
+      SetOtapAbortFlag(2,0);
+    }
+    iVar4 = (**(code **)(**(int **)(iVar7 + 0x10) + 0x14))
+                      (*(int **)(iVar7 + 0x10),*(undefined4 *)(iVar7 + 0x14),
+                       *(undefined4 *)(unaff_EBP + -0x10),*(undefined4 *)(unaff_EBP + 0x10),
+                       *(undefined4 *)(iVar7 + 0x18),unaff_EBP + -0x18);
+    if (*(int *)(iVar7 + 0x30) == 0xd) {
+      iVar5 = GetOtapAbortFlag(0);
+      if (iVar5 == -1) {
+        iVar4 = -0x13fffff1;
+      }
+    }
+    if (-1 < iVar4) {
+      *(int *)(unaff_EBP + 8) = *(int *)(unaff_EBP + 8) + *(int *)(unaff_EBP + -0x14);
+      iVar4 = *(int *)(iVar7 + 0x30);
+      if (((iVar4 == 4) || (iVar4 == 8)) ||
+         ((iVar4 == 9 || (((iVar4 == 10 || (iVar4 == 0xc)) || (iVar4 == 0xd)))))) {
+        SetOtapAbortFlag(3,0);
+        FUN_10018838();
+      }
+      iVar4 = FUN_10018557();
+      if (*(int *)(unaff_EBP + -0x10) < *(int *)(unaff_EBP + -0x14)) {
+        *(undefined4 *)(unaff_EBP + -0x14) = *(undefined4 *)(unaff_EBP + -0x10);
+      }
+      else {
+        *(int *)(unaff_EBP + -0x10) = *(int *)(unaff_EBP + -0x10) - *(int *)(unaff_EBP + -0x14);
+      }
+    }
+  } while ((0 < *(int *)(unaff_EBP + -0x10)) && (-1 < iVar4));
+  Ordinal_24(iVar1);
+  CString::CString((CString *)(unaff_EBP + -0x20));
+  *(undefined1 *)(unaff_EBP + -4) = 2;
+  CString::Format(this,(char *)(unaff_EBP + -0x20));
+  iVar7 = unaff_EBP + -0x20;
+  pCVar6 = (CString *)operator+((CString *)(unaff_EBP + 0x10),(CString *)(unaff_EBP + -0x24));
+  *(undefined1 *)(unaff_EBP + -4) = 3;
+  CString::operator=((CString *)(unaff_EBP + -0x24),pCVar6);
+  *(undefined1 *)(unaff_EBP + -4) = 2;
+  CString::~CString((CString *)(unaff_EBP + 0x10));
+  if (iVar1 != 0) {
+    Ordinal_16(iVar1,iVar7);
+    *(undefined4 *)(*(int *)(unaff_EBP + 0xc) + 8) = 0;
+  }
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  CString::~CString((CString *)(unaff_EBP + -0x20));
+  *(undefined1 *)(unaff_EBP + -4) = 0;
+  CString::~CString((CString *)(unaff_EBP + -0x24));
+  *(undefined4 *)(*(int *)(unaff_EBP + -0x2c) + 4) = *(undefined4 *)(unaff_EBP + -0x30);
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return iVar4;
+}
+
+
+=== FUNC FUN_100187b6 @100187b6 ===
+
+undefined4 FUN_100187b6(void)
+
+{
+  int *piVar1;
+  undefined1 *puVar2;
+  AFX_MODULE_STATE *pAVar3;
+  int iVar4;
+  int unaff_EBP;
+  
+  FUN_10021490();
+  pAVar3 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x18),pAVar3);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  CString::CString((CString *)(unaff_EBP + -0x10),s_CRcmpProtocol__BundleTCP_1002d244);
+  piVar1 = *(int **)(unaff_EBP + 0xc);
+  puVar2 = *(undefined1 **)(unaff_EBP + 8);
+  iVar4 = *piVar1;
+  puVar2[iVar4 + 2] = 0;
+  puVar2[*piVar1 + 3] = 0;
+  while (iVar4 != 0) {
+    puVar2[iVar4 + 1] = puVar2[iVar4 + -1];
+    iVar4 = iVar4 + -1;
+  }
+  *puVar2 = *(undefined1 *)((int)piVar1 + 1);
+  puVar2[1] = (char)*piVar1;
+  *piVar1 = *piVar1 + 2;
+  CString::~CString((CString *)(unaff_EBP + -0x10));
+  iVar4 = *(int *)(unaff_EBP + -0x14);
+  *(undefined4 *)(iVar4 + 4) = *(undefined4 *)(unaff_EBP + -0x18);
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return CONCAT31((int3)((uint)iVar4 >> 8),1);
+}
+
+
+=== FUNC FUN_10018838 @10018838 ===
+
+undefined4 FUN_10018838(void)
+
+{
+  int iVar1;
+  int iVar2;
+  int *piVar3;
+  int iVar4;
+  AFX_MODULE_STATE *pAVar5;
+  uint uVar6;
+  int unaff_EBP;
+  
+  FUN_10021490();
+  pAVar5 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x18),pAVar5);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  CString::CString((CString *)(unaff_EBP + -0x10),s_CRcmpProtocol__UnpackTCP_1002d260);
+  iVar2 = *(int *)(unaff_EBP + 8);
+  piVar3 = *(int **)(unaff_EBP + 0xc);
+  if (iVar2 != 0) {
+    iVar4 = *piVar3;
+    iVar1 = iVar4 + -2;
+    uVar6 = 0;
+    if (iVar1 != 0) {
+      do {
+        *(undefined1 *)(uVar6 + iVar2) = *(undefined1 *)(uVar6 + 2 + iVar2);
+        uVar6 = uVar6 + 1;
+      } while (uVar6 < *piVar3 - 2U);
+    }
+    *(undefined1 *)(iVar1 + iVar2) = 0;
+    *(undefined1 *)(iVar4 + -1 + iVar2) = 0;
+  }
+  *piVar3 = *piVar3 + -2;
+  CString::~CString((CString *)(unaff_EBP + -0x10));
+  iVar2 = *(int *)(unaff_EBP + -0x14);
+  *(undefined4 *)(iVar2 + 4) = *(undefined4 *)(unaff_EBP + -0x18);
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return CONCAT31((int3)((uint)iVar2 >> 8),1);
+}
+
+
+=== FUNC FUN_10018988 @10018988 ===
+
+undefined4 FUN_10018988(void)
+
+{
+  int iVar1;
+  int iVar2;
+  int iVar3;
+  AFX_MODULE_STATE *pAVar4;
+  undefined4 uVar5;
+  int unaff_EBP;
+  
+  FUN_10021490();
+  pAVar4 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x20),pAVar4);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  CString::CString((CString *)(unaff_EBP + -0x18),s_CRcmpProtocol__SendBroadcast_1002d27c);
+  *(undefined4 *)(unaff_EBP + -0x14) = 0;
+  *(undefined4 *)(unaff_EBP + -0x10) = 0;
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  iVar1 = *(int *)(*(int *)(unaff_EBP + 0xc) + 8);
+  *(undefined4 *)(unaff_EBP + -0x10) = *(undefined4 *)(iVar1 + 0x10);
+  Ordinal_23(iVar1,unaff_EBP + -0x14);
+  iVar2 = *(int *)(unaff_EBP + 8);
+  memcpy(*(void **)(iVar2 + 0x14),*(void **)(unaff_EBP + -0x14),*(size_t *)(unaff_EBP + -0x10));
+  iVar3 = *(int *)(iVar2 + 0x30);
+  if ((((iVar3 == 4) || (iVar3 == 8)) || (iVar3 == 9)) || ((iVar3 == 10 || (iVar3 == 0xc)))) {
+    FUN_100187b6();
+  }
+  uVar5 = (**(code **)(**(int **)(iVar2 + 0x10) + 0xc))
+                    (*(int **)(iVar2 + 0x10),*(undefined4 *)(iVar2 + 0x14),
+                     *(undefined4 *)(unaff_EBP + -0x10));
+  Ordinal_24(iVar1);
+  *(undefined1 *)(unaff_EBP + -4) = 0;
+  CString::~CString((CString *)(unaff_EBP + -0x18));
+  *(undefined4 *)(*(int *)(unaff_EBP + -0x1c) + 4) = *(undefined4 *)(unaff_EBP + -0x20);
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return uVar5;
+}
+
+
+=== FUNC FUN_1001a822 @1001a822 ===
+
+undefined1 FUN_1001a822(void)
+
+{
+  uint *puVar1;
+  LPCSTR pCVar2;
+  int iVar3;
+  LSTATUS LVar4;
+  int unaff_EBP;
+  
+  FUN_10021490();
+  *(undefined1 *)(unaff_EBP + -0x15) = 0;
+  *(undefined4 *)(unaff_EBP + -0x14) = 0;
+  pCVar2 = DAT_1002f83c;
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  iVar3 = FUN_10003b69((void *)(unaff_EBP + -0x14),(HKEY)0x80000002,pCVar2,0xf003f);
+  if (iVar3 == 0) {
+    *(undefined4 *)(unaff_EBP + -0x24) = 0;
+    *(undefined4 *)(unaff_EBP + -0x20) = 0;
+    *(undefined4 *)(unaff_EBP + -0x38) = 0x32;
+    memset((void *)(unaff_EBP + -0x104),0,0x32);
+    *(undefined4 *)(unaff_EBP + -0x2c) = 0x32;
+    memset((void *)(unaff_EBP + -0x35c),0,0x32);
+    *(undefined4 *)(unaff_EBP + -0x28) = 0;
+    *(undefined4 *)(unaff_EBP + -0x30) = 0x32;
+    memset((void *)(unaff_EBP + -0x1cc),0,0x32);
+    *(undefined4 *)(unaff_EBP + -0x34) = 0x32;
+    memset((void *)(unaff_EBP + -0x294),0,0x32);
+    *(undefined4 *)(unaff_EBP + -0x3c) = 0x32;
+    memset((void *)(unaff_EBP + -0x424),0,0x32);
+    *(undefined4 *)(unaff_EBP + -0x10) = 0;
+    *(undefined4 *)(unaff_EBP + -0x1c) = 4;
+    LVar4 = RegQueryValueExA(*(HKEY *)(unaff_EBP + -0x14),s_FromExplorer_1002d48c,(LPDWORD)0x0,
+                             (LPDWORD)(unaff_EBP + -0x10),(LPBYTE)(unaff_EBP + -0x24),
+                             (LPDWORD)(unaff_EBP + -0x1c));
+    if (LVar4 == 0) {
+      *(undefined4 *)(unaff_EBP + -0x1c) = 0;
+      *(undefined4 *)(unaff_EBP + -0x10) = 4;
+      LVar4 = RegQueryValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyUse_1002d480,(LPDWORD)0x0,
+                               (LPDWORD)(unaff_EBP + -0x1c),(LPBYTE)(unaff_EBP + -0x20),
+                               (LPDWORD)(unaff_EBP + -0x10));
+      if (LVar4 == 0) {
+        *(undefined4 *)(unaff_EBP + -0x10) = 0;
+        LVar4 = RegQueryValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyAddress_1002d470,(LPDWORD)0x0,
+                                 (LPDWORD)(unaff_EBP + -0x10),(LPBYTE)(unaff_EBP + -0x104),
+                                 (LPDWORD)(unaff_EBP + -0x38));
+        if (LVar4 == 0) {
+          *(undefined4 *)(unaff_EBP + -0x10) = 0;
+          LVar4 = RegQueryValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyPort_1002d464,(LPDWORD)0x0,
+                                   (LPDWORD)(unaff_EBP + -0x10),(LPBYTE)(unaff_EBP + -0x35c),
+                                   (LPDWORD)(unaff_EBP + -0x2c));
+          if (LVar4 == 0) {
+            *(undefined4 *)(unaff_EBP + -0x1c) = 0;
+            *(undefined4 *)(unaff_EBP + -0x10) = 4;
+            LVar4 = RegQueryValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyAuthen_1002d458,
+                                     (LPDWORD)0x0,(LPDWORD)(unaff_EBP + -0x1c),
+                                     (LPBYTE)(unaff_EBP + -0x28),(LPDWORD)(unaff_EBP + -0x10));
+            if (LVar4 == 0) {
+              *(undefined4 *)(unaff_EBP + -0x10) = 0;
+              LVar4 = RegQueryValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyUserName_1002d448,
+                                       (LPDWORD)0x0,(LPDWORD)(unaff_EBP + -0x10),
+                                       (LPBYTE)(unaff_EBP + -0x1cc),(LPDWORD)(unaff_EBP + -0x30));
+              if (LVar4 == 0) {
+                *(undefined4 *)(unaff_EBP + -0x10) = 0;
+                LVar4 = RegQueryValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyPwd_1002d43c,
+                                         (LPDWORD)0x0,(LPDWORD)(unaff_EBP + -0x10),
+                                         (LPBYTE)(unaff_EBP + -0x294),(LPDWORD)(unaff_EBP + -0x34));
+                if (LVar4 == 0) {
+                  *(undefined4 *)(unaff_EBP + -0x10) = 0;
+                  LVar4 = RegQueryValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyDomain_1002d430,
+                                           (LPDWORD)0x0,(LPDWORD)(unaff_EBP + -0x10),
+                                           (LPBYTE)(unaff_EBP + -0x424),(LPDWORD)(unaff_EBP + -0x3c)
+                                          );
+                  if (LVar4 == 0) {
+                    puVar1 = *(uint **)(unaff_EBP + 0xc);
+                    **(uint **)(unaff_EBP + 8) = (uint)(*(int *)(unaff_EBP + -0x24) != 0);
+                    *puVar1 = (uint)(*(int *)(unaff_EBP + -0x20) != 0);
+                    CString::operator=((CString *)(puVar1 + 1),(char *)(unaff_EBP + -0x104));
+                    CString::operator=((CString *)(puVar1 + 2),(char *)(unaff_EBP + -0x35c));
+                    if (*(int *)(unaff_EBP + -0x28) == 0) {
+                      puVar1[3] = 0;
+                    }
+                    else {
+                      puVar1[3] = 1;
+                    }
+                    CString::operator=((CString *)(puVar1 + 4),(char *)(unaff_EBP + -0x1cc));
+                    CString::operator=((CString *)(puVar1 + 5),(char *)(unaff_EBP + -0x294));
+                    CString::operator=((CString *)(puVar1 + 6),(char *)(unaff_EBP + -0x424));
+                    *(undefined1 *)(unaff_EBP + -0x15) = 1;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  else {
+    GetLastError();
+  }
+  if (*(int *)(unaff_EBP + -0x14) != 0) {
+    RegCloseKey(*(HKEY *)(unaff_EBP + -0x14));
+  }
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return *(undefined1 *)(unaff_EBP + -0x15);
+}
+
+
+=== FUNC FUN_1001aa93 @1001aa93 ===
+
+undefined1 FUN_1001aa93(void)
+
+{
+  int iVar1;
+  HKEY hKey;
+  LPCSTR pCVar2;
+  BYTE *lpData;
+  LSTATUS LVar3;
+  int iVar4;
+  int extraout_ECX;
+  int unaff_EBP;
+  
+  FUN_10021490();
+  *(undefined1 *)(unaff_EBP + -0xd) = 0;
+  *(undefined4 *)(unaff_EBP + -0x14) = 0;
+  iVar4 = *(int *)(extraout_ECX + 300);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  iVar1 = *(int *)(extraout_ECX + 0xa4);
+  *(undefined4 *)(unaff_EBP + -0x1c) = 0;
+  if (iVar1 != 0) {
+    *(undefined4 *)(unaff_EBP + -0x1c) = 1;
+  }
+  iVar1 = *(int *)(extraout_ECX + 0xa0);
+  *(undefined4 *)(unaff_EBP + -0x20) = 0;
+  if (iVar1 != 0) {
+    *(undefined4 *)(unaff_EBP + -0x20) = 1;
+  }
+  *(undefined4 *)(unaff_EBP + -0x18) = 0;
+  LVar3 = RegCreateKeyExA((HKEY)0x80000002,DAT_1002f83c,0,(LPSTR)0x0,0,0xf003f,
+                          (LPSECURITY_ATTRIBUTES)0x0,(PHKEY)(unaff_EBP + -0x18),
+                          (LPDWORD)(unaff_EBP + -0x24));
+  if (LVar3 == 0) {
+    LVar3 = FUN_10019476((undefined4 *)(unaff_EBP + -0x14));
+    hKey = *(HKEY *)(unaff_EBP + -0x18);
+    *(HKEY *)(unaff_EBP + -0x14) = hKey;
+    if (LVar3 == 0) {
+      *(uint *)(unaff_EBP + -0x18) = (uint)(iVar4 != 0);
+      LVar3 = RegSetValueExA(hKey,s_FromExplorer_1002d48c,0,4,(BYTE *)(unaff_EBP + -0x18),4);
+      if (LVar3 == 0) {
+        *(undefined4 *)(unaff_EBP + -0x1c) = *(undefined4 *)(unaff_EBP + -0x1c);
+        LVar3 = RegSetValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyUse_1002d480,0,4,
+                               (BYTE *)(unaff_EBP + -0x1c),4);
+        if (LVar3 == 0) {
+          pCVar2 = *(LPCSTR *)(extraout_ECX + 0x90);
+          *(LPCSTR *)(unaff_EBP + -0x1c) = pCVar2;
+          iVar4 = lstrlenA(pCVar2);
+          LVar3 = RegSetValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyAddress_1002d470,0,1,
+                                 *(BYTE **)(unaff_EBP + -0x1c),iVar4 + 1);
+          if (LVar3 == 0) {
+            pCVar2 = *(LPCSTR *)(extraout_ECX + 0x94);
+            *(LPCSTR *)(unaff_EBP + -0x1c) = pCVar2;
+            iVar4 = lstrlenA(pCVar2);
+            LVar3 = RegSetValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyPort_1002d464,0,1,
+                                   *(BYTE **)(unaff_EBP + -0x1c),iVar4 + 1);
+            if (LVar3 == 0) {
+              *(undefined4 *)(unaff_EBP + -0x20) = *(undefined4 *)(unaff_EBP + -0x20);
+              LVar3 = RegSetValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyAuthen_1002d458,0,4,
+                                     (BYTE *)(unaff_EBP + -0x20),4);
+              if (LVar3 == 0) {
+                pCVar2 = *(LPCSTR *)(extraout_ECX + 0x9c);
+                *(LPCSTR *)(unaff_EBP + -0x20) = pCVar2;
+                iVar4 = lstrlenA(pCVar2);
+                LVar3 = RegSetValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyUserName_1002d448,0,1,
+                                       *(BYTE **)(unaff_EBP + -0x20),iVar4 + 1);
+                if (LVar3 == 0) {
+                  pCVar2 = *(LPCSTR *)(extraout_ECX + 0x98);
+                  *(LPCSTR *)(unaff_EBP + -0x20) = pCVar2;
+                  iVar4 = lstrlenA(pCVar2);
+                  LVar3 = RegSetValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyPwd_1002d43c,0,1,
+                                         *(BYTE **)(unaff_EBP + -0x20),iVar4 + 1);
+                  if (LVar3 == 0) {
+                    lpData = *(BYTE **)(extraout_ECX + 0xa8);
+                    iVar4 = lstrlenA((LPCSTR)lpData);
+                    LVar3 = RegSetValueExA(*(HKEY *)(unaff_EBP + -0x14),s_ProxyDomain_1002d430,0,1,
+                                           lpData,iVar4 + 1);
+                    if (LVar3 == 0) {
+                      *(undefined1 *)(unaff_EBP + -0xd) = 1;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      if (*(int *)(unaff_EBP + -0x14) == 0) goto LAB_1001ac5d;
+      RegCloseKey(*(HKEY *)(unaff_EBP + -0x14));
+      *(undefined4 *)(unaff_EBP + -0x14) = 0;
+    }
+  }
+  if (*(int *)(unaff_EBP + -0x14) != 0) {
+    RegCloseKey(*(HKEY *)(unaff_EBP + -0x14));
+  }
+LAB_1001ac5d:
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return *(undefined1 *)(unaff_EBP + -0xd);
+}
+
+
+=== FUNC FUN_100200e2 @100200e2 ===
+
+/* WARNING (jumptable): Unable to track spacebase fully for stack */
+
+int FUN_100200e2(void)
+
+{
+  uint uVar1;
+  int iVar2;
+  AFX_MODULE_STATE *pAVar3;
+  CString *pCVar4;
+  CString *this;
+  CString *this_00;
+  CString *this_01;
+  CString *this_02;
+  CString *this_03;
+  CString *this_04;
+  CString *this_05;
+  CString *this_06;
+  CString *this_07;
+  CString *this_08;
+  CString *this_09;
+  CString *this_10;
+  CString *this_11;
+  CString *this_12;
+  CString *this_13;
+  CString *this_14;
+  CString *this_15;
+  CString *this_16;
+  CString *this_17;
+  CString *this_18;
+  CString *this_19;
+  CString *this_20;
+  CString *this_21;
+  CString *this_22;
+  CString *this_23;
+  CString *this_24;
+  CString *this_25;
+  int unaff_EBP;
+  
+  FUN_10021490();
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  pAVar3 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x74),pAVar3);
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  if (*(int *)(*(int *)(unaff_EBP + 0x10) + -8) != 0) {
+    pCVar4 = (CString *)operator+((CString *)(unaff_EBP + -0x14),(char *)(unaff_EBP + 0x10));
+    *(undefined1 *)(unaff_EBP + -4) = 2;
+    CString::operator=((CString *)(unaff_EBP + 0x10),pCVar4);
+    *(undefined1 *)(unaff_EBP + -4) = 1;
+    CString::~CString((CString *)(unaff_EBP + -0x14));
+  }
+  CString::CString((CString *)(unaff_EBP + -0x10),&DAT_1002f5ac);
+  uVar1 = *(uint *)(unaff_EBP + 0xc);
+  iVar2 = *(int *)(unaff_EBP + 8);
+  *(undefined1 *)(unaff_EBP + -4) = 3;
+  if (uVar1 < 0xbc) {
+    if (uVar1 != 0xbb) {
+      if (uVar1 < 0xc) {
+        if (uVar1 != 0xb) {
+          switch(uVar1) {
+          case 1:
+            operator+((char *)(unaff_EBP + 0xc),
+                      (CString *)s_Virtual_Radio_Failed_to_create_c_1002f4b4);
+            *(undefined1 *)(unaff_EBP + -4) = 4;
+            CString::Format(this_00,(char *)(unaff_EBP + -0x10));
+            *(undefined1 *)(unaff_EBP + -4) = 3;
+            pCVar4 = (CString *)(unaff_EBP + 0xc);
+            goto LAB_1002093e;
+          case 2:
+            break;
+          case 3:
+            break;
+          case 4:
+          case 5:
+          case 7:
+          case 8:
+            break;
+          case 6:
+            break;
+          case 9:
+            break;
+          case 10:
+            break;
+          default:
+            goto switchD_10020180_default;
+          }
+        }
+      }
+      else if (uVar1 < 0x24) {
+        if (uVar1 == 0x23) {
+          if (iVar2 < -0x13fffffd) {
+            if ((iVar2 != -0x13fffffe) &&
+               ((iVar2 == -0x7ffffd4c ||
+                (((iVar2 != -0x7ffffd32 && (iVar2 != -0x7fffd8b4)) &&
+                 ((iVar2 == -0x7fffbffb || (iVar2 != -0x13ffffff)))))))) goto LAB_10020ba4;
+          }
+          else {
+            if (iVar2 == -0x13fffffa) goto LAB_10020ba4;
+            if (iVar2 != -0x13fffff9) {
+              if (iVar2 == -0x13fffff8) {
+                operator+((char *)(unaff_EBP + -0x20),
+                          (CString *)s_Could_not_Enter_Read_OTAP_Mode_1002f1ac);
+                *(undefined1 *)(unaff_EBP + -4) = 5;
+                CString::Format(this_05,(char *)(unaff_EBP + -0x10));
+                *(undefined1 *)(unaff_EBP + -4) = 3;
+                pCVar4 = (CString *)(unaff_EBP + -0x20);
+              }
+              else if (iVar2 == -0x13fffff7) {
+                operator+((char *)(unaff_EBP + -0x1c),
+                          (CString *)s_Could_not_Enter_Read_OTAP_Mode_1002f1ac);
+                *(undefined1 *)(unaff_EBP + -4) = 6;
+                CString::Format(this_04,(char *)(unaff_EBP + -0x10));
+                *(undefined1 *)(unaff_EBP + -4) = 3;
+                pCVar4 = (CString *)(unaff_EBP + -0x1c);
+              }
+              else {
+                if (iVar2 != -0x13fffff3) goto LAB_10020ba4;
+                operator+((char *)(unaff_EBP + -0x18),
+                          (CString *)s_Invalid_Parameter_or_Operation_R_1002f1d0);
+                *(undefined1 *)(unaff_EBP + -4) = 7;
+                CString::Format(this_03,(char *)(unaff_EBP + -0x10));
+                *(undefined1 *)(unaff_EBP + -4) = 3;
+                pCVar4 = (CString *)(unaff_EBP + -0x18);
+              }
+              goto LAB_100202cf;
+            }
+          }
+          goto LAB_10020a2d;
+        }
+        if (uVar1 != 0xc) {
+          if (uVar1 == 0xf) {
+            if ((iVar2 != -0x7fffd8b4) && (iVar2 == -0x13fffff1)) goto LAB_10020a2d;
+          }
+          else if (uVar1 != 0x1f) {
+            if (uVar1 != 0x22) goto switchD_10020180_default;
+            if (iVar2 != -0x7ffffd4c) {
+              if ((iVar2 == -0x7ffffd32) || (iVar2 == -0x7fffd8b4)) goto LAB_10020a2d;
+              if (iVar2 != -0x7fffbffb) {
+                if (iVar2 == -0x13fffffa) {
+                  operator+((char *)(unaff_EBP + -0x14),
+                            (CString *)s_OTAP___Failed_to_Write_Due_To_Ov_1002f354);
+                  *(undefined1 *)(unaff_EBP + -4) = 8;
+                  CString::Format(this_02,(char *)(unaff_EBP + -0x10));
+                  *(undefined1 *)(unaff_EBP + -4) = 3;
+                  pCVar4 = (CString *)(unaff_EBP + -0x14);
+                }
+                else {
+                  if (iVar2 != -0x13fffff2) goto LAB_10020ba4;
+                  operator+((char *)(unaff_EBP + 8),(CString *)s_OTAP___Write_Unsuccessful_1002f388)
+                  ;
+                  *(undefined1 *)(unaff_EBP + -4) = 9;
+                  CString::Format(this_01,(char *)(unaff_EBP + -0x10));
+                  *(undefined1 *)(unaff_EBP + -4) = 3;
+                  pCVar4 = (CString *)(unaff_EBP + 8);
+                }
+                goto LAB_100202cf;
+              }
+            }
+          }
+        }
+      }
+      else {
+        if (0x23 < uVar1) {
+          if (uVar1 < 0x26) {
+LAB_10020517:
+            if (-0x3ffffc78 < iVar2) {
+              if (iVar2 < -0x13fffff7) {
+                if (iVar2 == -0x13fffff8) {
+                  operator+((char *)(unaff_EBP + -0x24),
+                            (CString *)s_Could_not_Enter_Read_OTAP_Mode_1002f1ac);
+                  *(undefined1 *)(unaff_EBP + -4) = 10;
+                  CString::Format(this_06,(char *)(unaff_EBP + -0x10));
+                  *(undefined1 *)(unaff_EBP + -4) = 3;
+                  pCVar4 = (CString *)(unaff_EBP + -0x24);
+                  goto LAB_100202cf;
+                }
+              }
+              else if (iVar2 == -0x13fffff7) {
+                operator+((char *)(unaff_EBP + -0x28),
+                          (CString *)s_Could_not_Enter_Read_OTAP_Mode_1002f1ac);
+                *(undefined1 *)(unaff_EBP + -4) = 0xb;
+                CString::Format(this_07,(char *)(unaff_EBP + -0x10));
+                *(undefined1 *)(unaff_EBP + -4) = 3;
+                pCVar4 = (CString *)(unaff_EBP + -0x28);
+                goto LAB_1002093e;
+              }
+              goto LAB_10020ba4;
+            }
+            if (iVar2 != -0x3ffffc78) {
+              if (iVar2 < -0x7ffffd31) {
+                if ((iVar2 != -0x7ffffd32) && (iVar2 != -0x7fffffec)) goto LAB_10020ba4;
+              }
+              else if ((iVar2 != -0x7fffbffd) &&
+                      ((iVar2 == -0x7fffbffb ||
+                       (((iVar2 != -0x7ffbfeac && (iVar2 != -0x3ffffc7a)) && (iVar2 != -0x3ffffc79))
+                       )))) goto LAB_10020ba4;
+            }
+            goto LAB_10020a2d;
+          }
+          if (0x26 < uVar1) {
+            if (uVar1 < 0x29) goto LAB_10020517;
+            if (uVar1 == 0x2a) {
+              switch(iVar2) {
+              case -0x3fffeff0:
+                break;
+              case -0x3fffefef:
+                break;
+              default:
+                break;
+              case -0x3fffefeb:
+                break;
+              case -0x3fffefea:
+                break;
+              case -0x3fffefe9:
+                break;
+              case -0x3fffefe8:
+                break;
+              case -0x3fffefe7:
+                break;
+              case -0x3fffefe0:
+                break;
+              case -0x3fffefde:
+                break;
+              case -0x3fffefdd:
+              }
+              goto LAB_10020ba4;
+            }
+          }
+        }
+switchD_10020180_default:
+      }
+    }
+    goto LAB_10020ba4;
+  }
+  switch(uVar1) {
+  case 0xbd:
+    if (iVar2 != -0x3fffefec) break;
+LAB_10020a2d:
+    CString::Format(this,(char *)(unaff_EBP + -0x10));
+    goto LAB_10020bb3;
+  default:
+    goto switchD_10020180_default;
+  case 0xbf:
+  case 0xc0:
+    if (((iVar2 != -0x7fffbffe) && (iVar2 != -0x7ffbfeac)) &&
+       (((iVar2 == -0x1313ffc1 ||
+         (((iVar2 == -0x1313ffb1 || (iVar2 == -0x1313ffa1)) || (iVar2 == -0x1313ff91)))) ||
+        (iVar2 == -0x1313ff81)))) goto LAB_10020a2d;
+    break;
+  case 0xc6:
+    if (iVar2 != -0x13fffffd) {
+      if (iVar2 == -0x13fffffc) {
+        operator+((char *)(unaff_EBP + -0x2c),(CString *)s_OTAP___Reading_Radio_Multi_Insta_1002e324
+                 );
+        *(undefined1 *)(unaff_EBP + -4) = 0xc;
+        CString::Format(this_08,(char *)(unaff_EBP + -0x10));
+        *(undefined1 *)(unaff_EBP + -4) = 3;
+        pCVar4 = (CString *)(unaff_EBP + -0x2c);
+        goto LAB_100202cf;
+      }
+      if (iVar2 == -0x13fffffb) goto LAB_10020a2d;
+    }
+    break;
+  case 199:
+    break;
+  case 200:
+    if (iVar2 == -0x13fffffc) {
+      operator+((char *)(unaff_EBP + -0x54),(CString *)s_OTAP___Invalid_Response_from_Rad_1002e16c);
+      *(undefined1 *)(unaff_EBP + -4) = 0x16;
+      CString::Format(this_18,(char *)(unaff_EBP + -0x10));
+      *(undefined1 *)(unaff_EBP + -4) = 3;
+      pCVar4 = (CString *)(unaff_EBP + -0x54);
+      goto LAB_1002093e;
+    }
+    if (iVar2 == -0x13fffff6) goto LAB_10020a2d;
+    break;
+  case 0xc9:
+    operator+((char *)(unaff_EBP + -0x5c),(CString *)s_OTAP___Failed_to_Read_Radio_Mode_1002e030);
+    *(undefined1 *)(unaff_EBP + -4) = 0x18;
+    CString::Format(this_20,(char *)(unaff_EBP + -0x10));
+    *(undefined1 *)(unaff_EBP + -4) = 3;
+    pCVar4 = (CString *)(unaff_EBP + -0x5c);
+    goto LAB_1002093e;
+  case 0xca:
+    operator+((char *)(unaff_EBP + -0x60),(CString *)s_OTAP___Failed_to_Read_Radio_Seri_1002e00c);
+    *(undefined1 *)(unaff_EBP + -4) = 0x19;
+    CString::Format(this_21,(char *)(unaff_EBP + -0x10));
+    *(undefined1 *)(unaff_EBP + -4) = 3;
+    pCVar4 = (CString *)(unaff_EBP + -0x60);
+    goto LAB_1002093e;
+  case 0xcb:
+    operator+((char *)(unaff_EBP + -100),(CString *)s_OTAP___Failed_to_Read_Radio_UUID_1002dfe8);
+    *(undefined1 *)(unaff_EBP + -4) = 0x1a;
+    CString::Format(this_22,(char *)(unaff_EBP + -0x10));
+    *(undefined1 *)(unaff_EBP + -4) = 3;
+    pCVar4 = (CString *)(unaff_EBP + -100);
+    goto LAB_1002093e;
+  case 0xcc:
+    operator+((char *)(unaff_EBP + -0x68),(CString *)s_OTAP___Failed_to_Read_Radio_Code_1002dfc0);
+    *(undefined1 *)(unaff_EBP + -4) = 0x1b;
+    CString::Format(this_23,(char *)(unaff_EBP + -0x10));
+    *(undefined1 *)(unaff_EBP + -4) = 3;
+    pCVar4 = (CString *)(unaff_EBP + -0x68);
+    goto LAB_1002093e;
+  case 0xcd:
+    operator+((char *)(unaff_EBP + -0x6c),(CString *)s_OTAP___Failed_to_Read_Radio_FDB_1002df9c);
+    *(undefined1 *)(unaff_EBP + -4) = 0x1c;
+    CString::Format(this_24,(char *)(unaff_EBP + -0x10));
+    *(undefined1 *)(unaff_EBP + -4) = 3;
+    pCVar4 = (CString *)(unaff_EBP + -0x6c);
+    goto LAB_1002093e;
+  case 0xce:
+  case 0xd2:
+  case 0xd3:
+    if (iVar2 != -0x13ffffff) {
+      if (iVar2 == -0x13fffffe) {
+        operator+((char *)(unaff_EBP + -0x4c),(CString *)s_OTAP___Invalid_Response_from_Rad_1002e16c
+                 );
+        *(undefined1 *)(unaff_EBP + -4) = 0x12;
+        CString::Format(this_16,(char *)(unaff_EBP + -0x10));
+        *(undefined1 *)(unaff_EBP + -4) = 3;
+        pCVar4 = (CString *)(unaff_EBP + -0x4c);
+      }
+      else if (iVar2 == -0x13fffffa) {
+        operator+((char *)(unaff_EBP + -0x48),(CString *)s_OTAP___Failed_To_Copy_Due_To_Ove_1002e1a8
+                 );
+        *(undefined1 *)(unaff_EBP + -4) = 0x13;
+        CString::Format(this_15,(char *)(unaff_EBP + -0x10));
+        *(undefined1 *)(unaff_EBP + -4) = 3;
+        pCVar4 = (CString *)(unaff_EBP + -0x48);
+      }
+      else {
+        if (iVar2 != -0x13fffff9) {
+          operator+((char *)(unaff_EBP + -0x40),(CString *)s_OTAP___Reading_Radio_Failed_1002e1f8);
+          *(undefined1 *)(unaff_EBP + -4) = 0x15;
+          CString::Format(this_13,(char *)(unaff_EBP + -0x10));
+          *(undefined1 *)(unaff_EBP + -4) = 3;
+          pCVar4 = (CString *)(unaff_EBP + -0x40);
+          goto LAB_1002093e;
+        }
+        operator+((char *)(unaff_EBP + -0x44),(CString *)s_OTAP___Failed_Resultcode_1002e1dc);
+        *(undefined1 *)(unaff_EBP + -4) = 0x14;
+        CString::Format(this_14,(char *)(unaff_EBP + -0x10));
+        *(undefined1 *)(unaff_EBP + -4) = 3;
+        pCVar4 = (CString *)(unaff_EBP + -0x44);
+      }
+      goto LAB_100202cf;
+    }
+    operator+((char *)(unaff_EBP + -0x50),(CString *)s_OTAP___Incorrect_Number_of_XMPs_o_1002e130);
+    *(undefined1 *)(unaff_EBP + -4) = 0x11;
+    CString::Format(this_17,(char *)(unaff_EBP + -0x10));
+    *(undefined1 *)(unaff_EBP + -4) = 3;
+    pCVar4 = (CString *)(unaff_EBP + -0x50);
+    goto LAB_1002093e;
+  case 0xcf:
+    break;
+  case 0xd0:
+    if (iVar2 == -0x13fffffd) {
+      operator+((char *)(unaff_EBP + -0x3c),(CString *)s_OTAP___Reading_Radio_Multi_Insta_1002e244);
+      *(undefined1 *)(unaff_EBP + -4) = 0x10;
+      CString::Format(this_12,(char *)(unaff_EBP + -0x10));
+      *(undefined1 *)(unaff_EBP + -4) = 3;
+      pCVar4 = (CString *)(unaff_EBP + -0x3c);
+      goto LAB_1002093e;
+    }
+    if (iVar2 == -0x13fffffc) {
+      operator+((char *)(unaff_EBP + -0x38),(CString *)s_OTAP___Reading_Radio_Multi_Insta_1002e324);
+      *(undefined1 *)(unaff_EBP + -4) = 0xe;
+      CString::Format(this_11,(char *)(unaff_EBP + -0x10));
+      *(undefined1 *)(unaff_EBP + -4) = 3;
+      pCVar4 = (CString *)(unaff_EBP + -0x38);
+LAB_100202cf:
+      CString::~CString(pCVar4);
+      goto LAB_10020bb3;
+    }
+    if (iVar2 == -0x13fffffb) {
+      operator+((char *)(unaff_EBP + -0x34),(CString *)s_OTAP___Reading_Radio_Multi_Insta_1002e28c);
+      *(undefined1 *)(unaff_EBP + -4) = 0xf;
+      CString::Format(this_10,(char *)(unaff_EBP + -0x10));
+      *(undefined1 *)(unaff_EBP + -4) = 3;
+      pCVar4 = (CString *)(unaff_EBP + -0x34);
+      goto LAB_100202cf;
+    }
+    goto LAB_10020bab;
+  case 0xd1:
+    break;
+  case 0xd4:
+  case 0xd5:
+    if (iVar2 == -0x13fffffa) {
+      operator+((char *)(unaff_EBP + -0x58),(CString *)s_OTAP___Delete_CodePlug_Failed_1002e054);
+      *(undefined1 *)(unaff_EBP + -4) = 0x17;
+      CString::Format(this_19,(char *)(unaff_EBP + -0x10));
+      *(undefined1 *)(unaff_EBP + -4) = 3;
+      pCVar4 = (CString *)(unaff_EBP + -0x58);
+      goto LAB_1002093e;
+    }
+    break;
+  case 0xd6:
+    operator+((char *)(unaff_EBP + -0x30),(CString *)s_Failed_to_Parse_Radio_Configurat_1002e2d4);
+    *(undefined1 *)(unaff_EBP + -4) = 0xd;
+    CString::Format(this_09,(char *)(unaff_EBP + -0x10));
+    *(undefined1 *)(unaff_EBP + -4) = 3;
+    pCVar4 = (CString *)(unaff_EBP + -0x30);
+LAB_1002093e:
+    CString::~CString(pCVar4);
+    goto LAB_10020bab;
+  }
+LAB_10020ba4:
+  CString::Format(this,(char *)(unaff_EBP + -0x10));
+LAB_10020bab:
+  if (iVar2 != -0x1313ffd1) {
+LAB_10020bb3:
+    CString::CString((CString *)(unaff_EBP + 0xc));
+    *(undefined1 *)(unaff_EBP + -4) = 0x1d;
+    CString::Format(this_25,(char *)(unaff_EBP + 0xc));
+    CString::operator+=((CString *)(unaff_EBP + -0x10),(CString *)(unaff_EBP + 0xc));
+    AfxMessageBox(*(char **)(unaff_EBP + -0x10),0x10,0);
+    *(undefined1 *)(unaff_EBP + -4) = 3;
+    CString::~CString((CString *)(unaff_EBP + 0xc));
+  }
+  CString::operator=((CString *)(unaff_EBP + 0x10),&DAT_1002f5ac);
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  CString::~CString((CString *)(unaff_EBP + -0x10));
+  *(undefined4 *)(unaff_EBP + -4) = 0xffffffff;
+  *(undefined4 *)(*(int *)(unaff_EBP + -0x70) + 4) = *(undefined4 *)(unaff_EBP + -0x74);
+  CString::~CString((CString *)(unaff_EBP + 0x10));
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return iVar2;
+}
+
+
+INFO  REPORT: Save succeeded for processed file: /NextGen10.dll (HeadlessAnalyzer)  
+
+# --- UnlockSecurity helpers ---
+=== FUNC FUN_1000b2ad @1000b2ad ===
+
+HRESULT FUN_1000b2ad(void)
+
+{
+  char cVar1;
+  AFX_MODULE_STATE *pAVar2;
+  int extraout_ECX;
+  HRESULT HVar3;
+  int unaff_EBP;
+  CString aCStackY_b0 [128];
+  IID *rclsid;
+  IID *riid;
+  LPVOID *ppv;
+  CString aCStack_e [14];
+  
+  FUN_10021490();
+  pAVar2 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x1c),pAVar2);
+  HVar3 = 0;
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  CString::CString((CString *)(unaff_EBP + -0x10),s_CRcmpBundler__LoadServer_1002c798);
+  cVar1 = *(char *)(extraout_ECX + 0x20);
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  if (cVar1 != '\x01') {
+    HVar3 = CoCreateInstance((IID *)&DAT_10025aa0,(LPUNKNOWN)0x0,1,(IID *)&DAT_10025a40,
+                             (LPVOID *)(extraout_ECX + 0x18));
+    if (-1 < HVar3) {
+      HVar3 = CoCreateInstance((IID *)&DAT_10025b00,(LPUNKNOWN)0x0,1,(IID *)&DAT_10025ae0,
+                               (LPVOID *)(extraout_ECX + 0x14));
+      if (-1 < HVar3) {
+        if (*(int *)(unaff_EBP + 8) == 3) {
+          ppv = (LPVOID *)(extraout_ECX + 0xc);
+          riid = (IID *)&DAT_10025ad0;
+          rclsid = (IID *)&DAT_10025af0;
+        }
+        else {
+          ppv = (LPVOID *)(extraout_ECX + 8);
+          riid = (IID *)&DAT_10025a30;
+          rclsid = (IID *)&DAT_10025a90;
+        }
+        HVar3 = CoCreateInstance(rclsid,(LPUNKNOWN)0x0,1,riid,ppv);
+        if (-1 < HVar3) {
+          *(undefined1 *)(extraout_ECX + 0x20) = 1;
+          goto LAB_1000b393;
+        }
+      }
+    }
+    *(CString **)(unaff_EBP + 8) = aCStackY_b0 + 0x90;
+    CString::CString(aCStackY_b0 + 0x90,(CString *)(extraout_ECX + 0x98));
+    *(CString **)(unaff_EBP + -0x14) = aCStackY_b0 + 0x8c;
+    *(undefined1 *)(unaff_EBP + -4) = 2;
+    CString::CString(aCStackY_b0 + 0x8c,(CString *)(unaff_EBP + -0x10));
+    *(undefined1 *)(unaff_EBP + -4) = 1;
+    FUN_1000b500();
+  }
+LAB_1000b393:
+  *(undefined1 *)(unaff_EBP + -4) = 0;
+  CString::~CString((CString *)(unaff_EBP + -0x10));
+  *(undefined4 *)(*(int *)(unaff_EBP + -0x18) + 4) = *(undefined4 *)(unaff_EBP + -0x1c);
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return HVar3;
+}
+
+
+=== FUNC FUN_1000fd89 @1000fd89 ===
+
+undefined4 FUN_1000fd89(void)
+
+{
+  int *piVar1;
+  AFX_MODULE_STATE *pAVar2;
+  byte *pbVar3;
+  int iVar4;
+  undefined1 *puVar5;
+  int iVar6;
+  uint uVar7;
+  byte bVar8;
+  int unaff_EBP;
+  byte *pbVar9;
+  
+  FUN_10021490();
+  pAVar2 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x24),pAVar2);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  pbVar3 = operator_new(0x100);
+  *(int *)(unaff_EBP + -0x10) = *(int *)(unaff_EBP + 8);
+  *(int *)(unaff_EBP + -0x10) = *(int *)(unaff_EBP + -0x10) - (int)pbVar3;
+  *(byte **)(unaff_EBP + -0x1c) = pbVar3;
+  *(undefined4 *)(unaff_EBP + -0x14) = 0x51e88d21;
+  pbVar9 = (byte *)(*(int *)(unaff_EBP + 8) + 0x1f);
+  *(undefined4 *)(unaff_EBP + -0x18) = 0x20;
+  do {
+    bVar8 = pbVar3[*(int *)(unaff_EBP + -0x10)];
+    iVar4 = 7;
+    do {
+      uVar7 = *pbVar9 >> ((byte)iVar4 & 0x1f) & 1 ^ *(int *)(unaff_EBP + -0x14) >> 9 & 1U;
+      *(uint *)(unaff_EBP + -0x14) = uVar7 + *(int *)(unaff_EBP + -0x14) * 2;
+      bVar8 = bVar8 ^ (char)uVar7 << ((byte)iVar4 & 0x1f);
+      iVar4 = iVar4 + -1;
+    } while (0 < iVar4);
+    *pbVar3 = bVar8;
+    pbVar9 = pbVar9 + -1;
+    pbVar3 = pbVar3 + 1;
+    piVar1 = (int *)(unaff_EBP + -0x18);
+    *piVar1 = *piVar1 + -1;
+  } while (*piVar1 != 0);
+  puVar5 = *(undefined1 **)(unaff_EBP + 8);
+  iVar6 = *(int *)(unaff_EBP + -0x1c) - (int)puVar5;
+  iVar4 = 0x20;
+  do {
+    *puVar5 = puVar5[iVar6];
+    puVar5 = puVar5 + 1;
+    iVar4 = iVar4 + -1;
+  } while (iVar4 != 0);
+  operator_delete(*(void **)(unaff_EBP + -0x1c));
+  *(undefined4 *)(*(int *)(unaff_EBP + -0x20) + 4) = *(undefined4 *)(unaff_EBP + -0x24);
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return 0;
+}
+
+
+INFO  REPORT: Save succeeded for processed file: /NextGen10.dll (HeadlessAnalyzer)  

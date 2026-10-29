@@ -2,7 +2,45 @@
 
 > **Single Entry Point for AI Agents (Antigravity `agy`, Claude Code `claude`, Gemini CLI `gemini`).**  
 > Supersedes `AGENT_HANDOFF_AND_MISSION_BRIEF.md`.  
-> Last updated: **2026-10-28** | Branch: `master` | Test Suite: **274/274 passed**
+> Last updated: **2026-10-28** | Branch: `master` | Test Suite: **261 passed, 1 skipped, 19 subtests** (Fedora laptop)
+
+---
+
+## 🔭 LATEST — 2026-10-28 Fedora session (Claude, Opus 4.8)
+
+Radio 4 (`721CLZ0655`, XTS 5000) on this Fedora laptop via `/dev/ttyACM0` (`0cad:1002`).
+Full detail in [`docs/SESSION_LOG_20261028.md`](SESSION_LOG_20261028.md).
+
+**0x0107 UnlockSecurity — crypto SOLVED.** The seed→response scramble (`NextGen10.dll FUN_1000fd89`)
+is a fixed LFSR scrambler (init `0x51E88D21`, tap bit 9, 32-byte block, bit 0 passthrough, input read
+reversed) — **no key, no per-radio secret, fully reversible**. Ported + tested:
+`src/open_astro/protocol/unlock.py` (`unlock_response`), `tests/test_unlock.py`.
+Decompiles/write-up: `docs/re/RE_0107_UNLOCKSECURITY.md`, `docs/re/nextgen10_*_decomp.txt`.
+
+**Handshake scaffold (gated, NOT transmitting):** `src/open_astro/protocol/unlock_session.py`
+orchestrates send-req → read 32B seed → scramble → send-resp. `perform()` refuses while
+`WIRE_PROFILE_CONFIRMED = False`.
+
+**THE ONE REMAINING UNKNOWN:** the UnlockSecurity *wire frame* — request opcode (`0x0107` vs msg tag
+`0x2011`), request body, seed offset in reply. Confirm via **(A)** a fresh Depot "unlock/program"
+capture that actually records the PPP/RCMP layer (the existing `captures/depot_*` have 0 parsed RCMP),
+or **(B)** tracing `FUN_1000b2ad`'s `CoCreateInstance` (CLSIDs `DAT_10025aa0`/`DAT_10025af0`) into the
+COM protocol object's send/recv vtable. Then fill the constants in `unlock_session.py` and set
+`WIRE_PROFILE_CONFIRMED = True`; record a hardware seed/response pair as the acceptance vector.
+
+**Then ADP (all Fedora-native, no KFDtool — ADP=40-bit RC4=codeplug key field; KVL only for AES/DES):**
+1) unlock `0x81` → write Q667 flashcode `400008-006000-1` (Luhn digit solved);
+2) write ADP key `A1B2C3D4E5` into `0x80` key field;
+3) set channel `0x0FFD` ADP personality pointers. Live ADP state map: `scratchpad/state_map.json`
+(secure enable ON, CKR1–8 present, key slots empty, flashcode still base `400008-002000-0`).
+
+**Fedora RE env (machine-local, not in repo):** Ghidra 12.2 `~/tools/ghidra_12.2_PUBLIC` (needs JDK 25,
+`~/tools/jdk-25.0.5+8`), REA MCP local-scope. RE root `~/re/openastro` via `re_sources.local.json`
+(gitignored); binaries copied from `~/GoogleDrive/RADIO/ASTRO25SOFTWARE/`. Ghidra scripts in
+`~/re/ghidra_scripts`. NOTE: full analysis of 24M `PatPort.exe` HANGS (MSVC RTTI) — use the small
+engine DLLs (`NextGen10.dll` base `0x10000000`, `ByteData10.dll` base `0x11000000`). XTS wedges on
+long/killed RCMP sessions (power-cycle); short batched reads + reconnect are stable
+(`scratchpad/resilient_dump.py`).
 
 ---
 

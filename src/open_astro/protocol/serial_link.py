@@ -31,6 +31,7 @@ from .commands import DeviceAddress, CommandResponse, UNKNOWN_PING, UNKNOWN_REBO
 MOTOROLA_VID = 0x0CAD
 MOTOROLA_PIDS = {
     0x1001: "XTS 1500 / XTS 2500 / MT 1500",
+    0x1002: "XTS 5000 / XTL 5000",
 }
 
 # USB-to-UART bridge chips used by "ribless" cables for radios without native USB
