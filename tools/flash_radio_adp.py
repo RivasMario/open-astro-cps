@@ -28,9 +28,10 @@ sys.path.insert(0, os.path.join(REPO, "src"))
 sys.path.insert(0, os.path.join(REPO, "tools"))
 
 from open_astro.parsers.cpg_parser import CpgParser, rc4
-from open_astro.protocol import rcmp
+from open_astro.protocol import rcmp, unlock_session
 from open_astro.protocol.rcmp_write import RcmpWriteClient
 from open_astro.protocol.rcmp_transport import RcmpReadClient
+from open_astro.protocol.write_session import CpgWriteAssembler
 import rcmp_replay_write
 
 KNOWN_RADIOS = {
@@ -66,24 +67,23 @@ def detect_connected_serial(host="192.168.128.1", port=8002) -> str | None:
     return None
 
 
-def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: str):
+def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: str | None = None):
     if serial not in KNOWN_RADIOS:
         raise ValueError(f"Unknown target serial '{serial}'. Registered: {list(KNOWN_RADIOS.keys())}")
 
     radio_meta = KNOWN_RADIOS[serial]
 
-    # 1. Load multi-zone base from Kent CPG (filtering to 3 zones)
+    # 1. Load multi-zone base from Kent CPG
     kent_cp = CpgParser(kent_cpg)
     cpg_objs = {}
     for entry in kent_cp.directory():
         p, item, inst = entry['partition'], entry['item_id'], entry['instance']
         if p == 0x82:
             continue
-        # Kept full 10-zone structure for Depot compatibility
-        pass
         strm = kent_cp._read(['DataStg', f"Strm_{entry['stream']}"])
         dec = rc4(kent_cp.key, strm)[6:-2]
         cpg_objs[(p, item, inst)] = dec
+    kent_cp.close()
 
     # 2. Load ADP security objects
     adp_cp = CpgParser(adp_cpg)
@@ -92,26 +92,14 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
         strm = adp_cp._read(['DataStg', f"Strm_{entry['stream']}"])
         dec = rc4(adp_cp.key, strm)[6:-2]
         adp_objs[(entry['partition'], entry['item_id'], entry['instance'])] = dec
+    adp_cp.close()
 
-    # Inject security objects
     for item in SECURITY_OBJECT_IDS:
         k = (0x80, item, 0)
         if k in adp_objs:
             cpg_objs[k] = adp_objs[k]
 
-    # 3. Extract base pcap records
-    recs, _ = rcmp_replay_write.extract_out_records(template_pcap, 5)
-    writes = [r for r in recs if r[:2].hex() == '0101']
-    pcap_keys = set((r[2], int.from_bytes(r[3:5], 'big'), int.from_bytes(r[5:7], 'big')) for r in writes)
-
-    # 4. Zone & Channel definitions:
-    # 00 = Strapped Clear (NO lock icon)
-    # 40 = Strapped Secure (YES lock icon)
-    #
-    # Zone 1: TEAM OPS
-    #   Ch 1: OPEN ASTRO   (P25 Clear, 851.5125 MHz, NAC $293)
-    #   Ch 2: TEAM ANALOG  (Analog Clear, 853.0125 MHz, CTCSS 156.7 Hz)
-    #   Ch 3: ADP SECURE   (P25 Secure, 852.0125 MHz, NAC $293, Strapped Secure, Lock Icon)
+    # 3. Zone & Channel definitions:
     ch1_z1 = "0ffb0000322f0293029302930a269c240a269c240a269c240000008000000000000001"
     ch2_z1 = "0ffb0000322f0000000000000a2b30040a2b30040a2b30041a001a8000000000000001"
     ch3_z1 = "0ffb0001642a0293029302930a2822c40a2822c40a2822c40000014000000000000001"
@@ -122,10 +110,6 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
            "5445414d20414e414c4f47000000000000" + \
            "4144502053454355524500000000000000"
 
-    # Zone 2: 800 INTEROP
-    #   Ch 1: 8CALL90 (Analog Clear, 851.0125 MHz, CTCSS 156.7 Hz)
-    #   Ch 2: 8TAC91  (Analog Clear, 851.5125 MHz, CTCSS 156.7 Hz)
-    #   Ch 3: 8TAC92  (Analog Clear, 852.0125 MHz, CTCSS 156.7 Hz)
     ch1_z2 = "0ffb0000322f0000000000000a2515840a2515840a2515841a001a8000000000000001"
     ch2_z2 = "0ffb0000322f0000000000000a269c240a269c240a269c241a001a8000000000000001"
     ch3_z2 = "0ffb0000322f0000000000000a2822c40a2822c40a2822c41a001a8000000000000001"
@@ -136,10 +120,6 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
            "3854414339310000000000000000000000" + \
            "3854414339320000000000000000000000"
 
-    # Zone 3: TAC OPS
-    #   Ch 1: TAC CLEAR  (P25 Clear, 851.5125 MHz, NAC $293)
-    #   Ch 2: TAC ANALOG (Analog Clear, 853.0125 MHz, CTCSS 156.7 Hz)
-    #   Ch 3: TAC SECURE (P25 Secure, 852.0125 MHz, NAC $293, Strapped Secure, Lock Icon)
     ch1_z3 = "0ffb0000322f0293029302930a269c240a269c240a269c240000008000000000000001"
     ch2_z3 = "0ffb0000322f0000000000000a2b30040a2b30040a2b30041a001a8000000000000001"
     ch3_z3 = "0ffb0001642a0293029302930a2822c40a2822c40a2822c40000014000000000000001"
@@ -150,57 +130,27 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
            "54414320414e414c4f4700000000000000" + \
            "5441432053454355524500000000000000"
 
-    # Pers 0: Clean CLEAR Conventional Personality (80 at byte 26, matching baseline 407CHT0214)
     clr_ffb0 = "000fcd00004c748011001d0ff100000182000022220000010203801000000fbe00000000000001010101000ffa00000ff30000000000000ff7000000000000262626260000000000000000"
-
-    # Pers 1: SECURE ADP Conventional Personality (88 at byte 26, cloned from clean baseline)
     sec_ffb1 = "000fcd00014c748011001d0ff1000001020001000a0000100003881000000fbe00000000000001010101000ffa00000ff30000000000000ff7000000000000262626260000000000000000"
-
-    # Radio Wide Secure master enable: length 16 with 0003
     rw_34 = "400314060000070c230b0a0602570003"
-
-    # Key table 0x005D: Key 1 = A1B2C3D4E5
     sec_5d = "0000000e000800083030303141314232433344344535303030322a2a2a2a2a2a2a2a2a2a303030332a2a2a2a2a2a2a2a2a2a303030342a2a2a2a2a2a2a2a2a2a303030352a2a2a2a2a2a2a2a2a2a303030362a2a2a2a2a2a2a2a2a2a303030372a2a2a2a2a2a2a2a2a2a303030382a2a2a2a2a2a2a2a2a2a"
-
-    # Conventional Physical Controls (0x0020:0) compiled by Depot:
-    # 03: Top Button (Orange)   -> Volume Set Tone (0x29)
-    # 04: Rotary Switch         -> Channel Select (0x1d)
-    # 60: Purple Button (Side 1)-> Light Toggle (0x18)
-    # 61: Side Button 2 (1-Dot) -> Scan (0x21)
-    # 62: Side Button 3 (2-Dot) -> Monitor (0x19)
-    # 94: Switch 94 (paired)    -> Volume Set Tone (0x29)
-    # 86: Switch 86             -> Unprogrammed (0x23)
     sw_20 = "00000002000700070329041d60186121621994298623"
-
-    # Trunking Physical Controls (0x0022:0):
-    # 60: Purple Button (Side 1)-> Light Toggle (0x18)
     sw_22 = "00000002000700070329041d60186121621994298623"
-
-    # Trunking default template (0x0014 / 0x0015):
     btn_14 = "0000000600040004031e1e1e2626022648262626002626262626002626262626"
     btn_15 = "0000000600040004031e1e1e2626022648262626002626262626002626262626"
-
-    # Conventional Display / Softkey Navigation (0x0016 / 0x0017):
-    # Restored to standard 4-byte baseline:
     btn_16 = "00000001001000041e1c8e37"
     btn_17 = "00000001001000041e1c8e37"
-
-    # Menu items: enable ZONE softkey on LCD
     menu_3e = "0affc00150300a9580343c141438873d1e000400210e28144d000f0100"
     menu_3f = "344046507850ff090808141a206a660a0a4d03"
 
-    # 10-Zone name table in 0x000D:0 (keep zones 4-10 intact from baseline)
     val_0d = bytearray(cpg_objs[(0x80, 0x000d, 0)])
     val_0d[8:25] = b"TEAM OPS".ljust(17, b"\x00")
     val_0d[25:42] = b"800 INTEROP".ljust(17, b"\x00")
     val_0d[42:59] = b"TAC OPS".ljust(17, b"\x00")
 
-    # 0x0FF1:0 Scan & Zone Master: Fixed Priority 1 (Ch 1) & Priority 2 (Ch 2)
-    # Activates Scan 'Z' icon on Side 2 (1-Dot) press and eliminates ILS unpacking errors
     val_ff1 = bytes.fromhex("00010003000f000f0ff000008000ff00ff0000000002000000000000000a")
     val_ff0 = bytes.fromhex("00000000000f010001010002010003000000000000000000000000000000000000000000000000000000000000000000000000")
 
-    # Zone channel counts (0x0FFC and 0x0FFE)
     v_ffc0 = bytes.fromhex("0001002300ff00030ffd0000000001")
     v_ffc1 = bytes.fromhex("0001002300ff00030ffd0002000001")
     v_ffc2 = bytes.fromhex("0001002300ff00030ffd0004000001")
@@ -242,35 +192,44 @@ def build_flash_stream(serial: str, kent_cpg: str, adp_cpg: str, template_pcap: 
         (0x80, 0x0ff1, 0): val_ff1,
     }
 
-    edits = []
-    adds = []
+    if template_pcap and os.path.exists(template_pcap):
+        recs, _ = rcmp_replay_write.extract_out_records(template_pcap, 5)
+        writes = [r for r in recs if r[:2].hex() == '0101']
+        pcap_keys = set((r[2], int.from_bytes(r[3:5], 'big'), int.from_bytes(r[5:7], 'big')) for r in writes)
 
-    for k, data in cpg_objs.items():
-        p, o, i = k
-        if p == 0x82:
-            continue  # RF calibration firewall!
-        val = custom_objs.get(k, data)
-        arg = f"{p:x}:{o:x}:{i}:{val.hex()}"
-        if k in pcap_keys:
-            edits.append(arg)
-        else:
-            adds.append(arg)
-
-    for k, val in custom_objs.items():
-        if k not in cpg_objs:
+        edits, adds = [], []
+        for k, data in cpg_objs.items():
             p, o, i = k
             if p == 0x82:
                 continue
+            val = custom_objs.get(k, data)
             arg = f"{p:x}:{o:x}:{i}:{val.hex()}"
-            if k in pcap_keys:
-                edits.append(arg)
-            else:
-                adds.append(arg)
+            (edits if k in pcap_keys else adds).append(arg)
 
-    edited_records = rcmp_replay_write.apply_edits(recs, edits, rcmp)
-    final_records = rcmp_replay_write.apply_adds(edited_records, adds, rcmp)
-    framed = rcmp_replay_write.validate(final_records, rcmp)
-    return framed
+        for k, val in custom_objs.items():
+            if k not in cpg_objs:
+                p, o, i = k
+                if p == 0x82:
+                    continue
+                arg = f"{p:x}:{o:x}:{i}:{val.hex()}"
+                (edits if k in pcap_keys else adds).append(arg)
+
+        edited_records = rcmp_replay_write.apply_edits(recs, edits, rcmp)
+        final_records = rcmp_replay_write.apply_adds(edited_records, adds, rcmp)
+        return rcmp_replay_write.validate(final_records, rcmp)
+
+    # Pure-Python cross-platform synthesis (no gitignored .pcap needed)
+    merged = dict(cpg_objs)
+    merged.update(custom_objs)
+    raw_records: list[bytes] = [bytes([0x01, 0x06, 0x00])]
+    for pr in CpgWriteAssembler.default_prepare_records():
+        raw_records.append(pr[2:])
+    for (p, o, i) in sorted(merged.keys(), key=lambda x: (x[0] == 0x81, x[0], x[1], x[2])):
+        if p == 0x82:
+            continue
+        raw_records.append(rcmp.build_write(p, o, merged[(p, o, i)], i)[2:])
+    raw_records.append(bytes([0x01, 0x06, 0x01]))
+    return rcmp_replay_write.validate(raw_records, rcmp)
 
 
 def main():
@@ -318,12 +277,24 @@ def main():
         return 0
 
     print(f"[!] Transmitting {len(framed)} records to {args.host}:{args.port}...")
-    time.sleep(2.5)
+    time.sleep(0.5)
     client = RcmpWriteClient.connect(host=args.host, port=args.port, allow_write=True, src_port=0)
     try:
+        def _send_raw(fr: bytes) -> None:
+            client._conn.sendall(fr)
+
+        def _recv_body() -> bytes:
+            rec = client._recv_record()
+            return rec[2:] if len(rec) > 2 else b""
+
+        usess = unlock_session.UnlockSession(_send_raw, _recv_body, part=0x81, inst=0)
+        usess.exchange()
+        ack_rec = client._recv_record()
+        print(f"[+] UnlockSecurity (0x0107) 32-byte LFSR seed->response ACKed: {ack_rec.hex()}")
+
         for i, fr in enumerate(framed):
             client.send_prebuilt(fr)
-            time.sleep(0.03)
+            time.sleep(0.005)
             if (i + 1) % 50 == 0 or (i + 1) == len(framed):
                 print(f"    ...{i+1}/{len(framed)}")
         print(f"[+] All {len(framed)} records acked successfully!")

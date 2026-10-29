@@ -25,9 +25,10 @@ sys.path.insert(0, os.path.join(REPO, "src"))
 sys.path.insert(0, os.path.join(REPO, "tools"))
 
 from open_astro.parsers.cpg_parser import CpgParser, rc4
-from open_astro.protocol import rcmp
+from open_astro.protocol import rcmp, unlock_session
 from open_astro.protocol.rcmp_write import RcmpWriteClient
 from open_astro.protocol.rcmp_transport import RcmpReadClient
+from open_astro.protocol.write_session import CpgWriteAssembler
 import rcmp_replay_write
 
 SERIAL = "721CLZ0655"
@@ -60,9 +61,8 @@ OBJ_005D = bytes.fromhex(
 )
 
 
-def build_radio4_stream(source_cpg: str, template_pcap: str) -> list[bytes]:
-    """Assemble the validated write records for Radio 4."""
-    # 1. Load all objects from source codeplug
+def build_radio4_stream(source_cpg: str, template_pcap: str | None = None) -> list[bytes]:
+    """Assemble the validated write records for Radio 4 (XTS 5000)."""
     cp = CpgParser(source_cpg)
     cpg_objs = {}
     for entry in cp.directory():
@@ -75,7 +75,6 @@ def build_radio4_stream(source_cpg: str, template_pcap: str) -> list[bytes]:
         cpg_objs[(p, item, inst)] = dec
     cp.close()
 
-    # 2. Inject target identity and security objects
     custom_objs = {
         (0x81, 0x1004, 0): OBJ_1004,
         (0x81, 0x1005, 0): OBJ_1005,
@@ -88,41 +87,44 @@ def build_radio4_stream(source_cpg: str, template_pcap: str) -> list[bytes]:
         (0x80, 0x005d, 0): OBJ_005D,
     }
 
-    # 3. Extract base pcap records for session framing
-    recs, _ = rcmp_replay_write.extract_out_records(template_pcap, 5)
-    writes = [r for r in recs if r[:2].hex() == '0101']
-    pcap_keys = set((r[2], int.from_bytes(r[3:5], 'big'), int.from_bytes(r[5:7], 'big')) for r in writes)
+    if template_pcap and os.path.exists(template_pcap):
+        recs, _ = rcmp_replay_write.extract_out_records(template_pcap, 5)
+        writes = [r for r in recs if r[:2].hex() == '0101']
+        pcap_keys = set((r[2], int.from_bytes(r[3:5], 'big'), int.from_bytes(r[5:7], 'big')) for r in writes)
 
-    edits = []
-    adds = []
-
-    # Apply all codeplug objects
-    for k, data in cpg_objs.items():
-        p, o, i = k
-        if p == 0x82:
-            continue
-        val = custom_objs.get(k, data)
-        arg = f"{p:x}:{o:x}:{i}:{val.hex()}"
-        if k in pcap_keys:
-            edits.append(arg)
-        else:
-            adds.append(arg)
-
-    for k, val in custom_objs.items():
-        if k not in cpg_objs:
+        edits, adds = [], []
+        for k, data in cpg_objs.items():
             p, o, i = k
             if p == 0x82:
                 continue
+            val = custom_objs.get(k, data)
             arg = f"{p:x}:{o:x}:{i}:{val.hex()}"
-            if k in pcap_keys:
-                edits.append(arg)
-            else:
-                adds.append(arg)
+            (edits if k in pcap_keys else adds).append(arg)
 
-    edited_records = rcmp_replay_write.apply_edits(recs, edits, rcmp)
-    final_records = rcmp_replay_write.apply_adds(edited_records, adds, rcmp)
-    framed = rcmp_replay_write.validate(final_records, rcmp)
-    return framed
+        for k, val in custom_objs.items():
+            if k not in cpg_objs:
+                p, o, i = k
+                if p == 0x82:
+                    continue
+                arg = f"{p:x}:{o:x}:{i}:{val.hex()}"
+                (edits if k in pcap_keys else adds).append(arg)
+
+        edited_records = rcmp_replay_write.apply_edits(recs, edits, rcmp)
+        final_records = rcmp_replay_write.apply_adds(edited_records, adds, rcmp)
+        return rcmp_replay_write.validate(final_records, rcmp)
+
+    # Pure-Python cross-platform synthesis (no gitignored .pcap needed)
+    merged = dict(cpg_objs)
+    merged.update(custom_objs)
+    raw_records: list[bytes] = [bytes([0x01, 0x06, 0x00])]
+    for pr in CpgWriteAssembler.default_prepare_records():
+        raw_records.append(pr[2:])
+    for (p, o, i) in sorted(merged.keys(), key=lambda x: (x[0] == 0x81, x[0], x[1], x[2])):
+        if p == 0x82:
+            continue
+        raw_records.append(rcmp.build_write(p, o, merged[(p, o, i)], i)[2:])
+    raw_records.append(bytes([0x01, 0x06, 0x01]))
+    return rcmp_replay_write.validate(raw_records, rcmp)
 
 
 def main():
@@ -158,12 +160,24 @@ def main():
         return 0
 
     print(f"\n[!] Beginning transmission of {len(framed)} records to {args.host}:{args.port}...")
-    time.sleep(1.0)
+    time.sleep(0.5)
     client = RcmpWriteClient.connect(host=args.host, port=args.port, allow_write=True, src_port=0)
     try:
+        def _send_raw(fr: bytes) -> None:
+            client._conn.sendall(fr)
+
+        def _recv_body() -> bytes:
+            rec = client._recv_record()
+            return rec[2:] if len(rec) > 2 else b""
+
+        usess = unlock_session.UnlockSession(_send_raw, _recv_body, part=0x81, inst=0)
+        usess.exchange()
+        ack_rec = client._recv_record()
+        print(f"[+] UnlockSecurity (0x0107) 32-byte LFSR seed->response ACKed: {ack_rec.hex()}")
+
         for i, fr in enumerate(framed):
             client.send_prebuilt(fr)
-            time.sleep(0.02)
+            time.sleep(0.005)
             if (i + 1) % 50 == 0 or (i + 1) == len(framed):
                 print(f"    Transmitted {i+1}/{len(framed)} records...")
         print(f"[+] All {len(framed)} records ACKed by radio bootloader!")
