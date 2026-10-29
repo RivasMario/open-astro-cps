@@ -1,0 +1,52 @@
+# syntax=docker/dockerfile:1
+# 32-bit Wine + Xvfb + x11vnc + noVNC + socat + Virtual Radio Sandbox
+# Runs ASTRO 25 CPS / Depot (PatPort.exe) and NextGen10.dll COM servers inside
+# an isolated i386 Linux container while tools/virtual_radio.py impersonates
+# the radio on 192.168.128.1:8002 and COM1 (/dev/ttyS0) and records every packet.
+
+FROM --platform=linux/386 i386/debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    WINEARCH=win32 \
+    WINEPREFIX=/wine \
+    DISPLAY=:99 \
+    WINEDEBUG=-all
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    cabextract \
+    fluxbox \
+    iproute2 \
+    iptables \
+    novnc \
+    procps \
+    python3 \
+    python3-pip \
+    python3-serial \
+    socat \
+    tcpdump \
+    unshield \
+    unzip \
+    websockify \
+    wine \
+     wine32 \
+    winetricks \
+    x11vnc \
+    xterm \
+    xvfb \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir --break-system-packages olefile pyserial
+
+# Pre-initialize a clean 32-bit Windows XP Wine prefix so startup is instant
+RUN xvfb-run -a wineboot --init && \
+    xvfb-run -a winecfg -v winxp || true && \
+    wineserver -w
+
+WORKDIR /workspace
+COPY docker/entrypoint-wine.sh /usr/local/bin/entrypoint-wine.sh
+RUN chmod +x /usr/local/bin/entrypoint-wine.sh
+
+EXPOSE 6080 5900 8002
+
+ENTRYPOINT ["/usr/local/bin/entrypoint-wine.sh"]

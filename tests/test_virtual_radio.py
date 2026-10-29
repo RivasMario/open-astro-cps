@@ -293,3 +293,83 @@ def test_load_structural_json():
             client.close()
     finally:
         server.stop()
+
+
+def test_challenge_security_two_step_lfsr_unlock_and_captures(tmp_path):
+    """Verify the 2-step 32-byte LFSR seed->response UnlockSecurity flow,
+    CPS metadata opcodes (0x000F, 0x0010, 0x0011, 0x0012), and JSONL/PCAP capture.
+    """
+    from open_astro.protocol.unlock import unlock_response
+
+    jsonl_file = str(tmp_path / "trace.jsonl")
+    pcap_file = str(tmp_path / "trace.pcap")
+    cpg_data = load_codeplug(DEFAULT_CPG)
+    server = VirtualRadioServer(
+        cpg_data,
+        host="127.0.0.1",
+        port=0,
+        lock_security=True,
+        challenge_security=True,
+        capture_jsonl=jsonl_file,
+        capture_pcap=pcap_file,
+    )
+    server.start()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((server.host, server.port))
+    try:
+        # 1. Query firmware / codeplug version subcommands (0x000F)
+        for sub, expected_substr in ((0x00, b"R20.50.07"), (0x10, b"R19.50.01"), (0x42, b"\x00\x24")):
+            _send_rcmp_frame(sock, 0x000F, bytes([sub]))
+            op, body = _recv_rcmp_frame(sock)
+            assert op == 0x800F
+            assert expected_substr in body
+
+        # 2. Query model (0x0010), serial (0x0011), and UUID (0x0012)
+        _send_rcmp_frame(sock, 0x0010, b"\x00")
+        op, body = _recv_rcmp_frame(sock)
+        assert op == 0x8010 and b"H46UCF9PW6AN" in body
+
+        _send_rcmp_frame(sock, 0x0011, b"\x00")
+        op, body = _recv_rcmp_frame(sock)
+        assert op == 0x8011 and b"205CFR2930" in body
+
+        _send_rcmp_frame(sock, 0x0012, b"")
+        op, body = _recv_rcmp_frame(sock)
+        assert op == 0x8012 and len(body) == 17  # 1 status byte + 16 UUID bytes
+
+        # 3. Attempt write to 0x81 while locked -> refused (0x01)
+        sec_data = b"NEW_FLASHCODE_PAYLOAD"
+        write_81_req = struct.pack(">BHHH", PART_SECURITY, 0x1006, 0, len(sec_data)) + sec_data
+        _send_rcmp_frame(sock, 0x0002, write_81_req)
+        op, body = _recv_rcmp_frame(sock)
+        assert op == 0x8002 and body == b"\x01"
+
+        # 4. Step 1 of UnlockSecurity (0x0107): request 32-byte seed
+        _send_rcmp_frame(sock, 0x0107, b"\x81\x20\x11\x00")
+        op, seed_body = _recv_rcmp_frame(sock)
+        assert op == 0x8107
+        assert len(seed_body) == 32
+        assert seed_body == server.seed
+
+        # 5. Step 2 of UnlockSecurity: send wrong response -> refused (0x01)
+        _send_rcmp_frame(sock, 0x0107, b"\x81" + b"\x00" * 32)
+        op, body = _recv_rcmp_frame(sock)
+        assert op == 0x8107 and body == b"\x01"
+
+        # 6. Step 2 of UnlockSecurity: send valid LFSR scrambled response -> unlocked (0x00)
+        scrambled = unlock_response(seed_body)
+        _send_rcmp_frame(sock, 0x0107, b"\x81" + scrambled)
+        op, body = _recv_rcmp_frame(sock)
+        assert op == 0x8107 and body == b"\x00"
+
+        # 7. Write to 0x81 now succeeds!
+        _send_rcmp_frame(sock, 0x0002, write_81_req)
+        op, body = _recv_rcmp_frame(sock)
+        assert op == 0x8002 and body == b"\x00"
+
+        # 8. Verify JSONL and PCAP captures were written
+        assert os.path.exists(jsonl_file) and os.path.getsize(jsonl_file) > 200
+        assert os.path.exists(pcap_file) and os.path.getsize(pcap_file) > 100
+    finally:
+        sock.close()
+        server.stop()

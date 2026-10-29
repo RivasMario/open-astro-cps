@@ -1,0 +1,98 @@
+# Docker Compose for OpenAstro CPS Virtual Radio & Packet Capture Sandbox
+#
+# Provides BOTH container architectures requested:
+#   1. Profile `wine`  (default): 32-bit Wine + noVNC + socat COM1 + tcpdump + virtual_radio.py
+#   2. Profile `winxp`:           dockur/windows (Windows XP 32-bit VM in Docker) + virtual_radio sidecar
+#   3. Service `virtual-radio`:   standalone Python RCMP + Serial PPP simulator & packet logger
+#
+# Usage on Fedora or Windows:
+#   # Run standalone virtual radio simulator + packet capture:
+#   docker compose -f docker/docker-compose.yml up virtual-radio
+#
+#   # Variant A: Run 32-bit Wine CPS + Virtual Radio + noVNC (http://127.0.0.1:6080/vnc.html):
+#   CPS_HOST_DIR=~/re/openastro docker compose -f docker/docker-compose.yml --profile wine up --build
+#
+#   # Variant B: Run Windows XP 32-bit VM + Virtual Radio (http://127.0.0.1:8006):
+#   CPS_HOST_DIR=~/re/openastro docker compose -f docker/docker-compose.yml --profile winxp up
+
+services:
+  virtual-radio:
+    image: python:3.12-slim
+    container_name: openastro-virtual-radio
+    working_dir: /workspace
+    command: >
+      sh -c "pip install --quiet olefile pyserial &&
+      python tools/virtual_radio.py
+      ${RADIO_CODEPLUG:-backups/721CLZ0655.cpg}
+      --host 0.0.0.0
+      --port 8002
+      --serial ${RADIO_SERIAL:-721CLZ0655}
+      --flashcode ${RADIO_FLASHCODE:-400008-002000-0}
+      --challenge-security
+      --capture-jsonl captures/virtual_radio_trace.jsonl
+      --capture-pcap captures/virtual_radio_trace.pcap
+      --verbose"
+    volumes:
+      - ../:/workspace
+    ports:
+      - "127.0.0.1:8002:8002"
+    networks:
+      radio_net:
+        ipv4_address: 192.168.128.1
+
+  cps-wine:
+    profiles: ["wine"]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.wine-cps
+    container_name: openastro-cps-wine
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - RADIO_CODEPLUG=${RADIO_CODEPLUG:-/workspace/backups/721CLZ0655.cpg}
+      - RADIO_SERIAL=${RADIO_SERIAL:-721CLZ0655}
+      - RADIO_FLASHCODE=${RADIO_FLASHCODE:-400008-002000-0}
+    volumes:
+      - ../:/workspace
+      - ${CPS_HOST_DIR:-../captures}:/cps:ro
+    ports:
+      - "127.0.0.1:6080:6080"
+      - "127.0.0.1:5900:5900"
+      - "127.0.0.1:8002:8002"
+
+  cps-winxp:
+    profiles: ["winxp"]
+    image: dockurr/windows:latest
+    container_name: openastro-cps-winxp
+    environment:
+      VERSION: "winxp"
+      RAM_SIZE: "2G"
+      CPU_CORES: "2"
+      DISK_SIZE: "16G"
+    devices:
+      - /dev/kvm
+      - /dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "127.0.0.1:8006:8006"
+      - "127.0.0.1:3389:3389/tcp"
+    volumes:
+      - winxp_data:/storage
+      - ${CPS_HOST_DIR:-../backups}:/shared
+    depends_on:
+      - virtual-radio
+    networks:
+      radio_net:
+        ipv4_address: 192.168.128.2
+
+networks:
+  radio_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.128.0/24
+
+volumes:
+  winxp_data:
