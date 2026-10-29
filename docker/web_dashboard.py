@@ -171,6 +171,32 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     _tx(sock, 0x0100, struct.pack(">BHHH", 0x81, 0x1006, 0, 0x18) + b"\x00\x00")
                     msg = "Simulated CPS Identity + Partition 0x81 Read!"
                 elif parsed.path == "/api/sim-unlock-write":
+                # existing block unchanged
+                _tx(sock, 0x0106, b"\x00")
+                # 1. Request 32-byte seed (opcode 0x0107, tag 0x2011)
+                op, seed = _tx(sock, 0x0107, b"\x81\x20\x11\x00")
+                # 2. Scramble 32-byte seed with NextGen10 LFSR (FUN_1000fd89)
+                resp_bytes = unlock_response(seed)
+                op2, ack = _tx(sock, 0x0107, b"\x81" + resp_bytes)
+                # 3. Write Q667 ADP Flashcode 400008-006000-1 to 0x81:0x1006
+                fc_payload = b"\x00\x00\x00\x10\x00\x01\x00\x01400008-006000-1\x00"
+                framed_w = rcmp.build_write(0x81, 0x1006, fc_payload, inst=0)
+                sock.sendall(framed_w)
+                hdr = sock.recv(2)
+                sock.recv(struct.unpack(">H", hdr)[0])
+                _tx(sock, 0x0106, b"\x01")
+                msg = f"0x0107 Seed ({seed[:4].hex()}...) -> LFSR Response ({resp_bytes[:4].hex()}...) VERIFIED & 0x81 Written!"
+            elif parsed.path == "/api/flash-all":
+                # Run the flash_all_radios script and return its stdout
+                try:
+                    result = subprocess.run([
+                        "python",
+                        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools", "flash_all_radios.py")
+                    ], capture_output=True, text=True, check=True)
+                    msg = result.stdout.strip() or "Flash all completed."
+                except subprocess.CalledProcessError as e:
+                    msg = f"Flash all failed: {e}\n{e.stdout}\n{e.stderr}"
+
                     _tx(sock, 0x0106, b"\x00")
                     # 1. Request 32-byte seed (opcode 0x0107, tag 0x2011)
                     op, seed = _tx(sock, 0x0107, b"\x81\x20\x11\x00")
