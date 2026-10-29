@@ -77,3 +77,6 @@ live_codeplug.json
 
 # machine-local RE binary root override
 re_sources.local.json
+
+# Rust build artifacts (keep Cargo.lock)
+rust/open_astro_cli/target/

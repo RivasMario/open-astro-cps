@@ -14,6 +14,14 @@ Dependencies:
 
 import pathlib, subprocess, shutil, time, os, signal, sys
 
+# Windows consoles default to cp1252; force UTF-8 so emoji/arrows in output
+# do not raise UnicodeEncodeError.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 BASE = pathlib.Path(r"C:\\Users\\v-mariorivas\\open-astro-cps")
 CAP_DIR = BASE / "captures"
 CAP_DIR.mkdir(exist_ok=True)
