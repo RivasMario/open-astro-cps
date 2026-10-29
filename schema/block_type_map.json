@@ -1,0 +1,1020 @@
+{
+ "_comment": "CPS codeplug block TYPE -> wire ITEM ID -> partition, from PatPort.exe's block builders (dispatcher emulated). Derived facts only. Regenerate with tools/patport_block_map.py.",
+ "blocks": [
+  {
+   "item_id": 10,
+   "type": 49,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 11,
+   "type": 2,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 12,
+   "type": 18,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 13,
+   "type": 172,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 20,
+   "type": 176,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 21,
+   "type": 188,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 22,
+   "type": 17,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 23,
+   "type": 19,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 24,
+   "type": 186,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 25,
+   "type": 187,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 26,
+   "type": 189,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 27,
+   "type": 56,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 32,
+   "type": 174,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 33,
+   "type": 180,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 34,
+   "type": 175,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 35,
+   "type": 181,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 38,
+   "type": 64,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 39,
+   "type": 41,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 40,
+   "type": 199,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 41,
+   "type": 42,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 42,
+   "type": 166,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 43,
+   "type": 161,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 44,
+   "type": 123,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 45,
+   "type": 132,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 46,
+   "type": 130,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 47,
+   "type": 149,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 48,
+   "type": 148,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 49,
+   "type": 171,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 50,
+   "type": 150,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 51,
+   "type": 163,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 52,
+   "type": 44,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 53,
+   "type": 51,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 54,
+   "type": 1,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 55,
+   "type": 160,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 56,
+   "type": 133,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 58,
+   "type": 157,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 59,
+   "type": 159,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 60,
+   "type": 105,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 61,
+   "type": 108,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 62,
+   "type": 104,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 63,
+   "type": 107,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 64,
+   "type": 229,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 71,
+   "type": 48,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 72,
+   "type": 7,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 73,
+   "type": 207,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 74,
+   "type": 206,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 75,
+   "type": 209,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 76,
+   "type": 210,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 77,
+   "type": 211,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 78,
+   "type": 212,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 79,
+   "type": 214,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 80,
+   "type": 13,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 81,
+   "type": 230,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 82,
+   "type": 218,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 83,
+   "type": 219,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 84,
+   "type": 220,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 85,
+   "type": 102,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 87,
+   "type": 52,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 88,
+   "type": 222,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 89,
+   "type": 6,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 90,
+   "type": 223,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 91,
+   "type": 9,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 92,
+   "type": 236,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 93,
+   "type": 231,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 94,
+   "type": 241,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 95,
+   "type": 76,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 100,
+   "type": 247,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 101,
+   "type": 245,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 108,
+   "type": 272,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 110,
+   "type": 271,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 112,
+   "type": 281,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 113,
+   "type": 282,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 115,
+   "type": 287,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 116,
+   "type": 292,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 117,
+   "type": 298,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 3999,
+   "type": 299,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4000,
+   "type": 300,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4001,
+   "type": 297,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4002,
+   "type": 295,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4003,
+   "type": 296,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4004,
+   "type": 293,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4005,
+   "type": 294,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4006,
+   "type": 291,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4008,
+   "type": 288,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4009,
+   "type": 286,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4010,
+   "type": 284,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4011,
+   "type": 283,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4012,
+   "type": 269,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4013,
+   "type": 270,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4014,
+   "type": 267,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4015,
+   "type": 268,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4016,
+   "type": 276,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4017,
+   "type": 275,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4018,
+   "type": 274,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4019,
+   "type": 273,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4020,
+   "type": 266,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4021,
+   "type": 277,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4028,
+   "type": 246,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4029,
+   "type": 248,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4030,
+   "type": 75,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4031,
+   "type": 240,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4032,
+   "type": 237,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4033,
+   "type": 8,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4034,
+   "type": 5,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4036,
+   "type": 235,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4037,
+   "type": 234,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4038,
+   "type": 112,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4039,
+   "type": 15,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4040,
+   "type": 233,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4041,
+   "type": 14,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4042,
+   "type": 232,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4043,
+   "type": 16,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4044,
+   "type": 12,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4045,
+   "type": 213,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4046,
+   "type": 57,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4047,
+   "type": 53,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4048,
+   "type": 152,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4049,
+   "type": 98,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4050,
+   "type": 227,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4051,
+   "type": 228,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4052,
+   "type": 224,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4053,
+   "type": 225,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4054,
+   "type": 116,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4055,
+   "type": 115,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4056,
+   "type": 226,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4057,
+   "type": 114,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4058,
+   "type": 113,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4059,
+   "type": 216,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4060,
+   "type": 118,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4061,
+   "type": 117,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4062,
+   "type": 205,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4063,
+   "type": 22,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4064,
+   "type": 217,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4065,
+   "type": 208,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4066,
+   "type": 88,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4067,
+   "type": 195,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4068,
+   "type": 84,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4069,
+   "type": 197,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4070,
+   "type": 196,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4071,
+   "type": 21,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4072,
+   "type": 103,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4073,
+   "type": 204,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4074,
+   "type": 153,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4075,
+   "type": 203,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4076,
+   "type": 86,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4077,
+   "type": 202,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4078,
+   "type": 85,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4079,
+   "type": 201,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4080,
+   "type": 47,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4081,
+   "type": 200,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4082,
+   "type": 145,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4083,
+   "type": 198,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4084,
+   "type": 128,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4085,
+   "type": 194,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4086,
+   "type": 127,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4087,
+   "type": 193,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4088,
+   "type": 146,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4089,
+   "type": 129,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4090,
+   "type": 125,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4091,
+   "type": 4,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4092,
+   "type": 177,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4093,
+   "type": 45,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4094,
+   "type": 178,
+   "partition": "0x80",
+   "source": "generic-builder-arg4"
+  },
+  {
+   "item_id": 4095,
+   "type": 173,
+   "partition": "0x80",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4100,
+   "type": 24,
+   "partition": "0x81",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4101,
+   "type": 43,
+   "partition": "0x81",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4102,
+   "type": 243,
+   "partition": "0x81",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4798,
+   "type": 239,
+   "partition": "0x85",
+   "source": "attrib-immediate"
+  },
+  {
+   "item_id": 4799,
+   "type": 238,
+   "partition": "0x85",
+   "source": "generic-builder-arg4"
+  }
+ ],
+ "unresolved": []
+}

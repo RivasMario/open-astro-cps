@@ -1,3 +1,9 @@
+> [!CAUTION]
+> **UNVERIFIED / CONTAINS FABRICATED CONTENT.** This doc names binaries that do not exist in
+> the ASTRO 25 CPS R20.01.00 install (`A25Core.dll`, `A25DB.dll`, `A25CPS.exe`, `A25Tuner.exe`, ...).
+> Audited 2026-10-23 against every file in the CPS cab and `G:\RADIO`. Real architecture:
+> docs/CPS_BINARY_ANALYSIS.md, docs/CPS_ISH_SCHEMA.md, docs/PROVENANCE_AUDIT.md. Do not cite.
+
 # Master Architecture Reference: Motorola ASTRO 25 CPS Software Internals & DLL Dissection
 ## Comprehensive Blueprint of Executables, DLL Subsystems, Database Schemata, and 800/900 MHz XTS 5000 Specifications
 

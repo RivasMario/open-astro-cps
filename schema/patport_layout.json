@@ -1,0 +1,26 @@
+{
+  "_comment": "Codeplug partition layout as declared by Motorola CPS (PatPort.exe -> cgIsh10c.dll CcgIshCpLayout::AddPartition / CcgIshBlkLayout::SetPartitionNum). Derived facts only. Regenerate with tools/patport_partition_layout.py.",
+  "access_rights_enum": {
+    "0": "ReadOnly",
+    "1": "ReadWrite",
+    "2": "ReadWriteLocked"
+  },
+  "partitions": {
+    "0x80": {
+      "access_rights": 1,
+      "access": "ReadWrite",
+      "block_layouts": 164
+    },
+    "0x81": {
+      "access_rights": 2,
+      "access": "ReadWriteLocked",
+      "block_layouts": 3
+    },
+    "0x85": {
+      "access_rights": 2,
+      "access": "ReadWriteLocked",
+      "block_layouts": 2
+    }
+  },
+  "unresolved_block_calls": 0
+}

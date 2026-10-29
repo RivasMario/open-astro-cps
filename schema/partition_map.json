@@ -1,0 +1,39 @@
+{
+  "_comment": "Authoritative RCMP partition/object allowlist for codeplug writes. Derived from Motorola CPS's own addressing in the capture sessions listed in 'sources' -- these are the partitions and object-id ranges CPS itself used. A codeplug write may target only partitions with writable=true; 0x82 (tuning/soft-pots) is a separate tuner session and is never writable. Regenerate with tools/derive_partition_map.py.",
+  "sources": [
+    "cps_20261023_082619_decoded.json",
+    "cps_20261023_083355_decoded.json",
+    "cps_20261023_083952_decoded.json",
+    "cps_20261023_084833_decoded.json"
+  ],
+  "partitions": {
+    "0x80": {
+      "role": "codeplug (plaintext objects)",
+      "writable": true,
+      "obj_min": 10,
+      "obj_max": 4095,
+      "observed_objs": 164
+    },
+    "0x81": {
+      "role": "codeplug (RC4-encrypted streams)",
+      "writable": true,
+      "obj_min": 4100,
+      "obj_max": 4102,
+      "observed_objs": 3
+    },
+    "0x82": {
+      "role": "tuning / soft-pot calibration -- NEVER write (unrecoverable)",
+      "writable": false,
+      "obj_min": 4217,
+      "obj_max": 4217,
+      "observed_objs": 1
+    },
+    "0x85": {
+      "role": "codeplug (unidentified region, read within the codeplug session)",
+      "writable": true,
+      "obj_min": 4798,
+      "obj_max": 4799,
+      "observed_objs": 2
+    }
+  }
+}

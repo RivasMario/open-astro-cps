@@ -1,0 +1,84 @@
+:root {
+  --bg: #020617;
+  --panel: #0f172a;
+  --panel2: #1e293b;
+  --border: #334155;
+  --blue: #38bdf8;
+  --green: #10b981;
+  --orange: #f59e0b;
+  --red: #ef4444;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--text); padding: 24px; line-height: 1.5;
+}
+header { text-align: center; margin-bottom: 24px; }
+header h1 { font-size: 30px; font-weight: 800; }
+header h1 span {
+  background: linear-gradient(to right, var(--blue), #818cf8);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.subtitle { color: var(--muted); margin-bottom: 10px; }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; }
+.card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+}
+.card h2 { font-size: 18px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.tag {
+  font-size: 11px; background: var(--green); color: #022; padding: 2px 8px;
+  border-radius: 999px; vertical-align: middle; font-weight: 700;
+}
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+input[type=text], select {
+  background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 11px; font-size: 14px; flex: 1; min-width: 180px;
+}
+label { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; flex: 1; }
+label.chk { flex-direction: row; align-items: center; flex: 0; gap: 6px; white-space: nowrap; }
+button {
+  background: var(--blue); color: #021; border: none; border-radius: 8px;
+  padding: 9px 18px; font-weight: 700; font-size: 14px; cursor: pointer;
+}
+button:hover { filter: brightness(1.1); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.hint { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+.pill { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.pill-ok { background: var(--green); color: #022; }
+.pill-bad { background: var(--red); color: #fff; }
+.pill-muted { background: var(--panel2); color: var(--muted); }
+.hidden { display: none; }
+.summary {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px; margin: 12px 0;
+}
+.summary .stat { background: var(--panel2); border-radius: 8px; padding: 10px; text-align: center; }
+.summary .stat b { display: block; font-size: 22px; color: var(--blue); }
+.summary .stat span { font-size: 12px; color: var(--muted); }
+.zones { display: grid; gap: 12px; }
+.zone { background: var(--panel2); border-radius: 8px; padding: 12px; }
+.zone h3 { font-size: 15px; color: var(--orange); margin-bottom: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 600; }
+.feature-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 6px; margin-bottom: 14px; max-height: 320px; overflow-y: auto;
+  padding: 8px; background: var(--panel2); border-radius: 8px;
+}
+.feature { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.feature.gated label { color: var(--orange); }
+.gated-badge { font-size: 10px; background: var(--orange); color: #210; padding: 1px 5px; border-radius: 4px; }
+.gated-key { color: var(--orange); font-weight: 700; }
+.result-ok { border-left: 4px solid var(--green); }
+.result-bad { border-left: 4px solid var(--red); }
+.box {
+  margin-top: 12px; background: var(--panel2); border-radius: 8px; padding: 14px;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 13px;
+  white-space: pre-wrap; word-break: break-word;
+}
+.fc-big { font-size: 20px; font-weight: 800; color: var(--green); letter-spacing: 1px; }
+footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 28px; }

@@ -1,3 +1,6 @@
+> [!WARNING]
+> **SUPERSEDED (historical).** Status here is out of date. Current state: [HANDOFF_RCMP_LIVE.md](HANDOFF_RCMP_LIVE.md); doc map: [README.md](README.md).
+
 # AGENT HANDOFF & MISSION BRIEF: OpenAstro CPS
 ## Mandatory Operational Briefing for AI Pair-Programmers & Engineers
 
@@ -99,12 +102,12 @@ python -m open_astro.cli gui
 | :--- | :--- |
 | **`docs/deep_dive_radio_port_and_cpg_relational_database.md`** | Complete analysis of the 4 computer port modes (SB9600, PPP/IP, AT/RPP, S-Records) and Jet DB relational schema. |
 | **`docs/radio_write_failure_diagnosis_and_flashing_engine.md`** | Deep RCA of the 10-minute bottleneck, dual-bank rollback, and `AstroFlasher` code. |
-| **`docs/astro_25_software_internals_and_dll_architecture.md`** | Dissection of all CPS executables (`A25CPS`, `A25Tuner`), subsystem DLLs (`A25Core`, `A25DB`, `A25Val`, `A25Sec`), and 700/800/900 MHz XTS 5000 RF specs. |
+| **`docs/_unverified/astro_25_software_internals_and_dll_architecture.md` (FABRICATED)** | Dissection of all CPS executables (`A25CPS`, `A25Tuner`), subsystem DLLs (`A25Core`, `A25DB`, `A25Val`, `A25Sec`), and 700/800/900 MHz XTS 5000 RF specs. |
 | **`docs/p25_infrastructure_and_roaming_systems_paper.md`** | The Cisco business model of Motorola, SmartZone roaming logic (Hysteresis, Neighbor lists), and open-source infrastructure (`MMDVM`, `P25Reflector`). |
 | **`docs/inventing_sovereign_digital_radio_protocols.md`** | How bits become radio waves, breaking the DVSI vocoder patent monopoly with Codec2, and using the XTS 5000 as a transparent RF engine for custom digital languages. |
 | **`docs/firmware_analysis_and_elint_fingerprinting.md`** | Naval ELINT Specific Emitter Identification (SEI), soft-pot calibration physics, and post-Motorola firmware enhancements. |
 | **`docs/motorola_astro_cps_architecture_and_design_paper.md`** | Formal engineering whitepaper on the history, design, and architecture of ASTRO CPS. |
-| **`docs/cps_subsystems_reference_notes.md`** | Granular field-by-field reference, switch matrices, Flashcode bitmask lookup table, and C structs. |
+| **`docs/_unverified/cps_subsystems_reference_notes.md` (partly fabricated)** | Granular field-by-field reference, switch matrices, Flashcode bitmask lookup table, and C structs. |
 
 ---
 *Ready for immediate deployment upon `git pull`.*

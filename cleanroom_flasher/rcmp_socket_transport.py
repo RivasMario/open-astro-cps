@@ -33,8 +33,8 @@ binaries; the end-to-end socket path has not yet been exercised on a radio.
 Bring up the link first (needs root + a real tty; run it yourself, not from an
 automation shell -- see docs/AT_INTERFACE_DISCOVERY.md):
 
-    sudo pppd /dev/ttyACM0 9600 192.168.128.2:192.168.128.1 noauth local \
-        nodetach debug nocrtscts lock connect 'chat -v "" ATD CONNECT'
+    sudo pppd /dev/ttyACM0 19200 192.168.128.2:192.168.128.1 noauth local \
+        nodetach debug nocrtscts lock connect 'chat -v "" "AT#DATLCL=1" OK ATD CONNECT'
 
 Then run this module's read-side probe. Writing is hard-gated (see below).
 """

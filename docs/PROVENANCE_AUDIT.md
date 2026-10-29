@@ -135,7 +135,7 @@ IP link, real command *names*, and **no verified codeplug read/write path.**
 The ledger in §2 was produced **without the CPS binaries** and leaned too hard
 on "fabricated." The binaries turned out to be on this machine after all
 (`G:\My Drive\RADIO\ASTRO25SOFTWARE\astro25portablecpsr20.01.00\`), including
-`NextGen10.dll` and the `Crack\PatPort.exe`. Direct inspection (`grep -a` over
+`NextGen10.dll` and `PatPort.exe`. Direct inspection (`grep -a` over
 the real DLL — **not** a fresh disassembly; exact offsets and opcode *numbers*
 still need `pefile`/`capstone`, not installed here) **overturns several §2
 verdicts in the branch's favour.** The home-Windows session found real
@@ -175,10 +175,9 @@ is the `VT_UI1` SafeArray type tag, not an opcode (serial is read via ISH).
 
 ### 5.2 The RC4 key is REAL (was ⚠️)
 
-`grep -a "A8Z6J9QP5"` hits inside `Crack\PatPort.exe`. The literal key string
+`grep -a "A8Z6J9QP5"` hits inside `PatPort.exe`. The literal key string
 the guide §4 names **is present in the shipped binary.** (Its exact
-DLL/offset attribution in the guide is unconfirmed, and this is the *cracked*
-PatPort, but the key itself is not invented.)
+DLL/offset attribution in the guide is unconfirmed, but the key itself is not invented.)
 
 ### 5.3 Port 8002 — real transport, wrong/unconfirmed number (was ⛔)
 

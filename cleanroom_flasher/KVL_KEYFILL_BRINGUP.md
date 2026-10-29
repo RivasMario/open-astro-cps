@@ -12,7 +12,7 @@ Two adapters, same host-side protocol (KFDtool adapter protocol, USB CDC serial
 | Adapter | Chain |
 |---|---|
 | Pi cable | USB-A → USB-C → **Pi Pico (RP2040)** → TRRS → Hirose → radio |
-| KVL clone | USB-A → USB-C → **clone box** → TRRS → Hirose → radio |
+| KFDtool-compatible USB adapter (KVL Mini) | USB-A → USB-C → **adapter box** → TRRS → Hirose → radio |
 
 * **TRRS** carries the P25 **3-wire key-fill bus** (data / sense / ground) — the
   classic "keyloader" interface (TIA-102.AACD).
@@ -27,8 +27,8 @@ Two adapters, same host-side protocol (KFDtool adapter protocol, USB CDC serial
 
 * **Pi Pico**: usually VID `2e8a` (Raspberry Pi), `/dev/ttyACM*`. A custom
   firmware may report a different VID.
-* **KVL clone**: often a USB-UART bridge — CH340 (`1a86`), CP210x (`10c4`), or a
-  TI MSP430 (`2047`) if it's a close KFDtool clone — `/dev/ttyUSB*` or
+* **KFDtool-compatible USB adapter (KVL Mini)**: often a USB-UART bridge — CH340 (`1a86`), CP210x (`10c4`), or a
+  TI MSP430 (`2047`) if it's a KFDtool-compatible adapter — `/dev/ttyUSB*` or
   `/dev/ttyACM*`.
 * **Do NOT** confuse with the XTS radio itself (`0cad:1001`, also `ttyACM*`);
   `kvl_probe.py` auto-skips that VID:PID so it never sends keyfill framing to the

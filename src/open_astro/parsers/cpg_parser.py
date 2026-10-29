@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 HEADER_SIZE = 0x320            # CFhAdkFileHeader::GetHeaderSize
 HEADER_STREAM = "AdkFileHeader"   # confirmed from real .cpg samples (plaintext)
@@ -151,6 +151,26 @@ def _guess_serial(fields: List[str]) -> Optional[str]:
     return None
 
 
+class CpgData(dict):
+    """Container for decoded .cpg objects, indexed by (partition, tag, instance).
+    Also exposes metadata attributes: model, serial, flashcode, header, objects."""
+
+    def __init__(self, objects_map: Dict[Tuple[int, int, int], bytes],
+                 header: Optional[Dict[str, Any]] = None,
+                 model: Optional[str] = None,
+                 serial: Optional[str] = None,
+                 flashcode: Optional[str] = None):
+        super().__init__(objects_map)
+        self.objects = self
+        self.header = header or {}
+        self.model = model or self.header.get("model") or "UNKNOWN"
+        self.serial = serial or self.header.get("serial") or "UNKNOWN"
+        self.flashcode = flashcode or "UNKNOWN"
+
+    def get_object(self, partition: int, tag: int, instance: int = 0) -> Optional[bytes]:
+        return self.get((partition, tag, instance))
+
+
 class CpgParser:
     """Structural reader for a .cpg file. Requires `olefile` (pip install olefile)."""
 
@@ -173,6 +193,78 @@ class CpgParser:
     def _read(self, path: List[str]) -> bytes:
         with self._ole.openstream(path) as s:
             return s.read()
+
+    def directory(self) -> List[Dict[str, Any]]:
+        """Decode DataStg/Strm_0, the .cpg object directory (VERIFIED on the
+        3 real backups: every entry matches its stream's tag/instance/CRC).
+
+        Strm_0 decrypts (RC4) to N 10-byte big-endian records
+
+            <item_id:u16> <instance:u16> <partition:u16> <stream_crc:u16> <stream:u16>
+
+        followed by a 2-byte trailer (not a plain CRC-16 of the records; meaning
+        unverified). `stream` is the N in DataStg/Strm_N; `partition` is the RCMP
+        partition the object lives in (0x80 / 0x81 / 0x85) -- so the .cpg itself
+        says where each object is written, no capture needed.
+        """
+        try:
+            raw = self._read(["DataStg", "Strm_0"])
+        except OSError:
+            return []
+        dec = rc4(self.key, raw)
+        out = []
+        for k in range(len(dec) // 10):
+            iid, inst, part, crc, strm = (int.from_bytes(dec[10 * k + o:10 * k + o + 2], "big")
+                                          for o in (0, 2, 4, 6, 8))
+            out.append({"item_id": iid, "instance": inst, "partition": part,
+                        "stream_crc": crc, "stream": strm})
+        return out
+
+    def objects(self) -> List[Dict[str, Any]]:
+        """Yield the fully-decoded ISH objects stored in the .cpg.
+
+        Each DataStg/Strm_N stream decrypts (RC4) to the self-describing framing
+        `<tag:u16><instance:u16><len:u16><payload[len]><crc:u16>` where
+        tag == the live RCMP object id, instance == the RCMP instance, and
+        crc == CRC-16-CCITT over payload. This is the raw object the write path
+        sends; it is returned here so a write-session can be assembled from a
+        source codeplug (see protocol/write_session.py). The plaintext header
+        stream and the Strm_0 directory index are skipped.
+
+        Returns a list of dicts: {name, tag, instance, length, payload,
+        stored_crc, crc_ok, partition}. `crc_ok` False means the object did not
+        validate and must not be trusted for a write. `partition` comes from the
+        Strm_0 directory (None if the directory has no entry for the stream).
+        """
+        part_of = {d["stream"]: d["partition"] for d in self.directory()}
+        out: List[Dict[str, Any]] = []
+        for p in self._streams():
+            if not p:
+                continue
+            leaf = p[-1]
+            if leaf == HEADER_STREAM or leaf == "Strm_0":
+                continue  # plaintext header / directory index, not an object
+            raw = self._read(p)
+            if len(raw) < 8:
+                continue
+            dec = rc4(self.key, raw)
+            tag = int.from_bytes(dec[0:2], "big")
+            inst = int.from_bytes(dec[2:4], "big")
+            length = int.from_bytes(dec[4:6], "big")
+            payload = dec[6:-2]
+            stored_crc = int.from_bytes(dec[-2:], "big")
+            out.append({
+                "name": "/".join(p),
+                "tag": tag,
+                "instance": inst,
+                "length": length,
+                "payload": payload,
+                "stored_crc": stored_crc,
+                "crc_ok": crc16_ccitt(payload) == stored_crc,
+                "partition": part_of.get(int(leaf.split("_")[-1]))
+                             if leaf.startswith("Strm_") else None,
+            })
+        return out
 
     def parse(self, decrypt: bool = True) -> Dict[str, Any]:
         """Return a structural dict: header + directory + per-stream info (decrypted + CRC)."""
@@ -265,6 +357,42 @@ class CpgParser:
                 "serial": parsed.get("serial") or _guess_serial(fields),
             }
         return result
+
+    @classmethod
+    def load_file(cls, path: str) -> CpgData:
+        """Extract raw decrypted Partition 0x80/0x81 objects and metadata."""
+        import re
+        with cls(path) as parser:
+            parsed = parser.parse()
+            header = parsed.get("header") or {}
+            objs = parser.objects()
+            obj_map: Dict[Tuple[int, int, int], bytes] = {}
+            for o in objs:
+                p = o.get("partition") or 0x80
+                t = o["tag"]
+                i = o["instance"]
+                obj_map[(p, t, i)] = o["payload"]
+
+            model = header.get("model")
+            serial = header.get("serial")
+            flashcode = None
+
+            if (0x81, 0x1004, 0) in obj_map:
+                p1004 = obj_map[(0x81, 0x1004, 0)]
+                m = re.search(rb"\x02\x12([A-Z0-9]+)\x00([A-Z0-9]+)\x00", p1004)
+                if m:
+                    if not serial:
+                        serial = m.group(1).decode("ascii", errors="replace")
+                    if not model:
+                        model = m.group(2).decode("ascii", errors="replace")
+
+            if (0x81, 0x1006, 0) in obj_map:
+                p1006 = obj_map[(0x81, 0x1006, 0)]
+                m = re.search(rb"([0-9A-Z]{6}-[0-9A-Z]{6}-[0-9A-Z])", p1006)
+                if m:
+                    flashcode = m.group(1).decode("ascii", errors="replace")
+
+            return CpgData(obj_map, header=header, model=model, serial=serial, flashcode=flashcode)
 
     def to_json(self, filepath: str, decrypt: bool = True) -> Dict[str, Any]:
         data = self.parse(decrypt=decrypt)

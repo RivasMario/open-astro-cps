@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenAstro Web GUI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>OpenAstro <span>Web GUI</span></h1>
+    <p class="subtitle">Offline / read-only codeplug workbench &mdash; no radio writes</p>
+    <div id="health" class="pill pill-muted">checking backend&hellip;</div>
+  </header>
+
+  <main>
+    <!-- Decode a .cpg -->
+    <section class="card">
+      <h2>1 &middot; Decode a codeplug</h2>
+      <div class="row">
+        <select id="cpgPicker">
+          <option value="backups/205CFR2930.cpg">backups/205CFR2930.cpg (Facebook radio)</option>
+          <option value="backups/205CMB2249_ADP.cpg">backups/205CMB2249_ADP.cpg (Kent PD ADP)</option>
+          <option value="backups/407CHT0214.cpg">backups/407CHT0214.cpg (Chris VHF)</option>
+          <option value="backups/Radio1_205CMB2249_codeplug.cpg">backups/Radio1_205CMB2249_codeplug.cpg (full fleet)</option>
+        </select>
+        <input id="cpgPath" type="text" placeholder="or type a repo-relative path&hellip;" />
+        <button id="decodeBtn">Decode</button>
+      </div>
+      <div id="decodeSummary" class="summary hidden"></div>
+      <div id="zones" class="zones"></div>
+    </section>
+
+    <!-- Personalities -->
+    <section class="card">
+      <h2>2 &middot; Conventional personalities</h2>
+      <p class="hint">Decoded 0x0FFB personality records (freq / NAC / simplex-duplex).</p>
+      <button id="persBtn">List personalities</button>
+      <div id="persResult"></div>
+    </section>
+
+    <!-- Flashcode upgrade -->
+    <section class="card">
+      <h2>3 &middot; FLASHcode upgrade <span class="tag">offline</span></h2>
+      <div class="row">
+        <label>Start flashcode
+          <input id="fcInput" type="text" value="000008-002410-2" />
+        </label>
+        <label class="chk"><input id="allowUcm" type="checkbox" /> allow UCM/dongle</label>
+      </div>
+      <p class="hint">Software features are safe on any radio. <span class="gated-key">UCM/dongle</span>
+        features need physical hardware &mdash; refused unless you allow them.</p>
+      <div id="featureGrid" class="feature-grid"></div>
+      <button id="fcBtn">Compute upgrade</button>
+      <div id="fcResult"></div>
+    </section>
+
+    <!-- SDR export -->
+    <section class="card">
+      <h2>4 &middot; Export to SDR tooling</h2>
+      <div class="row">
+        <input id="exportPath" type="text" value="examples/king_county_800mhz_fleet.json" />
+        <select id="exportFormat">
+          <option value="both">both</option>
+          <option value="dsdfme">DSD-FME</option>
+          <option value="sdrtrunk">SDRTrunk</option>
+        </select>
+        <button id="exportBtn">Export</button>
+      </div>
+      <div id="exportResult"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>OpenAstro CPS &middot; read-only front end. Radio writes are gated by the CLI replay harness, not here.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@
   "radio_model": "Motorola XTS 2500 / PRC-153",
   "bandsplit": "UHF Range 1 (380-470 MHz)",
   "serial_number": "SURPLUS_PRC153",
-  "flashcode": "500008-000488-4",
+  "flashcode": "500008-000488-2",
   "zones": [
     {
       "zone_number": 1,

@@ -1,6 +1,6 @@
 """
 Motorola ASTRO 25 Flashcode Decoder & Feature Matrix.
-Decodes 12-digit ASTRO 25 / XTS / XTL flashcodes (e.g., 500008-000488-4).
+Decodes 12-digit ASTRO 25 / XTS / XTL flashcodes (e.g., 500008-000488-2).
 """
 import re
 from typing import Dict, List, Optional, Tuple
@@ -85,6 +85,113 @@ FLASHCODE_MATRIX: Dict[Tuple[int, int], FlashcodeFeature] = {
     (11, 4): FlashcodeFeature("Q576", "Emergency Alarm & Voice", "High-priority emergency preemptive transmission"),
     (11, 2): FlashcodeFeature("Q377", "Radio Inhibit (Stun/Kill)", "Over-the-air remote radio stun and disable"),
     (11, 1): FlashcodeFeature("Q577", "Failsoft Operation", "Repeater fallback mode during system infrastructure loss")
+}
+
+
+# Q667 "Motorola ADP Encryption" lives at nibble 8, bit 4.
+ADP_Q667 = (8, 4)
+
+# Feature bits that need physical hardware the radio may not have installed.
+# Setting the flashcode bit does NOT activate these without the module; the tool
+# warns when one is enabled so nobody expects e.g. AES from a bit flip alone.
+HARDWARE_GATED = {
+    (1, 4): "H869 Hardware Multikey (needs UCM)",
+    (6, 4): "H868 Multikey 48-key (needs UCM)",
+    (7, 8): "Q399 Advanced System Key (needs USB dongle)",
+    (9, 8): "H865 DES/DES-XL (needs crypto module)",
+    (9, 4): "H869 AES-256 (needs UCM crypto module)",
+}
+
+
+def luhn_check_digit(payload: str) -> str:
+    """Compute the Motorola ASTRO 25 flashcode check digit.
+
+    VERIFIED-BIN: PatPort.exe `conCalculateFlashcode` @ VA 0x00a0b631 (check core
+    0xa0bbe1-0xa0bd96). Standard Luhn mod-10 over the 12 nibble VALUES, with the
+    even-from-left indices {0,2,4,6,8,10} doubled; each doubled value is split into
+    its tens+units digits and summed (idiv 10). check = (10 - total % 10) % 10.
+    """
+    p = payload.strip().upper()
+    if len(p) != 12:
+        raise ValueError(f"flashcode payload must be 12 hex nibbles, got {len(p)}")
+    total = 0
+    for i, ch in enumerate(p):
+        n = int(ch, 16)                      # 0..15; raises ValueError on non-hex
+        d = 2 * n if i % 2 == 0 else n       # even indices (0-based, from left) doubled
+        total += (d // 10) + (d % 10)        # sum the decimal digits of d
+    return str((10 - total % 10) % 10)       # single decimal digit 0..9
+
+
+def format_flashcode(payload: str) -> str:
+    """12-nibble payload -> canonical `AAAAAA-BBBBBB-C` with computed check digit."""
+    p = payload.strip().upper()
+    if len(p) != 12:
+        raise ValueError(f"flashcode payload must be 12 hex nibbles, got {len(p)}")
+    return f"{p[:6]}-{p[6:12]}-{luhn_check_digit(p)}"
+
+
+def verify_flashcode(full: str) -> bool:
+    """True if the trailing check digit of a full `AAAAAA-BBBBBB-C` is correct."""
+    clean = full.strip().upper().replace("-", "")
+    if len(clean) != 13:
+        raise ValueError("full flashcode must be 13 chars (12 payload + 1 check)")
+    return luhn_check_digit(clean[:12]) == clean[12]
+
+
+def set_feature(payload: str, nibble: int, bit: int, on: bool = True) -> str:
+    """Return a new 12-nibble payload with (nibble, bit) set or cleared."""
+    if not (0 <= nibble <= 11):
+        raise ValueError("nibble index must be 0..11")
+    if bit not in (1, 2, 4, 8):
+        raise ValueError("bit must be one of 1, 2, 4, 8")
+    chars = list(payload.strip().upper())
+    v = int(chars[nibble], 16)
+    chars[nibble] = "%X" % ((v | bit) if on else (v & ~bit))
+    return "".join(chars)
+
+
+def feature_bits(payload: str):
+    """Yield (nibble, bit) for every set feature bit in the payload."""
+    p = payload.strip().upper()
+    for i, ch in enumerate(p):
+        n = int(ch, 16)
+        for b in (8, 4, 2, 1):
+            if n & b:
+                yield (i, b)
+
+
+# Friendly CLI feature slugs -> (nibble, bit), mirroring FLASHCODE_MATRIX.
+# Anything whose (nibble,bit) is in HARDWARE_GATED needs a UCM/dongle. ADP is
+# SOFTWARE (no UCM). Names are stable CLI identifiers.
+FEATURE_FLAGS = {
+    "astro-digital": (0, 4), "conventional": (0, 2), "smartzone": (0, 8), "omnilink": (0, 1),
+    "digital-id": (1, 8), "hw-multikey": (1, 4), "smartnet": (1, 2), "voting-scan": (1, 1),
+    "soft-id": (2, 8), "statalert": (2, 4), "otar-junior": (2, 2), "otar-tactical": (2, 1),
+    "enhanced-secure": (3, 8), "packet-data": (3, 4), "emergency": (3, 2), "dual-priority-scan": (3, 1),
+    "radio-control": (4, 8), "ota-scanning": (4, 4), "mixed-mode": (4, 2), "fireground-acct": (4, 1),
+    "fpp": (5, 8), "fireground-voice": (5, 4), "p25": (5, 2), "fed-fpp": (5, 1),
+    "status-msg": (6, 8), "multikey-48": (6, 4), "enhanced-trunking": (6, 2), "direct-freq-entry": (6, 1),
+    "ask": (7, 8), "enhanced-zone": (7, 4), "digital-tone-sig": (7, 2), "enhanced-scan": (7, 1),
+    "selective-call": (8, 8), "adp": (8, 4), "software-sys-key": (8, 2), "unit-to-unit": (8, 1),
+    "des": (9, 8), "aes-256": (9, 4), "call-alert": (9, 2), "secondary-p25": (9, 1),
+    "spacing-12.5": (10, 8), "spacing-25": (10, 4), "private-conv": (10, 2), "tdma-p2": (10, 1),
+    "ddm": (11, 8), "emergency-alarm": (11, 4), "radio-inhibit": (11, 2), "failsoft": (11, 1),
+}
+
+
+def software_feature_slugs():
+    """Feature slugs that do NOT need a UCM/dongle (safe on a no-UCM radio)."""
+    return [s for s, nb in FEATURE_FLAGS.items() if nb not in HARDWARE_GATED]
+
+
+# Curated preset loads. `recommended` is a sane no-UCM P25 conventional radio;
+# the `max-*` presets are built programmatically in the CLI (all bits, UCM-gated).
+PROFILES = {
+    "recommended": [
+        "astro-digital", "conventional", "p25", "tdma-p2", "fpp", "enhanced-scan",
+        "enhanced-zone", "emergency", "emergency-alarm", "direct-freq-entry",
+        "mixed-mode", "adp", "unit-to-unit", "selective-call", "call-alert", "failsoft",
+    ],
 }
 
 

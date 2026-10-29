@@ -376,7 +376,7 @@ When the next agent or developer resumes work:
 1. **Everything is Documented and Tracked:**
    - [**`docs/deep_dive_radio_port_and_cpg_relational_database.md`**](file:///C:/Users/v-mariorivas/open-astro-cps/docs/deep_dive_radio_port_and_cpg_relational_database.md) (This deep-dive architectural specification).
    - [**`docs/motorola_astro_cps_architecture_and_design_paper.md`**](file:///C:/Users/v-mariorivas/open-astro-cps/docs/motorola_astro_cps_architecture_and_design_paper.md) (The overarching engineering paper).
-   - [**`docs/cps_subsystems_reference_notes.md`**](file:///C:/Users/v-mariorivas/open-astro-cps/docs/cps_subsystems_reference_notes.md) (Granular field and opcode tables).
+   - [**`docs/_unverified/cps_subsystems_reference_notes.md`**](_unverified/cps_subsystems_reference_notes.md) (Granular field and opcode tables).
 
 2. **Serial Link Driver Ready:**
    - Check [`src/open_astro/protocol/framing.py`](file:///C:/Users/v-mariorivas/open-astro-cps/src/open_astro/protocol/framing.py): Contains the verified `PacketFramer` calculating two's complement checksums.

@@ -1,0 +1,15 @@
+{
+  "_about": "Reverse-engineering target binaries (ASTRO25 CPS/Depot) for open-astro-cps. Resolved by tools/re_paths.py so no agent hardcodes a machine path. The ROOT is machine-specific and is NOT stored here: set env OPENASTRO_RE_ROOT, OR drop a gitignored re_sources.local.json next to this file ({\"root\": \"<abs path>\"}). The 'binaries' paths are RELATIVE to that resolved root; 'fallback_roots' are tried (expanduser) only when no env/local override resolves.",
+  "env_var": "OPENASTRO_RE_ROOT",
+  "binaries": {
+    "patport":    "ASTRO25 Portable CPS R20.01.00/ASTRO25 Portable CPS R20.01.00/Crack/PatPort.exe",
+    "bytedata10": "ASTRO25 Portable CPS R20.01.00/ASTRO25 Portable CPS R20.01.00/NetworkRadioProgrammer/System32/ByteData10.dll",
+    "nextgen10":  "ASTRO25 Portable CPS R20.01.00/ASTRO25 Portable CPS R20.01.00/NetworkRadioProgrammer/System32/NextGenNon98/NextGen10.dll"
+  },
+  "fallback_roots": [
+    "G:/My Drive/RADIO/ASTRO25SOFTWARE/astro25portablecpsr20.01.00",
+    "/mnt/g/My Drive/RADIO/ASTRO25SOFTWARE/astro25portablecpsr20.01.00",
+    "~/RADIO/ASTRO25SOFTWARE/astro25portablecpsr20.01.00",
+    "~/Google Drive/My Drive/RADIO/ASTRO25SOFTWARE/astro25portablecpsr20.01.00"
+  ]
+}

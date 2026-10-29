@@ -31,7 +31,7 @@ G:\My Drive\RADIO\ASTRO25SOFTWARE\astro25portablecpsr20.01.00\
 
 * 245,760 bytes, build Oct 23 2013. PE32, **ImageBase `0x10000000`**.
 * `.text` RVA `0x1000`–`0x2415A` (VA `0x10001000`–`0x1002415A`).
-* Also present in the same tree: `Crack\PatPort.exe` (24 MB) and
+* Also present in the same tree: `PatPort.exe` (24 MB) and
   `System32\ByteData10.dll`. The crypto/schema DLLs (`fhAdk10c.dll`,
   `cgIsh10c.dll`, `RemoteProtocols01.dll`) are **not** in this on-disk tree —
   they only exist inside the InstallShield `.cab`s the Fedora session extracted
@@ -182,7 +182,7 @@ captured — see OPEN items.)
   192.168.128.1" result does not refute RCMP — the service isn't a port on the
   radio.
 * **RC4 key `A8Z6J9QP5`:** confirmed present as a literal string in
-  `Crack\PatPort.exe` (`grep -a`). Not located in this DLL. The guide's
+  `PatPort.exe` (`grep -a`). Not located in this DLL. The guide's
   `fhAdk10c.dll:0x10012018` attribution is unverifiable from this tree (that DLL
   is only inside the `.cab`s).
 

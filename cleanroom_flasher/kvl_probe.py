@@ -2,12 +2,12 @@
 KVL / KFD adapter probe -- "get the hardware talking first".
 
 Identifies a P25 key-fill adapter on a USB-serial port and runs its self-test.
-Works for BOTH of Mario's adapters, which are the same host-side protocol:
+Works for BOTH of Mario's adapters, which use the same host-side protocol:
 
   * Pi cable:  USB-A -> USB-C -> Pi Pico (RP2040) -> TRRS (3-wire keyfill) ->
                Hirose -> radio side connector
-  * KVL clone: USB-A -> USB-C -> clone adapter   -> TRRS (3-wire keyfill) ->
-               Hirose -> radio side connector
+  * KFDtool-compatible USB adapter (KVL Mini): USB-A -> USB-C -> adapter ->
+               TRRS (3-wire keyfill) -> Hirose -> radio side connector
 
 Both speak the KFDtool adapter protocol over USB CDC serial (115200 8N1). This
 tool does ONLY safe, read-only adapter operations: read AP/FW/HW/model/serial
@@ -20,13 +20,10 @@ Run (no args = scan every candidate port):
     python kvl_probe.py
     python kvl_probe.py /dev/ttyACM0        # a specific port
     python kvl_probe.py --no-self-test      # identify only
-
-STATUS: untested against the real adapters (written without hardware). The
-framing/opcodes mirror the repo's kfdtool.py (adapter protocol). When you plug
-in, the model_id / fw_version reported here tell us what each adapter emulates.
 """
 from __future__ import annotations
 
+import argparse
 import sys
 import time
 from typing import List, Optional
@@ -165,10 +162,29 @@ def candidate_ports(explicit: Optional[str]) -> List[str]:
     return ports
 
 
-def main() -> int:
-    args = [a for a in sys.argv[1:]]
-    run_self_test = "--no-self-test" not in args
-    explicit = next((a for a in args if not a.startswith("-")), None)
+def main(argv: Optional[List[str]] = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Read-only probe for KFDtool-compatible P25 key-fill adapters (skips XTS radio 0cad:1001)"
+    )
+    parser.add_argument(
+        "port",
+        nargs="?",
+        help="Optional explicit serial port (e.g. /dev/ttyACM1 or COM4). Defaults to scanning all non-radio ports.",
+    )
+    parser.add_argument(
+        "-p",
+        "--port",
+        dest="port_flag",
+        help="Optional explicit serial port (alternative to positional argument).",
+    )
+    parser.add_argument(
+        "--no-self-test",
+        action="store_true",
+        help="Identify adapter AP/FW/HW/model/serial only, without running CMD_SELF_TEST.",
+    )
+    parsed = parser.parse_args(argv)
+    explicit = parsed.port_flag or parsed.port
+    run_self_test = not parsed.no_self_test
 
     ports = candidate_ports(explicit)
     if not ports:
