@@ -62,3 +62,68 @@ MFC/ActiveX GUI can still need `winetricks` nudges (vcrun, mfc42, msxml3).
 On an x86 **Windows** box with CPS installed and a bench radio on COM:
 `tools/capture_cps_write.ps1` (USBPcap) + `tools/decode_usb_ppp.py` → same
 `verify_*` step. Truest ground truth (real seed + real codeplug).
+
+## Homelab Proxmox runbook (recommended host)
+
+PVE (`proxmox` / tailnet `100.70.69.28`, i7-7700T, **x86_64 + KVM**) runs the
+wine rig native — no emulation. Drive it from a machine whose network passes
+Tailscale (home / `fedora-desktop`); the SOC network blocks the tailnet data
+path, so this cannot run from the Windows workstation there.
+
+CPS tree lives on the Windows box at `~/re/ASTRO25SOFTWARE/...`; move it to PVE
+via WSL Fedora (which has the files at `/mnt/c/...` and the tailnet).
+
+### 1. Stage files onto the PVE host (from WSL Fedora, at home)
+```bash
+RE=/mnt/c/Users/v-mariorivas/re/ASTRO25SOFTWARE/astro25portablecpsr20.01.00
+rsync -a --info=progress2 "$RE/" proxmox:/root/openastro/cps/           # ~1.9 GB
+# repo (or: git clone on PVE)
+rsync -a /mnt/c/Users/v-mariorivas/open-astro-cps/ proxmox:/root/openastro/repo/ \
+    --exclude rust/open_astro_cli/target --exclude .git
+```
+
+### 2. Create a Docker-capable Debian LXC on PVE (`ssh proxmox`)
+```bash
+# Debian 13 template (adjust storage names to your node):
+pveam update && pveam download local debian-13-standard_*_amd64.tar.zst
+pct create 120 local:vztmpl/debian-13-standard_*_amd64.tar.zst \
+    --hostname cps-capture --cores 4 --memory 4096 --rootfs local-lvm:16 \
+    --net0 name=eth0,bridge=vmbr0,ip=dhcp --features nesting=1,keyctl=1 --unprivileged 0
+# bind-mount the staged dir into the container:
+pct set 120 -mp0 /root/openastro,mp=/opt/oa
+pct start 120
+```
+
+### 3. Bootstrap + run inside the container
+```bash
+pct exec 120 -- bash -lc '
+  export OA_REPO=/opt/oa/repo
+  export CPS_HOST_DIR=/opt/oa/cps
+  export RADIO_SERIAL=721CLZ0655 RADIO_FLASHCODE=400008-002000-0
+  export RADIO_CODEPLUG=/workspace/backups/721CLZ0655.cpg
+  bash $OA_REPO/scripts/capture-vm-bootstrap.sh
+'
+```
+The rig builds the `linux/386` wine image **native** (fast), starts
+`virtual_radio.py` as the fake radio, and waits.
+
+### 4. View CPS and drive the write
+noVNC binds `127.0.0.1:6080` inside the container. Tunnel it out:
+```bash
+CTIP=$(ssh proxmox "pct exec 120 -- hostname -I | awk '{print \$1}'")
+ssh -L 6080:$CTIP:6080 proxmox      # keep open
+```
+Browse <http://127.0.0.1:6080/vnc.html>, run **Write Device** then **Read
+Device** in CPS, return to the rig terminal, press ENTER → `verify_handshake.py`
++ `verify_codeplug.py` run on the new capture.
+
+### 5. Retrieve captures
+```bash
+rsync -a proxmox:/root/openastro/repo/captures/ ./captures-from-pve/
+```
+A `verify_handshake.py` PASS here is the live acceptance vector — add the
+captured seed/response to `tests/test_unlock.py`.
+
+> Alternative: the `winxp` compose profile (`--profile winxp`) runs a real
+> WinXP VM via `/dev/kvm` (PVE has it) if Wine mishandles the MFC/ActiveX GUI.
+> Needs `/dev/kvm` + `/dev/net/tun` passed into the container/VM.
