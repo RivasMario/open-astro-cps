@@ -88,3 +88,59 @@ After the fix CPS reads well past `0x0050`.
   `export RADIO_UUID=...; CPS_HOST_DIR=/opt/oa/cps docker compose -f docker/docker-compose.yml --profile winxp up -d`.
   Inline `VAR=... docker compose` did NOT reach compose interpolation over SSH; use `export`.
 - Known-good default config (committed): 721 identity + borrowed genuine 407 UUID, R15 firmware.
+
+## Read protocol SOLVED + byte-validated (commit e81a048)
+
+Pivoted from live trial-and-error (slow: each attempt reboots XP) to an OFFLINE
+diff harness that replays the complete genuine 407CHT0214 capture
+(`captures/cps_20261023_082619_decoded.json`, 227 partition-0x80 objects) against
+`VirtualRadioServer.process_record` and byte-compares every response. This
+surfaced all fidelity bugs at once. Promoted to the regression test
+`tests/test_virtual_radio_fidelity.py`.
+
+Two ground-truthed fixes made the full 228-object read complete end-to-end:
+
+1. **Read-ack MTU cap (248 bytes).** Genuine radios cap every `0x8100` read-ack
+   record at 248 bytes. Objects larger than the MTU are truncated mid-payload
+   while the length field still advertises the full object size; CPS issues no
+   offset/continuation read (verified: all 228 genuine reads use offset 0). We
+   returned the whole object (up to the requested 880 bytes), overflowing CPS's
+   receive buffer and aborting the read ("Read Radio Failed", ecec003x) on the
+   first large object. Cap the payload at 248 - 14 = 234 bytes.
+2. **Absent-object NAK for instance 0.** A missing object (e.g. `0x80/0x0FA3`)
+   must get the 14-byte `0x81` not-found NAK, not a status-0 empty success,
+   which also aborted the read.
+
+Result vs genuine: 235/240 records exact; 227/227 codeplug objects byte-perfect.
+The only diffs are `0x0047` (last-programmed timestamp) and `0x000F`/`0x0011`
+(identity records), which legitimately differ between a saved `.cpg` and a live
+radio. The read pipeline is validated against hardware ground truth.
+
+## Write Device / 0x0107 capture still blocked (codeplug-data walls, not protocol)
+
+Reaching CPS **Write Device** (to capture genuine write framing + the `0x0107`
+unlock) needs a codeplug CPS R20 fully accepts: reads clean AND loads into the
+editor. Both available codeplugs fail for codeplug-specific reasons:
+
+- **407** reads byte-perfect but CPS aborts the parse with repeated warnings
+  "Field (Prefix ID / Prefix Emergency) in block ID Disp List Vector is defined
+  outside the block max entry size" -> the editor never opens (View menu shows no
+  codeplug tree). Because our served bytes are identical to the genuine radio,
+  genuine CPS would behave the same: a trait of this VHF codeplug under CPS R20.
+- **721** (the XTS5000 flashing target, Host R15) fails mid-read at `0x80/0x0FFD`
+  instance 27 with ecec0031, even though its `.cpg` 0x0FFD chain ends cleanly at
+  inst26 (null next-pointer, 27 instances stored). Likely an R15-codeplug vs
+  R20-CPS validation mismatch. No genuine 721 capture exists to byte-validate.
+
+Next options: obtain/produce a codeplug CPS R20 reads+loads, or repair the 407
+ID-Disp-List block, then drive Write Device to capture the write path + 0x0107.
+
+## Rig stability notes
+
+- After restarting `virtual-radio`, cps-winxp's QEMU loses its COM2 chardev.
+  Restart cps-winxp ONLY after socat/pty is back (`[ -e /tmp/radiotty ]`), else
+  QEMU aborts (exit 134) in a startup race. The LXC has only 4 GB RAM.
+- Helper scripts added under `C:\Users\v-mariorivas\wsl-setup\`: `deploy-mtu.sh`
+  (push code + restart stack safely), `deploy-721.sh` (switch to 721 defaults),
+  `diff_genuine_407.py` (the offline fidelity harness; lives in gitignored
+  `scratch/`, promoted to the tracked test above).
