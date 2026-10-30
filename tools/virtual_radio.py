@@ -547,9 +547,13 @@ class VirtualRadioServer:
 
             self._log(f"REQ 0x0100 (OP_READ part=0x{part:02X} obj=0x{obj:04X} inst={inst} reqlen={reqlen})")
             data = self._lookup_object(part, obj, inst)
-            if not data and inst > 0:
-                # Exact CPS capture behavior when an instance does not exist:
-                # 81 00 81 <part:1> <obj:2> <inst:2> 00 00 00 00 00 00 (14 bytes total)
+            if not data:
+                # Exact CPS capture behavior when an object/instance is absent:
+                # 81 00 81 <part:1> <obj:2> <inst:2> 00 00 00 00 00 00 (14 bytes).
+                # This must fire for inst 0 too (a whole object missing, e.g. a
+                # probed-but-absent object like 0x80/0x0FA3). Returning a status-0
+                # "empty success" there makes genuine CPS fail "Read Radio Failed"
+                # (ecec0031); genuine radios answer absent reads with this 0x81 NAK.
                 return struct.pack(">HBBHHHHH", 0x8100, 0x81, part, obj, inst, 0, 0, 0)
 
             sliced = data[offset:offset + reqlen] if reqlen else data[offset:]
@@ -563,7 +567,21 @@ class VirtualRadioServer:
             acklen = len(sliced) + 2
             header = struct.pack(">BBHHHHH", 0x00, part, obj, inst, acklen, 0x0000, acklen)
             crc = crc16_ccitt(sliced)
-            resp = struct.pack(">H", 0x8100) + header + sliced + struct.pack(">H", crc)
+            payload = sliced + struct.pack(">H", crc)
+
+            # Genuine radios cap each read-ack RECORD at a fixed RCMP MTU of 248
+            # bytes. For an object larger than the MTU the payload (object data +
+            # CRC) is truncated mid-stream in this frame, while the length field
+            # above still advertises the full object size. Verified against the
+            # 407CHT0214 genuine read: every oversized 0x80 object (0x0059,
+            # 0x005B, 0x0FA1, 0x000C, 0x0FFD, 0x0FFF ...) comes back as exactly a
+            # 248-byte record. Sending a larger record overflows CPS's receive
+            # buffer and aborts the read ("Read Radio Failed", ecec003x).
+            # 14 = 2 (opcode) + 12 (header), so the payload is capped at 234.
+            MAX_READ_ACK_RECORD = 248
+            payload = payload[:MAX_READ_ACK_RECORD - 14]
+
+            resp = struct.pack(">H", 0x8100) + header + payload
             self._log(f"RESP 0x8100 (READ_ACK, {acklen} bytes payload, crc=0x{crc:04X})")
             return resp
 
