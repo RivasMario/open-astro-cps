@@ -247,7 +247,10 @@ class VirtualRadioServer:
                  capture_jsonl: Optional[str] = None,
                  capture_pcap: Optional[str] = None,
                  firmware_version: str = "R20.50.07",
-                 codeplug_version: str = "R19.50.01"):
+                 codeplug_version: str = "R19.50.01",
+                 model_override: Optional[str] = None,
+                 radio_name: Optional[str] = None,
+                 uuid_override: Optional[str] = None):
         self.cpg_data = cpg_data
         self.host = host
         self.port = port
@@ -259,6 +262,13 @@ class VirtualRadioServer:
         self.seed = bytes(seed)
         self.firmware_version = firmware_version
         self.codeplug_version = codeplug_version
+        # Identity overrides reported to CPS over AT&V / RCMP, independent of the
+        # loaded codeplug. Used to present a genuine, CPS-supported radio identity
+        # (model / radio name / authorization UUID) while serving another radio's
+        # codeplug and flashcode for protocol capture.
+        self.model_override = model_override
+        self.radio_name = radio_name
+        self.uuid_override = uuid_override
         self.capture_jsonl = capture_jsonl
         self.pcap_logger = PcapLogger(capture_pcap) if capture_pcap else None
         self.trace_events: List[Dict[str, Any]] = []
@@ -462,7 +472,7 @@ class VirtualRadioServer:
         # Opcode 0x0010: Query Model String
         elif opcode == 0x0010:
             self._log("REQ 0x0010 (Query Model)")
-            model_bytes = (self.cpg_data.model or "H46UCF9PW6AN").encode("ascii")
+            model_bytes = (self.model_override or self.cpg_data.model or "H46UCF9PW6AN").encode("ascii")
             padded = model_bytes.ljust(15, b"\x00")
             return struct.pack(">HB", 0x8010, 0x00) + padded
 
@@ -475,7 +485,7 @@ class VirtualRadioServer:
         # Opcode 0x0012: Query Authorization UUID
         elif opcode == 0x0012:
             self._log("REQ 0x0012 (Query UUID)")
-            uuid_hex = self.cpg_data.header.get("uuid") or "d105add323864e539b513a65076458d3"
+            uuid_hex = self.uuid_override or self.cpg_data.header.get("uuid") or "d105add323864e539b513a65076458d3"
             try:
                 uuid_bytes = bytes.fromhex(uuid_hex)[:16]
             except ValueError:
@@ -545,9 +555,13 @@ class VirtualRadioServer:
             sliced = data[offset:offset + reqlen] if reqlen else data[offset:]
 
             # Read-ack layout: 12-byte header + data + CRC-16
-            # 00 <part:1> <obj:2> <inst:2> <reqlen:2> 00 00 <acklen:2>
-            acklen = len(sliced)
-            header = struct.pack(">BBHHHHH", 0x00, part, obj, inst, reqlen, 0x0000, acklen)
+            # 00 <part:1> <obj:2> <inst:2> <len:2> 00 00 <len:2>
+            # Both length fields carry the RETURNED payload size INCLUDING the
+            # trailing CRC-16 (genuine 0x8100 captures: a 10-byte object reports
+            # 0x000c = 12). Reporting the requested length here instead makes CPS
+            # over-read small objects (e.g. 0x80/0x0050) and crash PatPort.exe.
+            acklen = len(sliced) + 2
+            header = struct.pack(">BBHHHHH", 0x00, part, obj, inst, acklen, 0x0000, acklen)
             crc = crc16_ccitt(sliced)
             resp = struct.pack(">H", 0x8100) + header + sliced + struct.pack(">H", crc)
             self._log(f"RESP 0x8100 (READ_ACK, {acklen} bytes payload, crc=0x{crc:04X})")
@@ -687,6 +701,45 @@ class SerialPppBridge:
         self._ident = 1
         self._r_seq = 0x2000
         self._c_nxt = 0
+        self._lcp_req_sent = False
+
+    def _modem_reply(self, up: bytes) -> bytes:
+        """Build the RIB AT-probe reply for an AT/ATIx/AT&V command (upper-cased).
+
+        Mirrors a live-hardware capture (captures/at_*.log): each info field is
+        framed as ``\\r\\n<field>\\r\\n`` and the response ends ``\\r\\nOK\\r\\n``.
+        Identity fields come from the loaded codeplug and the server versions.
+        """
+        cpg = self.radio_server.cpg_data
+        model = (self.radio_server.model_override or cpg.model or "H46UCF9PW6AN")
+        serial = (cpg.serial or "UNKNOWN")
+        radio = self.radio_server.radio_name or (
+            "XTS 5000" if model[:3] in ("H18", "H98") else "XTS 2500")
+
+        def framed(body: bytes) -> bytes:
+            return b"\r\n" + body + b"\r\n\r\nOK\r\n"
+
+        if up == b"ATI1":
+            return framed(b"Motorola System Release 6.0 Radio")
+        if up == b"ATI2":
+            return framed(b"Host Version: " + self.radio_server.firmware_version.encode("ascii"))
+        if up == b"ATI3":
+            return framed(b"DSP Version: " + self.radio_server.codeplug_version.encode("ascii"))
+        if up == b"ATI4":
+            return framed(b"Motorola CGISS")
+        if up == b"AT&V":
+            fields = [
+                b"CARRIER:9600", b"PROTOCOL:ALT", b"COMPRESSION:NONE", b"FLOW:K3",
+                b"WV304:192.168.128.1",
+                b"RADIO:" + radio.encode("ascii"),
+                b"MODEL:" + model.encode("ascii"),
+                b"SERIAL:" + serial.encode("ascii"),
+                b"PORT:SIDE CONNECTOR AS USB", b"SECURE:R000000",
+                b"CPS:HARDWARE FLOW CONTROL",
+            ]
+            return b"\r\n" + b"\r\n\r\n".join(fields) + b"\r\n\r\nOK\r\n"
+        # Plain AT and anything else: bare OK.
+        return b"\r\nOK\r\n"
 
     def serve_forever(self) -> None:
         from open_astro.protocol.ppp_link import (
@@ -702,20 +755,21 @@ class SerialPppBridge:
                 continue
             self._rxbuf.extend(chunk)
 
-            # 0. Hayes modem (RIB) emulation. Genuine CPS / Windows RAS dials the
-            # radio over the serial port as a modem: it sends AT init commands
-            # (e.g. `AT&V\r`) and expects `OK`, then `ATD...` and expects
-            # `CONNECT`, before PPP frames begin. Answer those so the dial can
-            # progress. Only touch the buffer while no PPP FLAG / CLIENT is
-            # present, so real link data is never consumed here.
+            # 0. Hayes modem (RIB) emulation. Genuine CPS probes the radio over the
+            # serial RIB with AT / ATI1-4 / AT&V and expects specific replies (the
+            # AT&V config block carries RADIO/MODEL/SERIAL + WV304 radio IP), then
+            # ATD... to dial and expects CONNECT before PPP frames begin. Replies
+            # mirror a live-hardware capture (captures/at_*.log). Only touch the
+            # buffer while no PPP FLAG / CLIENT is present, so link data is safe.
             if FLAG not in self._rxbuf and b"CLIENT" not in self._rxbuf:
                 handled_at = False
                 while b"\r" in self._rxbuf:
                     line, _, rest = bytes(self._rxbuf).partition(b"\r")
                     self._rxbuf = bytearray(rest)
                     cmd = line.strip()
-                    up = cmd.upper()
-                    if up.startswith(b"ATD"):
+                    if not cmd.upper().startswith(b"AT"):
+                        continue
+                    if cmd.upper().startswith(b"ATD"):
                         self.radio_server._log(f"Serial modem: {cmd!r} -> CONNECT")
                         self.ser.write(b"\r\nCONNECT 115200\r\n")
                         self.ser.flush()
@@ -723,25 +777,27 @@ class SerialPppBridge:
                         magic = b"\x05\x06\x87\x65\x43\x21"
                         self.ser.write(ppp_frame(P_LCP, bytes([0x01, 0x01]) + struct.pack(">H", 4 + len(magic)) + magic))
                         self.ser.flush()
-                        handled_at = True
-                    elif up.startswith(b"AT"):
-                        self.radio_server._log(f"Serial modem: {cmd!r} -> OK")
-                        self.ser.write(b"\r\nOK\r\n")
+                    else:
+                        reply = self._modem_reply(cmd.upper())
+                        self.radio_server._log(f"Serial modem: {cmd!r} -> {reply!r}")
+                        self.ser.write(reply)
                         self.ser.flush()
-                        handled_at = True
+                    handled_at = True
                 if handled_at:
                     continue
 
-            # 1. Answer Windows RAS / CPS "CLIENT" dial-up probe with "CLIENTSERVER"
+            # 1. Answer the Windows direct-connection "CLIENT" probe with exactly
+            # "CLIENTSERVER" and nothing else. The client keeps re-sending CLIENT
+            # until it matches this, then it drives PPP itself. Do NOT append our
+            # LCP Configure-Request here: the raw 0x7E frame bytes arriving before
+            # the client switches to PPP framing break its CLIENTSERVER match and
+            # it loops. Our Configure-Request goes out once PPP is up (see below).
             if b"CLIENT" in self._rxbuf and FLAG not in self._rxbuf:
                 self.radio_server._log("Serial PPP: received CLIENT -> sending CLIENTSERVER")
                 self.ser.write(b"CLIENTSERVER")
                 self.ser.flush()
                 self._rxbuf.clear()
-                # Proactively send radio LCP Configure-Request
-                magic = b"\x05\x06\x87\x65\x43\x21"
-                self.ser.write(ppp_frame(P_LCP, bytes([0x01, 0x01]) + struct.pack(">H", 4 + len(magic)) + magic))
-                self.ser.flush()
+                self._lcp_req_sent = False
                 continue
 
             # 2. Process HDLC 0x7E frames
@@ -771,6 +827,13 @@ class SerialPppBridge:
                     if code == 0x01:  # Configure-Request -> Configure-Ack
                         self.ser.write(ppp_frame(P_LCP, bytes([0x02, ident]) + pl[2:]))
                         self.ser.flush()
+                        # Now that the peer is doing PPP, send our own radio LCP
+                        # Configure-Request (once) so LCP opens in both directions.
+                        if not self._lcp_req_sent:
+                            magic = b"\x05\x06\x87\x65\x43\x21"
+                            self.ser.write(ppp_frame(P_LCP, bytes([0x01, 0x01]) + struct.pack(">H", 4 + len(magic)) + magic))
+                            self.ser.flush()
+                            self._lcp_req_sent = True
                 elif proto == P_IPCP and len(pl) >= 4:
                     code, ident = pl[0], pl[1]
                     if code == 0x01:
@@ -908,6 +971,11 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument("--flashcode", help="Override FLASHcode string (e.g. 400008-006000-1)")
     parser.add_argument("--serial", help="Override serial number string (e.g. 721CLZ0655)")
     parser.add_argument("--tun", help="Optional path to .tun tuning partition file")
+    parser.add_argument("--host-version", help="Override radio Host firmware version string reported to CPS (ATI2 / 0x000F sub 0x00), e.g. R15.00.00")
+    parser.add_argument("--dsp-version", help="Override radio DSP version string reported to CPS (ATI3 / 0x000F sub 0x10), e.g. R15.00.00")
+    parser.add_argument("--model", help="Override model string reported to CPS (AT&V MODEL / 0x0010), e.g. H46KDF9PW6BN")
+    parser.add_argument("--radio-name", help="Override radio family name reported to CPS (AT&V RADIO), e.g. 'XTS 2500'")
+    parser.add_argument("--uuid", help="Override authorization UUID reported to CPS (0x0012), 32 hex chars")
     parser.add_argument("--verbose", "-v", action="store_true", help="Log all RCMP requests and responses")
     parser.add_argument(
         "--lock-security",
@@ -962,6 +1030,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         seed=seed,
         capture_jsonl=args.capture_jsonl,
         capture_pcap=args.capture_pcap,
+        firmware_version=args.host_version or "R20.50.07",
+        codeplug_version=args.dsp_version or "R19.50.01",
+        model_override=args.model,
+        radio_name=args.radio_name,
+        uuid_override=args.uuid,
     )
 
     try:

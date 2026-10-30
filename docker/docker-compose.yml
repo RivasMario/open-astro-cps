@@ -40,6 +40,11 @@ services:
       --port 8002
       --serial ${RADIO_SERIAL:-721CLZ0655}
       --flashcode ${RADIO_FLASHCODE:-400008-002000-0}
+      --host-version ${RADIO_HOST_VER:-R15.00.00}
+      --dsp-version ${RADIO_DSP_VER:-R15.00.00}
+      --model ${RADIO_MODEL:-H18UCF9PW6AN}
+      --radio-name 'XTS 5000'
+      --uuid ${RADIO_UUID:-d105add323864e539b513a65076458d3}
       --challenge-security
       --ppp-serial /tmp/radiotty
       --capture-jsonl captures/virtual_radio_trace.jsonl
