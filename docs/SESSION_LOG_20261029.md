@@ -34,16 +34,26 @@ noVNC viewer at `http://localhost:8006/` (SSH tunnel) with Claude-in-Chrome.
 - Verified end to end: serial TCP link ESTABLISHED (guest COM2 <-> socat PTY <-> SerialPppBridge),
   and CPS enumerates **COM2** in Select Port.
 
-## Current blocker (next session)
+## Blocker diagnosed + fix applied (verify next session)
 - CPS `Read Device` over COM2 runs NextGen10, then fails: **"NextGen10 — Radio Failed to Acknowledge.
   Error Context: 24, Status: c0000386"**.
-- The virtual radio received **zero bytes** (empty `captures/virtual_radio_trace.pcap`, no
-  `received CLIENT` log). So either CPS's bytes are not crossing the guest->host serial path, or CPS
-  uses a serial framing `SerialPppBridge` does not answer (it expects the Windows RAS direct-serial
-  `CLIENT` -> PPP handshake; genuine CPS may require a configured XP RAS/dial-up connection on COM2,
-  or NextGen10 drives the port directly with a different probe).
-- Instrumented the bridge with `socat -v -x` (logs to `/tmp/socat.log` in the virtual-radio
-  container) to capture exactly what CPS writes to COM2. Re-run the read and inspect that log first.
+- Root cause found via the `socat -v -x` byte trace (`/tmp/socat.log`): CPS/Windows RAS writes
+  **`41 54 26 56 0d` = `AT&V\r`** repeatedly — **Hayes modem AT commands**. Genuine CPS dials the
+  radio over the serial RIB **as a modem** (AT init -> expects `OK`, then `ATD...` -> expects
+  `CONNECT`, then PPP), NOT the Windows Direct-Connection `CLIENT` null-modem handshake that
+  `SerialPppBridge` implemented. With no `OK`, RAS never progressed, so zero PPP bytes and no capture.
+- **Fix applied** in `tools/virtual_radio.py` `SerialPppBridge.serve_forever`: added Hayes modem
+  emulation — answer `AT*` with `OK`, `ATD*` with `CONNECT 115200` then kick the radio LCP
+  Configure-Request, before the existing CLIENT/PPP/HDLC handling. Guarded to only run while no PPP
+  `FLAG` (0x7E) / `CLIENT` is in the buffer so real link data is never eaten.
+- **Not yet verified.** Next session: stage the updated `tools/virtual_radio.py` on the LXC
+  (`/opt/oa/repo`), restart `openastro-virtual-radio` (re-check the serial link ESTABLISHED; if the
+  guest QEMU exited on the socat drop, `up -d` restarts cps-winxp too — XP reboots, install persists),
+  then CPS `Read Device` -> COM2 and watch for `Serial modem: ... -> OK/CONNECT` then
+  `received ...`/RCMP in the virtual-radio log and a growing `captures/virtual_radio_trace.jsonl`.
+- If AT init now completes but PPP still stalls, capture the next `socat.log` bytes (the ATD dial
+  string + any post-CONNECT bytes) to see whether Windows expects `CLIENT` after `CONNECT` or goes
+  straight to LCP.
 
 ## Rig quick reference
 - LXC: `ssh cpslxc` (via WSL FedoraLinux-44). Compose at `/opt/oa/repo/docker/docker-compose.yml`,

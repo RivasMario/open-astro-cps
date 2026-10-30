@@ -702,6 +702,36 @@ class SerialPppBridge:
                 continue
             self._rxbuf.extend(chunk)
 
+            # 0. Hayes modem (RIB) emulation. Genuine CPS / Windows RAS dials the
+            # radio over the serial port as a modem: it sends AT init commands
+            # (e.g. `AT&V\r`) and expects `OK`, then `ATD...` and expects
+            # `CONNECT`, before PPP frames begin. Answer those so the dial can
+            # progress. Only touch the buffer while no PPP FLAG / CLIENT is
+            # present, so real link data is never consumed here.
+            if FLAG not in self._rxbuf and b"CLIENT" not in self._rxbuf:
+                handled_at = False
+                while b"\r" in self._rxbuf:
+                    line, _, rest = bytes(self._rxbuf).partition(b"\r")
+                    self._rxbuf = bytearray(rest)
+                    cmd = line.strip()
+                    up = cmd.upper()
+                    if up.startswith(b"ATD"):
+                        self.radio_server._log(f"Serial modem: {cmd!r} -> CONNECT")
+                        self.ser.write(b"\r\nCONNECT 115200\r\n")
+                        self.ser.flush()
+                        # Carrier up: proactively send radio LCP Configure-Request
+                        magic = b"\x05\x06\x87\x65\x43\x21"
+                        self.ser.write(ppp_frame(P_LCP, bytes([0x01, 0x01]) + struct.pack(">H", 4 + len(magic)) + magic))
+                        self.ser.flush()
+                        handled_at = True
+                    elif up.startswith(b"AT"):
+                        self.radio_server._log(f"Serial modem: {cmd!r} -> OK")
+                        self.ser.write(b"\r\nOK\r\n")
+                        self.ser.flush()
+                        handled_at = True
+                if handled_at:
+                    continue
+
             # 1. Answer Windows RAS / CPS "CLIENT" dial-up probe with "CLIENTSERVER"
             if b"CLIENT" in self._rxbuf and FLAG not in self._rxbuf:
                 self.radio_server._log("Serial PPP: received CLIENT -> sending CLIENTSERVER")
