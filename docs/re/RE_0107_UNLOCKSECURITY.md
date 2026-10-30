@@ -79,3 +79,23 @@ JAVA_HOME=~/tools/jdk-25.0.5+8 \
 NOTE: full Ghidra analysis of the 24M `PatPort.exe` **hangs** in MSVC RTTI/type analysis on this
 laptop; the small engine DLLs (`NextGen10.dll` 240K, `ByteData10.dll` 132K) analyze in seconds and
 are the right targets anyway.
+
+## Independent re-confirmation (2026-10-29, Ghidra 12.2 headless, Windows ARM64)
+
+Re-decompiled `FUN_1000fd89` cold from `NextGen10.dll` (resolved via
+`tools/re_paths.py nextgen10`) with a fresh Ghidra 12.2 headless pass — no
+reference to the notes above. Recovered verbatim:
+
+```
+*(undefined4 *)(EBP + -0x14) = 0x51e88d21;                 // init state
+*(undefined4 *)(EBP + -0x18) = 0x20;                       // 32-byte block
+uVar7 = *pbVar9 >> (iVar4 & 0x1f) & 1 ^ state >> 9 & 1;     // fb = inbit ^ (state>>9)  tap=9
+state = uVar7 + state * 2;                                 // state = state*2 + fb
+bVar8 = bVar8 ^ (char)uVar7 << (iVar4 & 0x1f);             // out bit ^= fb
+```
+`MOV dword ptr [EBP + -0x14],0x51e88d21` @ VA `0x1000fdc4`. Every constant
+(`0x51E88D21`, tap bit 9, `state*2+fb`, length `0x20`) equals
+`src/open_astro/protocol/unlock.py`. Static chain confirmed independent of the
+earlier Fedora analysis. Live hardware/real-CPS seed/response vector (open item
+#3) remains the only acceptance still pending — see
+`docs/FEDORA_CAPTURE_HANDOFF.md`.
