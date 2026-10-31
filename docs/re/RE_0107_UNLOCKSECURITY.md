@@ -118,3 +118,26 @@ JAVA_HOME=~/tools/jdk-25.0.5+8 \
 NOTE: full Ghidra analysis of the 24M `PatPort.exe` **hangs** in MSVC RTTI/type analysis on this
 laptop; the small engine DLLs (`NextGen10.dll` 240K, `ByteData10.dll` 132K) analyze in seconds and
 are the right targets anyway.
+
+## 2026-10-30 (ctd) — seed buffer + scramble arg confirmed; request framing still open
+
+Decompiled `FUN_1000cce7` / `FUN_1000c01f` / `FUN_1000fd89` (Ghidra 12.2 headless, `-noanalysis`,
+`DecompUnlock2.java`):
+
+- **`FUN_1000fd89` arg confirmed:** operates on the 32-byte buffer passed at `EBP+8`, in place —
+  `new[0x100]` temp, transform, copy `0x20` back. `pbVar9 = arg + 0x1f` (reads `seed[31-i]`), init
+  `0x51e88d21`, tap bit 9, inner loop bits 7..1 (bit 0 untouched). **Byte-for-byte = `unlock.py`.**
+- **Seed global = `DAT_1002f7e8`:** `FUN_1000c01f` (CRcmpBundler::Open) **mode `0xd`** does
+  `memcpy(&DAT_1002f7e8, *(void**)(EBP+0x1c), 0x20)`, then `_DAT_1002f7fe = 0x1f43` and
+  `*(u16*)(piVar2+0x92) = DAT_1002f806`. So Open(0xd) = "deliver the 32-byte seed to the engine".
+- **`FUN_1000cce7` order:** build(`*piVar2+0x60`) → `Ordinal_23`(lock)/`FUN_1000fd89`(scramble)/
+  `Ordinal_24`(unlock) → send(`*piVar2+0x5c`) → reply(`*piVar2+0xb0`). msg container tag `0x2011`
+  set at `EBP-0x30`; `*puVar1 = 0` is the out-status init.
+
+**Still NOT byte-confirmed (unchanged blocker):** the on-wire `0x0107` request body and the seed's
+offset in the reply. build/send/reply dispatch through `piVar2`'s *runtime* COM vtable, which static
+decomp of these `unaff_EBP` thunks cannot resolve to exact bytes. `WIRE_PROFILE_CONFIRMED` stays
+False. **Decisive step: one live unlock capture** (now feasible — dockur CPS VM is stable and
+bridged to the real XTS 5000 via the relay; tcpdump is armed on the relay bridge, port 8002).
+Capture a CPS "program radio" exchange, extract the `0x0107` request + seed offset, add a
+seed/response KAT vector, then flip the flag.

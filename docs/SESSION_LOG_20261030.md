@@ -78,3 +78,11 @@ Also this session (homelab, not repo): XTS 5000 `721CLZ0655` full codeplug CLI-d
   moment it is flipped.
 - 43-byte `0x81:1005` license bitmask byte/bit layout still `[OPEN]` (doc §7.2) — writing
   only `0x1006` ASCII will not change firmware feature gating.
+
+## FLASHcode persist RE — advanced, not yet unblocked (Claude, 2026-10-30)
+- `FUN_1000fd89` arg/buffer confirmed = `unlock.py` (EBP+8 32-byte in-place). Seed global
+  `DAT_1002f7e8` (Open mode 0xd memcpy 0x20; marker `0x1f43` @ _DAT_1002f7fe). See docs/re/RE_0107.
+- Request body + seed wire offset STILL not byte-confirmed statically (runtime COM vtable wall).
+  WIRE_PROFILE_CONFIRMED stays False — not flipped on inference (a wrong 0x0107 frame can wedge the
+  link). Decisive step: capture one live CPS unlock against the 5000 (harness armed: tcpdump port
+  8002 on relay bridge, dockur VM stable).
