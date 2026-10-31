@@ -26,6 +26,14 @@ New artifacts: `docs/re/nextgen10_bundler_vtable.txt`, `docs/re/nextgen10_unlock
 write-up updated in `docs/re/RE_0107_UNLOCKSECURITY.md`. New Ghidra scripts in `~/re/ghidra_scripts`:
 `FindBundlerVt.java`, `DumpBundlerVt.java`.
 
+## Correction (static trace, option 1)
+Decompiled the slot targets. The `0x10025cc0` table is the OLE-dispatch table, NOT the object
+`FUN_1000cce7` indexes — slot mapping disproven: `+0x60`=`FUN_1000c01f` (`Open` dispatcher),
+`+0x5c`=`FUN_1000a610` (`ReadIshList`), `+0xb0`=`FUN_1000f978` (`"Host"` request). `0x2011` is a
+generic RCMP message-container tag (set identically by all three), not the unlock discriminator.
+The real unlock opcode is a field inside the message body, not yet located. See corrected
+`docs/re/RE_0107_UNLOCKSECURITY.md`.
+
 ## Stopped here (no transmit)
 Did **not** transmit a guessed `UnlockSecurity` frame — `unlock_session.perform()` stays gated
 (`WIRE_PROFILE_CONFIRMED = False`). Exact request body + seed offset still unconfirmed.

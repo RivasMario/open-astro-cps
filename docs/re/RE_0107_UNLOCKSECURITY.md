@@ -58,28 +58,33 @@ with the same algorithm, re-implementing this answers any seed and unlocks Parti
 Tests: `tests/test_unlock.py` (golden vectors + structural invariants; **live radio seed/response
 pair is the final acceptance, pending**).
 
-## 2026-10-30 — CRcmpBundler vtable + slot functions resolved
+## 2026-10-30 — bundler dispatch vtable located; slot mapping DISPROVEN
 
-The `+0x60 / +0x5c / +0xb0` vtable calls in `FUN_1000cce7` are **`CRcmpBundler`**
-slots (`piVar2` = the bundler `this`). The bundler vtable is **not** symbolized; found it by
-scanning `.rdata` for the pointer to `FUN_1000cce7` (`FindBundlerVt.java`).
+Found a bundler method table by scanning `.rdata` for the pointer to `FUN_1000cce7`
+(`FindBundlerVt.java`): table at **`0x10025cc0`** (UnlockSecurity ptr at `+0xd0`), plus a second
+variant at `0x10026020`. Full dump: `docs/re/nextgen10_bundler_vtable.txt`.
 
-- **CRcmpBundler vtable base = `0x10025cc0`** (ends `0x10025df0`; `UnlockSecurity` is slot `+0xd0`).
-  Full dump: `docs/re/nextgen10_bundler_vtable.txt`. (A second table at `0x10026020` is a
-  derived/`OTAP` variant with the same methods at shifted offsets.)
-- Resolved UnlockSecurity slots (decompiles in `docs/re/nextgen10_unlock_slots_decomp.txt`):
-  - `+0x60` **build** = `FUN_1000c01f` — a command dispatcher (`CRcmpBundler::Open` debug name).
-    Takes a command selector; `== 0xd` branch does `memcpy(&DAT_1002f7e8, arg, 0x20)` (0x20 = the
-    32-byte seed block) and sets `_DAT_1002f7fe = 0x1f43`, writes `piVar2+0x92`; sets the
-    sub-protocol selector `piVar2[0x20]`. Calls `FUN_1000d523` on the non-`0xc` path.
-  - `+0x5c` **send** = `FUN_1000a610`.
-  - `+0xb0` **reply** = `FUN_1000f978`.
+**But this table is the OLE-automation/dispatch table, NOT the object `FUN_1000cce7` indexes with
+`(*piVar2+0x5c/0x60/0xb0)`.** Decompiling those slots (`docs/re/nextgen10_unlock_slots_decomp.txt`)
+disproves the build/send/reply labels:
+- `0x10025cc0+0x60` = `FUN_1000c01f` — `CRcmpBundler::Open` dispatcher (not an unlock builder).
+- `0x10025cc0+0x5c` = `FUN_1000a610` — a `ReadIshList`-style request routine.
+- `0x10025cc0+0xb0` = `FUN_1000f978` — builds a `"Host"` (`48 6f 73 74`) request via vtable `+0x68`.
 
-So the `0x2011`→wire-record serialization lives in `FUN_1000c01f`/`FUN_1000d523` + the `DAT_1002f7xx`
-globals, not in the `CRcmpProtocol` TCP codec (`SendRequest`/`BundleTCP` just chunk and length-prefix
-an already-built buffer — see below). **Decompiler stack-param inference is unreliable for these
-naked `unaff_EBP` thunks**; the exact request body + seed offset still need either careful tracing of
-`FUN_1000c01f`→`FUN_1000d523`+globals, or one live unlock capture.
+None is UnlockSecurity's build/send/reply. The `+0x60/+0x5c/+0xb0` offsets in `FUN_1000cce7` apply to
+`piVar2`'s *runtime* vtable (the internal `CRcmpProtocol`/COM object), whose true vtable is not this
+dispatch table. **Correcting the earlier RE note: `+0x60`≠build, `+0x5c`≠send, `+0xb0`≠reply against
+this table.**
+
+**`0x2011` is a generic RCMP message-container tag**, not the unlock discriminator: `FUN_1000a610`
+(ReadIshList) and `FUN_1000f978` ("Host") both `operator_new` a message and set its first `u16` to
+`0x2011`, exactly like `FUN_1000cce7`. So the real unlock opcode (`0x0107`?) is a *field inside* the
+message body, set somewhere not yet located — the "`0x2011` vs `0x0107`" framing is a false dichotomy.
+
+Next static step (uncertain, slow): identify `piVar2`'s actual class + vtable at the unlock call
+site and decompile its real `+0x5c/+0x60/+0xb0`, or where the message body's opcode field is written.
+Decompiler stack-param/offset inference on these naked `unaff_EBP` thunks is unreliable — a live
+unlock capture remains the reliable oracle.
 
 Confirmed framing facts (do not re-derive):
 - `CRcmpProtocol::BundleTCP` (`FUN_100187b6`) prepends a **2-byte big-endian length** — matches

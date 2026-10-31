@@ -5,14 +5,14 @@ INFO  Using log config file: jar:file:/home/mario/tools/ghidra_12.2_PUBLIC/Ghidr
 INFO  Using log file: /home/mario/.config/ghidra/ghidra_12.2_PUBLIC/application.log (LoggingInitialization)  
 INFO  Loading user preferences: /home/mario/.config/ghidra/ghidra_12.2_PUBLIC/preferences (Preferences)  
 INFO  Searching for classes... (ClassSearcher)  
-INFO  Class search complete (639 ms) (ClassSearcher)  
+INFO  Class search complete (636 ms) (ClassSearcher)  
 INFO  Initializing SSL Context (DefaultSSLContextInitializer)  
 INFO  Initializing Random Number Generator... (SecureRandomFactory)  
 INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)  
 INFO  Loaded 121 trusted CA certificate(s) from /etc/ssl/certs/ca-certificates.crt (UnixSystemTrustKeyStoreUtil)  
 INFO  Loaded 121 trusted CA certificates from the OS trust store. (DefaultTrustManagerFactory)  
 INFO  Loaded 118 trusted CA certificates from the Java default trust store. (DefaultTrustManagerFactory)  
-INFO  Headless startup complete (1424 ms) (AnalyzeHeadless)  
+INFO  Headless startup complete (1407 ms) (AnalyzeHeadless)  
 INFO  Class searcher loaded 60 extension points (19 false positives) (ClassSearcher)  
 INFO  HEADLESS Script Paths:
     /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/PyGhidra/ghidra_scripts
@@ -44,194 +44,51 @@ INFO  Opening project: /home/mario/re/ghidra_projects/ng (HeadlessProject)
 INFO  REPORT: Processing project file: /NextGen10.dll (HeadlessAnalyzer)  
 INFO  REPORT: Execute script: DecompAddrs.java  (HeadlessAnalyzer)  
 INFO  SCRIPT: /home/mario/re/ghidra_scripts/DecompAddrs.java (HeadlessAnalyzer)  
-INFO  DecompAddrs.java> === FUNC FUN_1000c01f @1000c01f === (GhidraScript)  
-INFO  DecompAddrs.java> 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+=== FUNC FUN_1000d523 @1000d523 ===
 
-int FUN_1000c01f(void)
+undefined4 FUN_1000d523(void)
 
 {
-  char cVar1;
-  int *piVar2;
-  AFX_MODULE_STATE *pAVar3;
-  undefined4 uVar4;
-  int iVar5;
-  ushort *puVar6;
-  int iVar7;
-  undefined2 *puVar8;
+  AFX_MODULE_STATE *pAVar1;
+  int iVar2;
+  undefined4 *puVar3;
+  int iVar4;
+  long lVar5;
   int unaff_EBP;
-  char *pcVar9;
-  CString aCStack_e [14];
   
   FUN_10021490();
-  pAVar3 = (AFX_MODULE_STATE *)FUN_1002120d();
-  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x1c),pAVar3);
+  pAVar1 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x1c),pAVar1);
   *(undefined4 *)(unaff_EBP + -4) = 0;
-  CString::CString((CString *)(unaff_EBP + -0x10),s_CRcmpBundler__Open_1002c8ec);
-  iVar5 = *(int *)(unaff_EBP + 0xc);
-  piVar2 = *(int **)(unaff_EBP + 8);
+  *(undefined4 *)(unaff_EBP + -0x14) = 0x1000;
+  CString::CString((CString *)(unaff_EBP + -0x10),*(ushort **)(unaff_EBP + 8));
+  iVar4 = *(int *)(*(uchar **)(unaff_EBP + -0x10) + -8);
   *(undefined1 *)(unaff_EBP + -4) = 1;
-  if (iVar5 == 0xd) {
-    memcpy(&DAT_1002f7e8,*(void **)(unaff_EBP + 0x1c),0x20);
-    _DAT_1002f7fe = 0x1f43;
-    *(undefined2 *)((int)piVar2 + 0x92) = DAT_1002f806;
+  iVar2 = _mbscmp(*(uchar **)(unaff_EBP + -0x10),&DAT_1002ca18);
+  if (iVar2 == 0) {
+    *(undefined4 *)(unaff_EBP + -0x14) = 0x80000;
   }
-  if (iVar5 == 0xc) {
-    *(undefined4 *)(unaff_EBP + 8) = 0;
-  }
-  else {
-    uVar4 = FUN_1000d523();
-    *(undefined4 *)(unaff_EBP + 8) = uVar4;
-  }
-  piVar2[0x20] = iVar5;
-  if ((char)piVar2[8] != '\x01') {
-    iVar5 = FUN_1000b2ad();
-    if (-1 < iVar5) {
-      iVar5 = *(int *)(unaff_EBP + 0xc);
-      goto LAB_1000c0c8;
-    }
-    goto LAB_1000c2b2;
-  }
-LAB_1000c0c8:
-  if (iVar5 == 0xc) {
-    puVar6 = CString::AllocSysString((CString *)(piVar2 + 0xd));
-    iVar5 = piVar2[0xf];
-    *(ushort **)(unaff_EBP + 0x10) = puVar6;
-    if (iVar5 == 0) {
-      puVar6 = CString::AllocSysString((CString *)(piVar2 + 0x13));
-      *(ushort **)(unaff_EBP + 0xc) = puVar6;
-      puVar6 = CString::AllocSysString((CString *)(piVar2 + 0x14));
-      *(ushort **)(unaff_EBP + 8) = puVar6;
-      puVar6 = CString::AllocSysString((CString *)(piVar2 + 0x15));
-      *(ushort **)(unaff_EBP + 0x20) = puVar6;
-      puVar6 = CString::AllocSysString((CString *)(piVar2 + 0x16));
-      *(ushort **)(unaff_EBP + -0x14) = puVar6;
-      iVar5 = (**(code **)(*piVar2 + 0xf4))
-                        (piVar2,0xc,unaff_EBP + 0x10,piVar2[0x11],unaff_EBP + 0xc,piVar2[0x12],
-                         unaff_EBP + 8);
-      Ordinal_6(*(undefined4 *)(unaff_EBP + 0xc));
-      Ordinal_6(*(undefined4 *)(unaff_EBP + 8));
-      Ordinal_6(*(undefined4 *)(unaff_EBP + 0x20));
-      Ordinal_6(*(undefined4 *)(unaff_EBP + -0x14));
-    }
-    else {
-      iVar5 = (**(code **)(*piVar2 + 0xf0))(piVar2,0xc);
-    }
-    Ordinal_6(*(undefined4 *)(unaff_EBP + 0x10));
-    *(undefined1 *)(unaff_EBP + -4) = 0;
-    CString::~CString((CString *)(unaff_EBP + -0x10));
-    *(undefined4 *)(*(int *)(unaff_EBP + -0x18) + 4) = *(undefined4 *)(unaff_EBP + -0x1c);
-    goto LAB_1000c2fc;
-  }
-  if (iVar5 == 3) {
-    *(uint *)(unaff_EBP + 8) = *(uint *)(unaff_EBP + 8) | 3;
-    iVar5 = (**(code **)(*(int *)piVar2[3] + 0x1c))((int *)piVar2[3]);
-joined_r0x1000c23c:
-    if (-1 < iVar5) goto LAB_1000c244;
-LAB_1000c1a4:
-    if ((char)piVar2[8] != '\0') {
-      FUN_1000b3bb();
-      *(undefined1 *)(piVar2 + 8) = 0;
+  else if (3 < iVar4) {
+    puVar3 = (undefined4 *)CString::Left((CString *)(unaff_EBP + -0x10),unaff_EBP + 8);
+    iVar4 = _mbscmp((uchar *)*puVar3,&DAT_1002ca14);
+    CString::~CString((CString *)(unaff_EBP + 8));
+    if (iVar4 == 0) {
+      puVar3 = (undefined4 *)CString::Right((CString *)(unaff_EBP + -0x10),unaff_EBP + 8);
+      lVar5 = atol((char *)*puVar3);
+      CString::~CString((CString *)(unaff_EBP + 8));
+      *(long *)(unaff_EBP + -0x14) = lVar5 << 0xc;
     }
   }
-  else {
-    if (iVar5 != 0xd) {
-      *(uint *)(unaff_EBP + 0x1c) = *(uint *)(unaff_EBP + 0x1c) | *(uint *)(unaff_EBP + 8);
-      iVar5 = (**(code **)(*(int *)piVar2[2] + 0x1c))
-                        ((int *)piVar2[2],*(undefined4 *)(unaff_EBP + 0xc),
-                         *(undefined4 *)(unaff_EBP + 0x10),*(undefined4 *)(unaff_EBP + 0x14),
-                         *(undefined4 *)(unaff_EBP + 0x18));
-      goto joined_r0x1000c23c;
-    }
-    CString::operator=((CString *)(piVar2 + 0x26),s_Could_not_communicate_with_the_R_1002c8c4);
-    SetOtapAbortFlag();
-    iVar5 = (**(code **)(*(int *)piVar2[2] + 0x1c))
-                      ((int *)piVar2[2],0xd,*(undefined4 *)(unaff_EBP + 0x10),
-                       *(undefined4 *)(unaff_EBP + 0x14),*(undefined4 *)(unaff_EBP + 0x18),
-                       *(undefined4 *)(unaff_EBP + 0x1c),*(undefined4 *)(unaff_EBP + 0x20));
-    iVar7 = GetOtapAbortFlag(0);
-    if (iVar7 == -1) {
-      iVar5 = -0x13fffff1;
-    }
-    if (iVar5 < 0) {
-      SetOtapAbortFlag();
-      goto LAB_1000c1a4;
-    }
-LAB_1000c244:
-    iVar7 = piVar2[0x20];
-    if ((((iVar7 == 4) || (iVar7 == 8)) || (iVar7 == 9)) || (iVar7 == 10)) {
-      if (iVar7 != 0xc) {
-        piVar2[9] = **(int **)(unaff_EBP + 0x10);
-      }
-      iVar5 = FUN_1000b5b0();
-      if (-1 < iVar5) {
-        *(undefined1 *)((int)piVar2 + 0x29) = 1;
-        goto LAB_1000c2e5;
-      }
-    }
-    else if (-1 < iVar5) {
-      if (iVar7 != 0xd) goto LAB_1000c2e5;
-      piVar2[9] = **(int **)(unaff_EBP + 0x10);
-      if ((DAT_1002f804 == 1) || (DAT_1002f804 == 0)) {
-        puVar8 = operator_new(0x10);
-        Ordinal_8();
-        *puVar8 = 0x2011;
-        uVar4 = Ordinal_43(0x11,1,0x410);
-        *(undefined4 *)(unaff_EBP + 0xc) = uVar4;
-        *(undefined4 *)(puVar8 + 4) = uVar4;
-        iVar5 = FUN_1000b5b0();
-        if (-1 < iVar5) {
-          iVar5 = Ordinal_23(*(undefined4 *)(puVar8 + 4),unaff_EBP + 0x10);
-          if (-1 < iVar5) {
-            cVar1 = *(char *)(*(int *)(unaff_EBP + 0x10) + 2);
-            if (cVar1 != '\0') {
-              if (cVar1 == '\x02') {
-                pcVar9 = s_The_Radio_is_Not_an_OTAP_Enabled_1002c89c;
-              }
-              else if (*(char *)(*(int *)(unaff_EBP + 0x10) + 3) == '\x04') {
-                pcVar9 = s_Radio_is_Busy_1002c88c;
-              }
-              else {
-                pcVar9 = s_Radio_is_Not_Responding_1002c874;
-              }
-              CString::operator=((CString *)(piVar2 + 0x26),pcVar9);
-              iVar5 = -0x13fffff8;
-            }
-          }
-          Ordinal_24(*(undefined4 *)(puVar8 + 4));
-        }
-        Ordinal_16(*(undefined4 *)(unaff_EBP + 0xc));
-        operator_delete(puVar8);
-        if (-1 < iVar5) {
-          *(undefined1 *)((int)piVar2 + 0x91) = 1;
-          goto LAB_1000c2e5;
-        }
-      }
-      else {
-        iVar5 = -0x13fffff3;
-      }
-    }
-LAB_1000c2b2:
-    *(CString **)(unaff_EBP + 0x10) = aCStack_e + -0x12;
-    CString::CString(aCStack_e + -0x12,(CString *)(piVar2 + 0x26));
-    *(CString **)(unaff_EBP + 0xc) = aCStack_e + -0x16;
-    *(undefined1 *)(unaff_EBP + -4) = 2;
-    CString::CString(aCStack_e + -0x16,(CString *)(unaff_EBP + -0x10));
-    *(undefined1 *)(unaff_EBP + -4) = 1;
-    FUN_1000b500();
-  }
-LAB_1000c2e5:
   *(undefined1 *)(unaff_EBP + -4) = 0;
   CString::~CString((CString *)(unaff_EBP + -0x10));
   *(undefined4 *)(*(int *)(unaff_EBP + -0x18) + 4) = *(undefined4 *)(unaff_EBP + -0x1c);
-LAB_1000c2fc:
   ExceptionList = *(void **)(unaff_EBP + -0xc);
-  return iVar5;
+  return *(undefined4 *)(unaff_EBP + -0x14);
 }
 
- (GhidraScript)  
-INFO  DecompAddrs.java> === FUNC FUN_1000a610 @1000a610 === (GhidraScript)  
-INFO  DecompAddrs.java> 
+
+=== FUNC FUN_1000a610 @1000a610 ===
+
 int FUN_1000a610(void)
 
 {
@@ -383,9 +240,9 @@ LAB_1000a89c:
   return iVar7;
 }
 
- (GhidraScript)  
-INFO  DecompAddrs.java> === FUNC FUN_1000f978 @1000f978 === (GhidraScript)  
-INFO  DecompAddrs.java> 
+
+=== FUNC FUN_1000f978 @1000f978 ===
+
 undefined4 FUN_1000f978(void)
 
 {
@@ -435,5 +292,5 @@ undefined4 FUN_1000f978(void)
   return *(undefined4 *)(unaff_EBP + 0xc);
 }
 
- (GhidraScript)  
+
 INFO  REPORT: Save succeeded for processed file: /NextGen10.dll (HeadlessAnalyzer)  
