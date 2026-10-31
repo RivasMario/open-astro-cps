@@ -260,3 +260,70 @@ def test_lock_security_unlock_gate():
     finally:
         s.close()
         srv.stop()
+
+
+# --------------------------------------------------------------------------- #
+# UnlockSecurity wired into RcmpWriteClient's live write path
+# --------------------------------------------------------------------------- #
+def _locked_part_policy():
+    """A PartitionPolicy that declares 0x81 ReadWriteLocked (so the write client
+    treats a refused 0x81 write as an unlock-required case), 0x80 ReadWrite."""
+    from open_astro.protocol.write_session import PartitionPolicy
+    return PartitionPolicy(
+        {PART_CODEPLUG: {"writable": True, "obj_min": None, "obj_max": None,
+                         "role": "codeplug"},
+         PART_SECURITY: {"writable": True, "obj_min": None, "obj_max": None,
+                         "role": "security"}},
+        enforce_ranges=False, source="(test)",
+        cps_layout={PART_CODEPLUG: 1, PART_SECURITY: 2})
+
+
+def test_locked_write_routes_through_unlock_and_is_guarded():
+    """A refused 0x81 write on a RW-Locked partition must route into
+    UnlockSecurity -- and, because the 0x0107 wire frame is not yet confirmed,
+    that raises UnlockError instead of silently returning the dropped ack."""
+    from open_astro.protocol.unlock_session import UnlockError
+    srv = _make_server(lock=True)
+    sock = socket.create_connection(("127.0.0.1", srv.port), timeout=3.0)
+    w = RcmpWriteClient(sock, allow_write=True, policy=_locked_part_policy())
+    try:
+        with pytest.raises(UnlockError):
+            w.write_object(PART_SECURITY, 0x1006, UPGRADED_FC.encode("ascii") + b"\x00")
+        assert PART_SECURITY not in w._unlocked
+    finally:
+        w.close()
+        srv.stop()
+
+
+def test_locked_write_retries_after_unlock_succeeds(monkeypatch):
+    """With unlock in place (here: a raw 0x0107 that the virtual radio honours),
+    a refused 0x81 write is retried and accepted, and the value reads back."""
+    srv = _make_server(lock=True)
+    sock = socket.create_connection(("127.0.0.1", srv.port), timeout=3.0)
+    w = RcmpWriteClient(sock, allow_write=True, policy=_locked_part_policy())
+
+    def fake_unlock(part=PART_SECURITY, inst=0):
+        # Stand in for the (unconfirmed) seed/response handshake: this virtual
+        # radio grants the session on a bare 0x0107. Exercises the retry loop.
+        w._conn.sendall(struct.pack(">H", 2) + struct.pack(">H", 0x0107))
+        w._recv_record()               # consume the 0x8107 grant
+        w._unlocked.add(part)
+        return b""
+
+    monkeypatch.setattr(w, "unlock_security", fake_unlock)
+    new_obj = UPGRADED_FC.encode("ascii") + b"\x00"
+    try:
+        ack = w.write_object(PART_SECURITY, 0x1006, new_obj)
+        assert w._ack_status(ack) == 0
+        assert PART_SECURITY in w._unlocked
+    finally:
+        w.close()
+
+    r = RcmpReadClient.connect(host="127.0.0.1", port=srv.port, timeout=3.0,
+                               src_port=0)
+    try:
+        back = r.read_object(PART_SECURITY, 0x1006, len(new_obj))
+        assert _ascii_fc(back) == UPGRADED_FC
+    finally:
+        r.close()
+        srv.stop()

@@ -66,6 +66,10 @@ class RcmpWriteClient:
             except Exception:
                 policy = None
         self._policy = policy
+        # Partitions unlocked this session via UnlockSecurity (0x0107). A
+        # RW-Locked partition (0x81) is re-locked by every reboot, so this is
+        # per-connection state, never cached across sessions.
+        self._unlocked: set = set()
 
     @classmethod
     def connect(cls, host: str = RADIO_PPP_HOST, port: int = RCMP_PORT,
@@ -138,6 +142,61 @@ class RcmpWriteClient:
         except Exception as e:
             raise RcmpWriteError(str(e)) from e
 
+    # -- security unlock (0x0107) ----------------------------------------
+    def _needs_unlock(self, part: int) -> bool:
+        """True if `part` is declared ReadWriteLocked by CPS and this session
+        has not unlocked it yet. No policy -> no unlock gate (we cannot know)."""
+        if part in self._unlocked:
+            return False
+        return self._policy is not None and self._policy.requires_unlock(part)
+
+    def unlock_security(self, part: int = 0x81, inst: int = 0) -> bytes:
+        """Run the UnlockSecurity (0x0107) handshake so a RW-Locked partition
+        will accept persistent writes, and mark it unlocked for this session.
+
+        Delegates to UnlockSession.perform(), which refuses to transmit until
+        the request/seed wire frame is confirmed (WIRE_PROFILE_CONFIRMED). So
+        this never sends a guessed unlock frame to a radio -- on an unconfirmed
+        profile it raises UnlockError. The handshake runs over this client's own
+        framed transport (same socket as the writes)."""
+        from .unlock_session import UnlockSession
+        session = UnlockSession(self._conn.sendall, self._recv_record,
+                                part=part, inst=inst)
+        resp = session.perform()
+        self._unlocked.add(part)
+        return resp
+
+    @staticmethod
+    def _ack_status(rec: dict) -> Optional[int]:
+        """Status byte of a write/unlock ACK: the first body byte after the
+        opcode (0 = accepted). None if the record carries no status byte."""
+        body_hex = rec.get("body_hex") or ""
+        return int(body_hex[:2], 16) if len(body_hex) >= 2 else None
+
+    def _retry_if_locked(self, part: int, inst: int, framed: bytes,
+                         rec: dict, expect_op: int) -> dict:
+        """A bare write to a RW-Locked partition is ACKed but refused with a
+        non-zero 0x8101 status (and dropped by the bootloader on reboot). When
+        that happens on a partition CPS marks RW-Locked and we have not unlocked
+        yet, run UnlockSecurity (0x0107) and retry the write once. A refusal we
+        cannot clear by unlocking is raised, not silently swallowed."""
+        status = self._ack_status(rec)
+        if status in (None, 0):
+            return rec
+        if not self._needs_unlock(part):
+            raise RcmpWriteError(
+                f"radio refused write to partition 0x{part:02x} "
+                f"(0x8101 status 0x{status:02x})")
+        # UnlockError here if the 0x0107 wire frame is not yet confirmed.
+        self.unlock_security(part, inst)
+        rec = self._txn(framed, expect_op)
+        status = self._ack_status(rec)
+        if status not in (None, 0):
+            raise RcmpWriteError(
+                f"radio still refused write to partition 0x{part:02x} after "
+                f"UnlockSecurity (0x8101 status 0x{status:02x})")
+        return rec
+
     # -- session ---------------------------------------------------------
     def open_session(self) -> dict:
         return self._txn(rcmp.frame(bytes([0x01, 0x06, 0x00])),
@@ -159,20 +218,31 @@ class RcmpWriteClient:
         self._guard_partition(part)
         self._policy_check(part, obj)
         framed = rcmp.build_write(part, obj, payload, inst)
-        return self._txn(framed, rcmp.OP_WRITE | rcmp.RESP_FLAG)
+        expect = rcmp.OP_WRITE | rcmp.RESP_FLAG
+        rec = self._txn(framed, expect)
+        return self._retry_if_locked(part, inst, framed, rec, expect)
 
     def send_prebuilt(self, framed: bytes) -> dict:
         """Send an already-framed record (e.g. replayed verbatim from a capture)
         and validate its ack by the record's own opcode. Partition-guarded for
         read/write records."""
         payload = framed[2:] if len(framed) >= 2 else b""
+        write_part: Optional[int] = None
+        write_inst = 0
         if len(payload) >= 3 and payload[:2].hex() in ("0100", "0101"):
             self._guard_partition(payload[2])
             # Policy applies to writes (0101); reads (0100) are harmless.
             if payload[:2].hex() == "0101" and len(payload) >= 5:
                 self._policy_check(payload[2], int.from_bytes(payload[3:5], "big"))
+                # Write record body: [0101][part:1][obj:2][inst:2][len:2][data].
+                write_part = payload[2]
+                write_inst = int.from_bytes(payload[5:7], "big") if len(payload) >= 7 else 0
         opcode = int.from_bytes(payload[:2], "big") if len(payload) >= 2 else 0
-        return self._txn(framed, opcode | rcmp.RESP_FLAG)
+        expect = opcode | rcmp.RESP_FLAG
+        rec = self._txn(framed, expect)
+        if write_part is not None:
+            rec = self._retry_if_locked(write_part, write_inst, framed, rec, expect)
+        return rec
 
     # -- lifecycle -------------------------------------------------------
     def close(self) -> None:
