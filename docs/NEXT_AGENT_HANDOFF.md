@@ -2,7 +2,50 @@
 
 > **Single Entry Point for AI Agents (Antigravity `agy`, Claude Code `claude`, Gemini CLI `gemini`).**  
 > Supersedes `AGENT_HANDOFF_AND_MISSION_BRIEF.md`.  
-> Last updated: **2026-10-28** | Branch: `master` | Test Suite: **261 passed, 1 skipped, 19 subtests** (Fedora laptop)
+> Last updated: **2026-10-30** | Branch: `feat/0107-unlocksecurity-reverse` | Test Suite: **264 passed, 1 skipped, 19 subtests** (Fedora laptop)
+
+---
+
+## 🔭 LATEST — 2026-10-30 Fedora session (Claude, Opus 4.8)
+
+UnlockSecurity (0x0107) wired into the live write path + capture tooling ready. Branch
+`feat/0107-unlocksecurity-reverse`, commits `c00e239` `cc8edbf` `6ad6aae`. Detail in
+[`docs/SESSION_LOG_20261030.md`](SESSION_LOG_20261030.md).
+
+**Done:**
+- `RcmpWriteClient` now routes a refused (0x8101 status!=0) write to a RW-locked partition
+  through `UnlockSession.perform()` + one retry (both `write_object` and the `send_prebuilt`
+  0x0101 replay funnel). Guarded by `WIRE_PROFILE_CONFIRMED=False` → raises `UnlockError`, never
+  transmits a guessed 0x0107. 0x82 firewall intact.
+- RE: `FUN_1000fd89` scramble arg/buffer confirmed = `unlock.py`; seed global `DAT_1002f7e8`
+  (Open mode 0xd memcpy 0x20, marker 0x1f43). Request body + seed wire offset still NOT
+  byte-confirmed (runtime COM vtable) → flag stays False.
+- `scripts/analyze_unlock_capture.py` (+test): dependency-free classic-pcap analyzer that
+  auto-confirms SEED_OFFSET by matching a live seed→response against `unlock_response()`.
+
+**FIRST on Windows — try the pcaps you already have** (gitignored, Windows-only; not on the
+Fedora laptop or the rig). The flash tools reference `captures/cps_20261023_101302.pcap` and
+`captures/depot_flashcode_20261024_214545.pcap` — the depot FLASHcode session likely already
+contains a `0x0107` exchange. Just run:
+```
+python scripts/analyze_unlock_capture.py captures/depot_flashcode_20261024_214545.pcap
+python scripts/analyze_unlock_capture.py captures/cps_20261023_101302.pcap
+```
+If either prints CONFIRMED, no new capture is needed — skip to flipping the flag below.
+
+**Otherwise (no existing unlock capture) — capture one live CPS unlock.**
+Containerized CPS can't do it (winxp QEMU v11.1.1 aborts on the ser1 serial chardev CPS needs;
+wine CPS can't open a COM port — Wine Mono can't run mixed-mode `PortMgrWrapper.dll`). On native
+Win11 CPS: Wireshark the RAS/PPP dial-up interface, **Read** the radio then **Program it back
+unchanged** (triggers the 0x81 write → 0x0107; backup = this session's `DUMP_721CLZ0655_*.json` +
+master `.cpg`; do NOT change any feature bit). Export as **classic pcap** (not pcapng), then:
+```
+python scripts/analyze_unlock_capture.py captures/<capture>.pcap
+```
+Take its reported `SEED_OFFSET` + seed/response, set `unlock_session.SEED_OFFSET`, record the
+seed/response as a KAT in `tests/test_unlock.py`, and set `WIRE_PROFILE_CONFIRMED = True`. Then
+the committed write path persists FLASHcode end-to-end. Remaining after that: recover the 43-byte
+`0x81:1005` bitmask layout (doc §7.2) — writing only `0x1006` ASCII won't change feature gating.
 
 ---
 
