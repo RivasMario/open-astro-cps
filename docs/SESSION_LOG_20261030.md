@@ -86,3 +86,16 @@ Also this session (homelab, not repo): XTS 5000 `721CLZ0655` full codeplug CLI-d
   WIRE_PROFILE_CONFIRMED stays False — not flipped on inference (a wrong 0x0107 frame can wedge the
   link). Decisive step: capture one live CPS unlock against the 5000 (harness armed: tcpdump port
   8002 on relay bridge, dockur VM stable).
+
+## Unlock capture: analyzer ready; capture to run on native Windows (Claude, 2026-10-30)
+- Containerized CPS can't do the capture: winxp QEMU v11.1.1 aborts (exit 134) on the ser1
+  isa-serial socket chardev CPS needs (dockur/QEMU regression; ser1 present=crash, absent=stable);
+  wine CPS can't open a COM port (Wine Mono can't run mixed-mode PortMgrWrapper.dll, per
+  Dockerfile.wine-cps). Decision: capture on the native Win11 CPS instead.
+- Added `scripts/analyze_unlock_capture.py` (dependency-free classic-pcap parser): reassembles
+  RCMP on TCP :8002, finds the 0x0107/0x8107 exchange, and brute-forces the seed window vs the
+  response window so `unlock_response(seed)==response` -- auto-confirming SEED_OFFSET + the transform
+  from live ground truth. Test: `tests/test_analyze_unlock_capture.py`. Suite 264 passed.
+- To finish: on Win11, Wireshark the RAS/PPP dial-up interface, CPS Read then Program the radio
+  (triggers the 0x81 write -> 0x0107), export as classic pcap, run the analyzer, then set
+  unlock_session.SEED_OFFSET + record the KAT + WIRE_PROFILE_CONFIRMED=True.
