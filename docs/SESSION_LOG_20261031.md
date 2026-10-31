@@ -100,3 +100,54 @@ corrected to PARTIAL. Fix = re-flash the full master `backups/721CLZ0655.cpg`.
 `rcmp_transport.read_streams` was hardened while chasing this: added tag `0x000D` (live zone
 names) and a transient-empty retry (`retry_empty`, default 1) so a dropped response no longer
 truncates a dump. Tests: `tests/test_rcmp_transport.py` (+3). Suite 275 passed, 1 skipped.
+
+## Flash investigation — completing Radio 4 (NOT executed; read-only survey)
+
+Goal: write the 4 missing zones (`ZK/ZL/ZM/ZR`, 25 objects) onto Radio 4.
+
+Facts established:
+- **All 25 missing objects are partition `0x80`** (plaintext): 4×`0x0ffc`, 17×`0x0ffd`,
+  4×`0x0fff`, instances ≥10. So completing the zones needs **NO `0x0107` unlock and NO
+  `0x81` write** — the whole unlock blocker is irrelevant here. Master backup CRC-clean (0 bad).
+- `src/open_astro/protocol/write_session.py` `CpgWriteAssembler.from_cpg()` already builds a
+  write session straight from the master `.cpg` (no pcap): CRC-checks every object, refuses
+  `0x82`, emits `0106 00 open → 0103 prepare → 0101 writes → 0106 01 commit`. Default prepare
+  records cover `0x80` only (`types 2..500` + `items 3595..4095`, which spans both the low tags
+  like `0x000D` and the high `0x0ffx` tags).
+- `RcmpWriteClient` (rcmp_write.py) is gated (`allow_write=True`) and **OS-socket only** —
+  userspace PPP cannot sustain the write burst (205CFR2930 lesson, codified).
+- RAS dial-up entry **`OpenAstroRadio` exists** on the Windows workstation (`rasphone.pbk`),
+  currently not connected. Bring up with `tools/ppp_up.ps1`, down with `tools/ppp_down.ps1`.
+- `rcmp_replay_write.py` drives from a **pcap capture** + `--edit`, not from the assembler.
+  No driver yet wires `CpgWriteAssembler` → `RcmpWriteClient` + readback-verify. **That driver
+  is the missing piece.**
+
+### OPEN BLOCKER — EEPROM persistence of a SYNTHESIZED session (Mario's lesson)
+Prior hardware lesson: writing **identical** data makes the radio see "nothing changed" and it
+does not re-commit to EEPROM. Our zone fill IS a real delta (9→13 zones), so that specific
+no-op does not apply. BUT a deeper risk remains:
+- `docs/how_motorola_writes_to_eeprom_and_partitions.md` (§4 diagram, lines 124-127): the radio
+  flushes cache + recomputes the partition checksum **on commit (`0106 01`)**, and only then
+  persists.
+- The assembler's synthesized finalize is just `0106 01`. The **real CPS write sessions also
+  sent `0102` and possibly `0104`/`0107` finalize records** (flagged "to confirm" in earlier
+  notes). Only **pcap REPLAYS** (which carry CPS's exact finalize) are hardware-proven to
+  persist (205CFR2930 recovery, ADP deploys). A fully synthesized `build_session` is **NOT yet
+  proven to hit EEPROM** — it could write-then-not-persist, exactly the symptom Mario warned of.
+- Also (§5, lines 144-145): `0x81` flashcode writes are **silently dropped** by the bootloader
+  (re-read from the immutable factory sector on boot) — flashcode upgrade via standard RCMP
+  never persists regardless. Not relevant to the `0x80` zone fill, but confirms `0x81` is a wall.
+
+### NEXT (resume here — do NOT transmit without Mario's explicit go + fresh backup)
+1. Parse a real decoded write capture's finalize tail to confirm the exact commit record
+   sequence. `captures/cps_20261023_084833_decoded.json` has keys `OUT host->radio` /
+   `IN radio->host`; `OUT` is a dict of 7 (not a flat hex string) — dig into its structure to
+   extract the ordered `0101…0102/0104/0107/0106 01` tail.
+2. Decide: **replay-with-substitution** (take a proven-persistent capture, swap in the zone
+   objects via `--edit`, keep CPS's exact finalize → proven persistence) vs **synthesized
+   `build_session`** (needs the finalize sequence confirmed + a hardware persistence test first).
+   Replay-with-substitution is the lower-risk path to a permanent EEPROM write.
+3. Build the assembler→live-write+readback driver OR extend `rcmp_replay_write.py` to inject the
+   25 `0x80` zone objects. Dry-run (CRC byte-exact, no `0x82`) before any `--socket --confirm`.
+4. Pre-write safety: fresh backup of the radio's CURRENT 9-zone state, CPS closed, RAS up,
+   `--expect-serial 721CLZ0655`, `0x80` only, NEVER `0x82`, readback-verify vs master after.
