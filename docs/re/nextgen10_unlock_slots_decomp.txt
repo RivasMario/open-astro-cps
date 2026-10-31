@@ -1,0 +1,439 @@
+openjdk version "25.0.5" 2026-10-20 LTS
+OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)
+OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode)
+INFO  Using log config file: jar:file:/home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)  
+INFO  Using log file: /home/mario/.config/ghidra/ghidra_12.2_PUBLIC/application.log (LoggingInitialization)  
+INFO  Loading user preferences: /home/mario/.config/ghidra/ghidra_12.2_PUBLIC/preferences (Preferences)  
+INFO  Searching for classes... (ClassSearcher)  
+INFO  Class search complete (639 ms) (ClassSearcher)  
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)  
+INFO  Initializing Random Number Generator... (SecureRandomFactory)  
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)  
+INFO  Loaded 121 trusted CA certificate(s) from /etc/ssl/certs/ca-certificates.crt (UnixSystemTrustKeyStoreUtil)  
+INFO  Loaded 121 trusted CA certificates from the OS trust store. (DefaultTrustManagerFactory)  
+INFO  Loaded 118 trusted CA certificates from the Java default trust store. (DefaultTrustManagerFactory)  
+INFO  Headless startup complete (1424 ms) (AnalyzeHeadless)  
+INFO  Class searcher loaded 60 extension points (19 false positives) (ClassSearcher)  
+INFO  HEADLESS Script Paths:
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/PyGhidra/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/FileFormats/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Processors/PIC/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Debug/Debugger/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/Swift/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Processors/JVM/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/Base/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Processors/Atmel/ghidra_scripts
+    /home/mario/re/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Processors/DATA/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/VersionTracking/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/Decompiler/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Processors/8051/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/FunctionID/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/PDB/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/BSim/ghidra_scripts
+    /home/mario/tools/ghidra_12.2_PUBLIC/Ghidra/Features/BytePatterns/ghidra_scripts (HeadlessAnalyzer)  
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)  
+INFO  Opening existing project: /home/mario/re/ghidra_projects/ng (HeadlessAnalyzer)  
+INFO  Opening project: /home/mario/re/ghidra_projects/ng (HeadlessProject)  
+INFO  REPORT: Processing project file: /NextGen10.dll (HeadlessAnalyzer)  
+INFO  REPORT: Execute script: DecompAddrs.java  (HeadlessAnalyzer)  
+INFO  SCRIPT: /home/mario/re/ghidra_scripts/DecompAddrs.java (HeadlessAnalyzer)  
+INFO  DecompAddrs.java> === FUNC FUN_1000c01f @1000c01f === (GhidraScript)  
+INFO  DecompAddrs.java> 
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+int FUN_1000c01f(void)
+
+{
+  char cVar1;
+  int *piVar2;
+  AFX_MODULE_STATE *pAVar3;
+  undefined4 uVar4;
+  int iVar5;
+  ushort *puVar6;
+  int iVar7;
+  undefined2 *puVar8;
+  int unaff_EBP;
+  char *pcVar9;
+  CString aCStack_e [14];
+  
+  FUN_10021490();
+  pAVar3 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x1c),pAVar3);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  CString::CString((CString *)(unaff_EBP + -0x10),s_CRcmpBundler__Open_1002c8ec);
+  iVar5 = *(int *)(unaff_EBP + 0xc);
+  piVar2 = *(int **)(unaff_EBP + 8);
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  if (iVar5 == 0xd) {
+    memcpy(&DAT_1002f7e8,*(void **)(unaff_EBP + 0x1c),0x20);
+    _DAT_1002f7fe = 0x1f43;
+    *(undefined2 *)((int)piVar2 + 0x92) = DAT_1002f806;
+  }
+  if (iVar5 == 0xc) {
+    *(undefined4 *)(unaff_EBP + 8) = 0;
+  }
+  else {
+    uVar4 = FUN_1000d523();
+    *(undefined4 *)(unaff_EBP + 8) = uVar4;
+  }
+  piVar2[0x20] = iVar5;
+  if ((char)piVar2[8] != '\x01') {
+    iVar5 = FUN_1000b2ad();
+    if (-1 < iVar5) {
+      iVar5 = *(int *)(unaff_EBP + 0xc);
+      goto LAB_1000c0c8;
+    }
+    goto LAB_1000c2b2;
+  }
+LAB_1000c0c8:
+  if (iVar5 == 0xc) {
+    puVar6 = CString::AllocSysString((CString *)(piVar2 + 0xd));
+    iVar5 = piVar2[0xf];
+    *(ushort **)(unaff_EBP + 0x10) = puVar6;
+    if (iVar5 == 0) {
+      puVar6 = CString::AllocSysString((CString *)(piVar2 + 0x13));
+      *(ushort **)(unaff_EBP + 0xc) = puVar6;
+      puVar6 = CString::AllocSysString((CString *)(piVar2 + 0x14));
+      *(ushort **)(unaff_EBP + 8) = puVar6;
+      puVar6 = CString::AllocSysString((CString *)(piVar2 + 0x15));
+      *(ushort **)(unaff_EBP + 0x20) = puVar6;
+      puVar6 = CString::AllocSysString((CString *)(piVar2 + 0x16));
+      *(ushort **)(unaff_EBP + -0x14) = puVar6;
+      iVar5 = (**(code **)(*piVar2 + 0xf4))
+                        (piVar2,0xc,unaff_EBP + 0x10,piVar2[0x11],unaff_EBP + 0xc,piVar2[0x12],
+                         unaff_EBP + 8);
+      Ordinal_6(*(undefined4 *)(unaff_EBP + 0xc));
+      Ordinal_6(*(undefined4 *)(unaff_EBP + 8));
+      Ordinal_6(*(undefined4 *)(unaff_EBP + 0x20));
+      Ordinal_6(*(undefined4 *)(unaff_EBP + -0x14));
+    }
+    else {
+      iVar5 = (**(code **)(*piVar2 + 0xf0))(piVar2,0xc);
+    }
+    Ordinal_6(*(undefined4 *)(unaff_EBP + 0x10));
+    *(undefined1 *)(unaff_EBP + -4) = 0;
+    CString::~CString((CString *)(unaff_EBP + -0x10));
+    *(undefined4 *)(*(int *)(unaff_EBP + -0x18) + 4) = *(undefined4 *)(unaff_EBP + -0x1c);
+    goto LAB_1000c2fc;
+  }
+  if (iVar5 == 3) {
+    *(uint *)(unaff_EBP + 8) = *(uint *)(unaff_EBP + 8) | 3;
+    iVar5 = (**(code **)(*(int *)piVar2[3] + 0x1c))((int *)piVar2[3]);
+joined_r0x1000c23c:
+    if (-1 < iVar5) goto LAB_1000c244;
+LAB_1000c1a4:
+    if ((char)piVar2[8] != '\0') {
+      FUN_1000b3bb();
+      *(undefined1 *)(piVar2 + 8) = 0;
+    }
+  }
+  else {
+    if (iVar5 != 0xd) {
+      *(uint *)(unaff_EBP + 0x1c) = *(uint *)(unaff_EBP + 0x1c) | *(uint *)(unaff_EBP + 8);
+      iVar5 = (**(code **)(*(int *)piVar2[2] + 0x1c))
+                        ((int *)piVar2[2],*(undefined4 *)(unaff_EBP + 0xc),
+                         *(undefined4 *)(unaff_EBP + 0x10),*(undefined4 *)(unaff_EBP + 0x14),
+                         *(undefined4 *)(unaff_EBP + 0x18));
+      goto joined_r0x1000c23c;
+    }
+    CString::operator=((CString *)(piVar2 + 0x26),s_Could_not_communicate_with_the_R_1002c8c4);
+    SetOtapAbortFlag();
+    iVar5 = (**(code **)(*(int *)piVar2[2] + 0x1c))
+                      ((int *)piVar2[2],0xd,*(undefined4 *)(unaff_EBP + 0x10),
+                       *(undefined4 *)(unaff_EBP + 0x14),*(undefined4 *)(unaff_EBP + 0x18),
+                       *(undefined4 *)(unaff_EBP + 0x1c),*(undefined4 *)(unaff_EBP + 0x20));
+    iVar7 = GetOtapAbortFlag(0);
+    if (iVar7 == -1) {
+      iVar5 = -0x13fffff1;
+    }
+    if (iVar5 < 0) {
+      SetOtapAbortFlag();
+      goto LAB_1000c1a4;
+    }
+LAB_1000c244:
+    iVar7 = piVar2[0x20];
+    if ((((iVar7 == 4) || (iVar7 == 8)) || (iVar7 == 9)) || (iVar7 == 10)) {
+      if (iVar7 != 0xc) {
+        piVar2[9] = **(int **)(unaff_EBP + 0x10);
+      }
+      iVar5 = FUN_1000b5b0();
+      if (-1 < iVar5) {
+        *(undefined1 *)((int)piVar2 + 0x29) = 1;
+        goto LAB_1000c2e5;
+      }
+    }
+    else if (-1 < iVar5) {
+      if (iVar7 != 0xd) goto LAB_1000c2e5;
+      piVar2[9] = **(int **)(unaff_EBP + 0x10);
+      if ((DAT_1002f804 == 1) || (DAT_1002f804 == 0)) {
+        puVar8 = operator_new(0x10);
+        Ordinal_8();
+        *puVar8 = 0x2011;
+        uVar4 = Ordinal_43(0x11,1,0x410);
+        *(undefined4 *)(unaff_EBP + 0xc) = uVar4;
+        *(undefined4 *)(puVar8 + 4) = uVar4;
+        iVar5 = FUN_1000b5b0();
+        if (-1 < iVar5) {
+          iVar5 = Ordinal_23(*(undefined4 *)(puVar8 + 4),unaff_EBP + 0x10);
+          if (-1 < iVar5) {
+            cVar1 = *(char *)(*(int *)(unaff_EBP + 0x10) + 2);
+            if (cVar1 != '\0') {
+              if (cVar1 == '\x02') {
+                pcVar9 = s_The_Radio_is_Not_an_OTAP_Enabled_1002c89c;
+              }
+              else if (*(char *)(*(int *)(unaff_EBP + 0x10) + 3) == '\x04') {
+                pcVar9 = s_Radio_is_Busy_1002c88c;
+              }
+              else {
+                pcVar9 = s_Radio_is_Not_Responding_1002c874;
+              }
+              CString::operator=((CString *)(piVar2 + 0x26),pcVar9);
+              iVar5 = -0x13fffff8;
+            }
+          }
+          Ordinal_24(*(undefined4 *)(puVar8 + 4));
+        }
+        Ordinal_16(*(undefined4 *)(unaff_EBP + 0xc));
+        operator_delete(puVar8);
+        if (-1 < iVar5) {
+          *(undefined1 *)((int)piVar2 + 0x91) = 1;
+          goto LAB_1000c2e5;
+        }
+      }
+      else {
+        iVar5 = -0x13fffff3;
+      }
+    }
+LAB_1000c2b2:
+    *(CString **)(unaff_EBP + 0x10) = aCStack_e + -0x12;
+    CString::CString(aCStack_e + -0x12,(CString *)(piVar2 + 0x26));
+    *(CString **)(unaff_EBP + 0xc) = aCStack_e + -0x16;
+    *(undefined1 *)(unaff_EBP + -4) = 2;
+    CString::CString(aCStack_e + -0x16,(CString *)(unaff_EBP + -0x10));
+    *(undefined1 *)(unaff_EBP + -4) = 1;
+    FUN_1000b500();
+  }
+LAB_1000c2e5:
+  *(undefined1 *)(unaff_EBP + -4) = 0;
+  CString::~CString((CString *)(unaff_EBP + -0x10));
+  *(undefined4 *)(*(int *)(unaff_EBP + -0x18) + 4) = *(undefined4 *)(unaff_EBP + -0x1c);
+LAB_1000c2fc:
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return iVar5;
+}
+
+ (GhidraScript)  
+INFO  DecompAddrs.java> === FUNC FUN_1000a610 @1000a610 === (GhidraScript)  
+INFO  DecompAddrs.java> 
+int FUN_1000a610(void)
+
+{
+  int *piVar1;
+  void *pvVar2;
+  AFX_MODULE_STATE *pAVar3;
+  undefined2 *puVar4;
+  undefined4 *puVar5;
+  undefined4 uVar6;
+  int iVar7;
+  int iVar8;
+  int unaff_EBP;
+  CString aCStack_26 [38];
+  
+  FUN_10021490();
+  pAVar3 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x34),pAVar3);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  CString::CString((CString *)(unaff_EBP + -0x20),s_CRcmpBundler__ReadIshList_1002c6b8);
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  *(undefined4 *)(unaff_EBP + -0x14) = 0;
+  *(undefined4 *)(unaff_EBP + -0x1c) = *(undefined4 *)(*(int *)(unaff_EBP + 0xc) + 8);
+  puVar4 = operator_new(0x10);
+  *(undefined2 **)(unaff_EBP + 0xc) = puVar4;
+  Ordinal_8();
+  *puVar4 = 0x2011;
+  puVar5 = operator_new(0x10);
+  *(undefined4 **)(unaff_EBP + -0x24) = puVar5;
+  *(undefined1 *)(unaff_EBP + -4) = 2;
+  if (puVar5 == (undefined4 *)0x0) {
+    uVar6 = 0;
+  }
+  else {
+    uVar6 = FUN_10006984(puVar5);
+  }
+  piVar1 = *(int **)(unaff_EBP + 8);
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  *(undefined4 *)(unaff_EBP + -0x10) = uVar6;
+  if ((char)piVar1[8] != '\x01') {
+    FUN_1000b2ad();
+  }
+  if (piVar1[0x20] == 0xc) {
+    if (piVar1[0xc] == 0) {
+      iVar7 = -0x7fffbffb;
+    }
+    else {
+      *(undefined4 *)(unaff_EBP + 8) = 0;
+      *(undefined4 *)(unaff_EBP + 0xc) = 0;
+      Ordinal_27();
+      *(undefined4 *)(*(int *)(unaff_EBP + 0xc) + 0x14) = 0;
+      iVar7 = piVar1[0xc];
+      *(undefined4 *)(unaff_EBP + -0x1c) = 0;
+      if (iVar7 == 0) {
+        FUN_10021744(0x80004003);
+      }
+      iVar7 = (**(code **)(*(int *)piVar1[0xc] + 0x28))
+                        ((int *)piVar1[0xc],unaff_EBP + 0xc,unaff_EBP + -0x1c,unaff_EBP + 8);
+      if (*(short *)(unaff_EBP + 8) == 0) {
+        iVar7 = -0x7fffbffb;
+      }
+      else {
+        Ordinal_27(*(undefined4 *)(unaff_EBP + -0x1c),*(int *)(unaff_EBP + 0x10) + 8);
+      }
+      Ordinal_16(*(undefined4 *)(unaff_EBP + 0xc));
+      if (iVar7 < 0) {
+        if (piVar1[0xc] == 0) {
+          FUN_10021744(0x80004003);
+        }
+        (**(code **)(*(int *)piVar1[0xc] + 0x38))();
+      }
+    }
+  }
+  else {
+    iVar7 = Ordinal_23();
+    if (-1 < iVar7) {
+      iVar8 = *(int *)(*(int *)(unaff_EBP + -0x1c) + 0x10) + -2;
+      *(int *)(unaff_EBP + -0x14) = iVar8;
+      *(int *)(unaff_EBP + 8) = iVar8;
+      *(int *)(unaff_EBP + -0x24) = iVar8 / 100;
+LAB_1000a780:
+      if (((HWND)piVar1[0xb] != (HWND)0x0) && (iVar8 <= *(int *)(unaff_EBP + 8))) {
+        SendMessageA((HWND)piVar1[0xb],0x405,0,0);
+        *(int *)(unaff_EBP + 8) = *(int *)(unaff_EBP + 8) - *(int *)(unaff_EBP + -0x24);
+      }
+      uVar6 = Ordinal_43(0x11,1,0x410,0);
+      *(undefined4 *)(unaff_EBP + -0x18) = uVar6;
+      *(undefined4 *)(*(int *)(unaff_EBP + 0xc) + 8) = uVar6;
+      iVar7 = Ordinal_23(uVar6,unaff_EBP + -0x2c);
+      if (iVar7 < 0) {
+LAB_1000a868:
+        Ordinal_24(*(undefined4 *)(unaff_EBP + -0x18));
+        Ordinal_16(*(undefined4 *)(unaff_EBP + -0x18));
+        if ((iVar7 < 0) || (iVar8 = *(int *)(unaff_EBP + -0x14), iVar8 < 1)) goto LAB_1000a89c;
+        goto LAB_1000a780;
+      }
+      iVar7 = *(int *)(*(int *)(unaff_EBP + 0xc) + 8);
+      if (*(int *)(iVar7 + 0x10) == 0) {
+        *(undefined4 *)(iVar7 + 0x10) = *(undefined4 *)(*(int *)(unaff_EBP + -0x18) + 0x10);
+      }
+      iVar7 = FUN_1000bd6f();
+      if ((-1 < iVar7) && (-1 < *(int *)(unaff_EBP + -0x14))) {
+        iVar7 = *(int *)(unaff_EBP + -0x10);
+        if (*(short *)(iVar7 + 8) == -1) {
+          iVar7 = (**(code **)(*piVar1 + 0x2c))
+                            (piVar1,*(undefined4 *)(unaff_EBP + 0x10),*(undefined2 *)(iVar7 + 4),
+                             *(undefined2 *)(iVar7 + 6));
+        }
+        else {
+          iVar7 = FUN_1000beb6();
+          if (-1 < iVar7) {
+            iVar7 = FUN_1000c89b();
+          }
+        }
+        pvVar2 = *(void **)(*(int *)(unaff_EBP + -0x10) + 0xc);
+        if (pvVar2 != (void *)0x0) {
+          operator_delete(pvVar2);
+          *(undefined4 *)(*(int *)(unaff_EBP + -0x10) + 0xc) = 0;
+        }
+        goto LAB_1000a868;
+      }
+      operator_delete(*(void **)(*(int *)(unaff_EBP + -0x10) + 0xc));
+      *(undefined4 *)(*(int *)(unaff_EBP + -0x10) + 0xc) = 0;
+LAB_1000a89c:
+      pvVar2 = *(void **)(*(int *)(unaff_EBP + -0x10) + 0xc);
+      if (pvVar2 != (void *)0x0) {
+        operator_delete(pvVar2);
+        *(undefined4 *)(*(int *)(unaff_EBP + -0x10) + 0xc) = 0;
+      }
+    }
+    Ordinal_24(*(undefined4 *)(unaff_EBP + -0x1c));
+    operator_delete(*(void **)(unaff_EBP + 0xc));
+    if (*(undefined4 **)(unaff_EBP + -0x10) != (undefined4 *)0x0) {
+      (**(code **)**(undefined4 **)(unaff_EBP + -0x10))();
+    }
+    if (iVar7 < 0) {
+      *(CString **)(unaff_EBP + 0x10) = aCStack_26 + -0x16;
+      CString::CString(aCStack_26 + -0x16,(CString *)(piVar1 + 0x26));
+      *(CString **)(unaff_EBP + 0xc) = aCStack_26 + -0x1a;
+      *(undefined1 *)(unaff_EBP + -4) = 3;
+      CString::CString(aCStack_26 + -0x1a,(CString *)(unaff_EBP + -0x20));
+      *(undefined1 *)(unaff_EBP + -4) = 1;
+      FUN_1000b500();
+    }
+  }
+  *(undefined1 *)(unaff_EBP + -4) = 0;
+  CString::~CString((CString *)(unaff_EBP + -0x20));
+  *(undefined4 *)(*(int *)(unaff_EBP + -0x30) + 4) = *(undefined4 *)(unaff_EBP + -0x34);
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return iVar7;
+}
+
+ (GhidraScript)  
+INFO  DecompAddrs.java> === FUNC FUN_1000f978 @1000f978 === (GhidraScript)  
+INFO  DecompAddrs.java> 
+undefined4 FUN_1000f978(void)
+
+{
+  undefined4 *puVar1;
+  int *piVar2;
+  AFX_MODULE_STATE *pAVar3;
+  int iVar4;
+  int iVar5;
+  int unaff_EBP;
+  
+  FUN_10021490();
+  pAVar3 = (AFX_MODULE_STATE *)FUN_1002120d();
+  AFX_MAINTAIN_STATE2::AFX_MAINTAIN_STATE2((AFX_MAINTAIN_STATE2 *)(unaff_EBP + -0x18),pAVar3);
+  puVar1 = *(undefined4 **)(unaff_EBP + 0xc);
+  *(undefined4 *)(unaff_EBP + -4) = 0;
+  *puVar1 = 0;
+  *(undefined4 *)(unaff_EBP + -0x10) = 0;
+  iVar4 = Ordinal_411(0x11,1,4);
+  *(undefined4 *)(iVar4 + 0x14) = 0;
+  Ordinal_8(unaff_EBP + -0x28);
+  *(undefined1 *)(unaff_EBP + -4) = 1;
+  *(undefined2 *)(unaff_EBP + -0x28) = 0x2011;
+  *(int *)(unaff_EBP + -0x20) = iVar4;
+  Ordinal_23(iVar4,unaff_EBP + -0x10);
+  **(undefined1 **)(unaff_EBP + -0x10) = 0x48;
+  *(undefined1 *)(*(int *)(unaff_EBP + -0x10) + 1) = 0x6f;
+  *(undefined1 *)(*(int *)(unaff_EBP + -0x10) + 2) = 0x73;
+  *(undefined1 *)(*(int *)(unaff_EBP + -0x10) + 3) = 0x74;
+  Ordinal_24(iVar4);
+  piVar2 = *(int **)(unaff_EBP + 8);
+  iVar5 = (**(code **)(*piVar2 + 0x68))(piVar2,piVar2[0x29],4,unaff_EBP + -0x28,puVar1);
+  *(int *)(unaff_EBP + 0xc) = iVar5;
+  if (iVar5 < 0) {
+    *puVar1 = 0x57;
+  }
+  if (iVar4 != 0) {
+    Ordinal_16(iVar4);
+    *(undefined4 *)(unaff_EBP + -0x20) = 0;
+  }
+  *(undefined1 *)(unaff_EBP + -4) = 0;
+  iVar4 = Ordinal_9(unaff_EBP + -0x28);
+  if (iVar4 < 0) {
+    FUN_10021744(iVar4);
+  }
+  *(undefined4 *)(*(int *)(unaff_EBP + -0x14) + 4) = *(undefined4 *)(unaff_EBP + -0x18);
+  ExceptionList = *(void **)(unaff_EBP + -0xc);
+  return *(undefined4 *)(unaff_EBP + 0xc);
+}
+
+ (GhidraScript)  
+INFO  REPORT: Save succeeded for processed file: /NextGen10.dll (HeadlessAnalyzer)  

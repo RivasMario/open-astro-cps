@@ -58,11 +58,45 @@ with the same algorithm, re-implementing this answers any seed and unlocks Parti
 Tests: `tests/test_unlock.py` (golden vectors + structural invariants; **live radio seed/response
 pair is the final acceptance, pending**).
 
+## 2026-10-30 — CRcmpBundler vtable + slot functions resolved
+
+The `+0x60 / +0x5c / +0xb0` vtable calls in `FUN_1000cce7` are **`CRcmpBundler`**
+slots (`piVar2` = the bundler `this`). The bundler vtable is **not** symbolized; found it by
+scanning `.rdata` for the pointer to `FUN_1000cce7` (`FindBundlerVt.java`).
+
+- **CRcmpBundler vtable base = `0x10025cc0`** (ends `0x10025df0`; `UnlockSecurity` is slot `+0xd0`).
+  Full dump: `docs/re/nextgen10_bundler_vtable.txt`. (A second table at `0x10026020` is a
+  derived/`OTAP` variant with the same methods at shifted offsets.)
+- Resolved UnlockSecurity slots (decompiles in `docs/re/nextgen10_unlock_slots_decomp.txt`):
+  - `+0x60` **build** = `FUN_1000c01f` — a command dispatcher (`CRcmpBundler::Open` debug name).
+    Takes a command selector; `== 0xd` branch does `memcpy(&DAT_1002f7e8, arg, 0x20)` (0x20 = the
+    32-byte seed block) and sets `_DAT_1002f7fe = 0x1f43`, writes `piVar2+0x92`; sets the
+    sub-protocol selector `piVar2[0x20]`. Calls `FUN_1000d523` on the non-`0xc` path.
+  - `+0x5c` **send** = `FUN_1000a610`.
+  - `+0xb0` **reply** = `FUN_1000f978`.
+
+So the `0x2011`→wire-record serialization lives in `FUN_1000c01f`/`FUN_1000d523` + the `DAT_1002f7xx`
+globals, not in the `CRcmpProtocol` TCP codec (`SendRequest`/`BundleTCP` just chunk and length-prefix
+an already-built buffer — see below). **Decompiler stack-param inference is unreliable for these
+naked `unaff_EBP` thunks**; the exact request body + seed offset still need either careful tracing of
+`FUN_1000c01f`→`FUN_1000d523`+globals, or one live unlock capture.
+
+Confirmed framing facts (do not re-derive):
+- `CRcmpProtocol::BundleTCP` (`FUN_100187b6`) prepends a **2-byte big-endian length** — matches
+  `rcmp.frame()`.
+- `CRcmpProtocol::SendRequest` (`FUN_10018123`) transmits an already-built payload in `0x410`-byte
+  chunks; its `*pcVar2=='\x01' && pcVar2[1]=='\x01'` (WRITE) branch reads the length at payload bytes
+  7–8 — matches the verified `rcmp.py` WRITE layout (`01 01 <part><obj:2><inst:2><len:2>`).
+- Wire opcode `0x0107` is a **strong inference** (fits the verified family `0x0100` read / `0x0101`
+  write / `0x0103` prepare / `0x0106` session), **not yet byte-confirmed**. `0x2011` is the internal
+  message-object tag, distinct from the wire opcode.
+
 ## Still open
-1. Wire the live exchange into the write/session layer: send `UnlockSecurity` request (msg tag
-   `0x2011`) → read the 32-byte seed → `unlock_response()` → send response → confirm `0x81` unlocked.
-2. Confirm message tag `0x2011` ↔ wire opcode `0x0107` mapping against a live capture.
-3. Record a hardware seed/response pair and add it as the acceptance test vector.
+1. Recover the exact UnlockSecurity request body + the seed's offset in the reply — trace
+   `FUN_1000c01f`→`FUN_1000d523` + `DAT_1002f7xx`, or capture one live unlock exchange.
+2. Fill the constants in `src/open_astro/protocol/unlock_session.py`, set
+   `WIRE_PROFILE_CONFIRMED = True`.
+3. Record a hardware seed/response pair as the acceptance test vector.
 
 ## False leads (recorded so we don't repeat)
 - A naive `01 07` byte search hit incidental immediates. `FUN_10008b95/_c10/_c8f/_d09/_d83` are
