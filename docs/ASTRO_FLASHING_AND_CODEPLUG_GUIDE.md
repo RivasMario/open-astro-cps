@@ -85,16 +85,16 @@ All scripts are **pure‑Python**, require only the standard library, and work o
 ## 6️⃣ Extending / Integrating
 - **Real hardware** – replace `127.0.0.1:8002` with the IP of a physical radio (or a serial‑to‑TCP bridge). Keep the handshake logic untouched.
 - **Custom flashcode** – edit the flash scripts (`tools/flash_radio_adp.py` / `flash_radio4_adp.py`) to modify the payload strings. The protocol handling stays the same.
-- **Automation** – the new unified CLI (`open_astro.py`, see next section) can be called from CI pipelines to verify that any code change does not break the handshake or the code‑plug format.
+- **Automation** – the new unified CLI (`astro_tasks.py`, see next section) can be called from CI pipelines to verify that any code change does not break the handshake or the code‑plug format.
 
 ---
 
-## 7️⃣ Next Step – Unified Open‑Astro CLI (`open_astro.py`)
+## 7️⃣ Next Step – Unified Open‑Astro CLI (`astro_tasks.py`)
 A lightweight command‑line tool that brings the three helper scripts together under one interface:
 ```bash
-python open_astro.py flash   # flash both radios (captures saved automatically)
-python open_astro.py read    # read the full code‑plug (captures saved automatically)
-python open_astro.py diff <capture1> <capture2>  # run the diff utility
+python astro_tasks.py flash   # flash both radios (captures saved automatically)
+python astro_tasks.py read    # read the full code‑plug (captures saved automatically)
+python astro_tasks.py diff <capture1> <capture2>  # run the diff utility
 ```
 The CLI will also expose flags to point at a real radio, choose a specific model, or force a custom flashcode.
 

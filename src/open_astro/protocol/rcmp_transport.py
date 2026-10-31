@@ -29,10 +29,14 @@ LOCAL_PPP_IP = "192.168.128.2"
 ACK_HEADER_LEN = 12    # read-ack echoes a 12-byte request header before data
 ACK_CRC_LEN = 2        # ...and a 2-byte CRC-16 trailer after the object bytes
 
-# Object tags the codeplug decoder consumes (== .cpg OLE stream tags): channel
-# names, conventional freq/NAC, channel->personality refs, talkgroups, sites,
-# and scan-list tables. read_streams() probes instances of each.
+# Object tags the codeplug decoder consumes (== .cpg OLE stream tags): zone
+# names, channel names, conventional freq/NAC, channel->personality refs,
+# talkgroups, sites, and scan-list tables. read_streams() probes instances of
+# each. 0x000D (zone-name ISH list) is read so live dumps carry real zone names
+# instead of the decoder's "ZONE N" fallback; it is read first because it is
+# small and we want it before a flaky radio can wedge mid-dump.
 CODEPLUG_OBJECT_TAGS = [
+    0x000D,
     0x0FFF, 0x0FFD, 0x0FFC, 0x0FF8, 0x0FDC,
     0x004C, 0x004D, 0x004F, 0x006C, 0x006E,
 ]
@@ -153,30 +157,44 @@ class RcmpReadClient:
 
     # -- lifecycle -------------------------------------------------------
     def read_streams(self, tags=None, max_inst: int = 32, block: int = 0x0370,
-                     verbose: bool = False):
+                     verbose: bool = False, retry_empty: int = 1):
         """Read a full codeplug as (tag, instance, payload) records.
 
         For each object tag, reads instances 0,1,2... until the radio returns
         empty or errors, which self-adapts to radios with more zones than any
         single captured plan. Returns the list the CpgDecoder consumes via
-        build_from_streams(). Read-only."""
+        build_from_streams(). Read-only.
+
+        Flaky radios (e.g. the XTS 5000) occasionally drop a single response, so
+        an instance that really exists can momentarily read back empty or raise.
+        Treating that first empty/error as end-of-list truncates the dump (seen
+        live: 0x0FFD stopped at inst 10, giving 9 zones instead of 13). So each
+        instance is re-read up to `retry_empty` extra times before we conclude
+        the list has ended; a genuine end simply costs one extra empty read."""
         if tags is None:
             tags = CODEPLUG_OBJECT_TAGS
         import sys as _sys
         out = []
         for tag in tags:
             for inst in range(max_inst):
-                try:
-                    data = self.read_object(rcmp.PART_CODEPLUG, tag, block, inst)
-                except Exception as e:
-                    # A missing instance (or a transient) ends this tag; never
-                    # let one object abort the whole dump -- return what we got.
-                    if verbose:
-                        print(f"    0x{tag:04x} inst {inst}: stop ({e})", file=_sys.stderr)
-                    break
+                data = b""
+                for probe in range(retry_empty + 1):
+                    try:
+                        data = self.read_object(rcmp.PART_CODEPLUG, tag, block, inst)
+                    except Exception as e:
+                        # Transient drop/desync: let the retry re-issue the read
+                        # rather than aborting the whole tag on one hiccup.
+                        if verbose:
+                            print(f"    0x{tag:04x} inst {inst}: error on try "
+                                  f"{probe + 1}/{retry_empty + 1} ({e})",
+                                  file=_sys.stderr)
+                        data = b""
+                    if data:
+                        break
                 if not data:
                     if verbose:
-                        print(f"    0x{tag:04x} inst {inst}: stop (empty)", file=_sys.stderr)
+                        print(f"    0x{tag:04x} inst {inst}: stop (empty after "
+                              f"{retry_empty + 1} tries)", file=_sys.stderr)
                     break
                 if verbose:
                     print(f"    0x{tag:04x} inst {inst}: {len(data)} bytes", file=_sys.stderr)
