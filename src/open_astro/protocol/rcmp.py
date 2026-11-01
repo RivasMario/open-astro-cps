@@ -40,8 +40,10 @@ from typing import Dict, Iterator, List, Optional
 # Opcodes (first two payload bytes).
 OP_READ = 0x0100
 OP_WRITE = 0x0101
+OP_BEGIN = 0x0102     # begin-write marker, precedes the prepare/erase records
 OP_PREPARE = 0x0103   # program / erase-prepare, precedes a write burst
 OP_SESSION = 0x0106   # session open
+OP_CHECKSUM = 0x0107  # partition checksum/finalize-arm; last control before writes
 RESP_FLAG = 0x8000    # response = request | 0x8000 on the opcode's high byte
 
 # Partition selectors (high-level memory map; see docs/RCMP_WIRE_PROTOCOL.md).
@@ -96,6 +98,26 @@ def build_prepare(part: int, start: int, end: int) -> bytes:
     """Build a framed PREPARE record (opcode 0x0103, DelIshTypes / DelIshItem). Layout:
     01 03 <part:u8> <start:u16> <end:u16>"""
     payload = struct.pack(">BBBHH", 0x01, 0x03, part, start, end)
+    return frame(payload)
+
+
+def build_begin(part: int = PART_CODEPLUG, obj: int = 0x0047,
+                inst: int = 0x0000, count: int = 0x0001) -> bytes:
+    """Build the framed BEGIN-WRITE record (opcode 0x0102) that opens the
+    write/prepare phase. Layout: 01 02 <part:u8> <obj:u16> <inst:u16> <count:u16>.
+    Defaults reproduce the proven codeplug-write capture byte-exact
+    (cps_20261023_101302.pcap device 5 record [32] = 010280004700000001)."""
+    payload = struct.pack(">BBBHHH", 0x01, 0x02, part, obj, inst, count)
+    return frame(payload)
+
+
+def build_checksum(part: int = PART_CODEPLUG, arg: int = 0x00) -> bytes:
+    """Build the framed PARTITION-CHECKSUM record (opcode 0x0107) that arms the
+    partition for commit, sent immediately before the 0101 write burst. Layout:
+    01 07 <part:u8> <arg:u8>. Default reproduces the proven codeplug-write
+    capture byte-exact (record [35] = 01078000). This is the 0x80 codeplug
+    checksum step, NOT the 0x81 UnlockSecurity challenge-response."""
+    payload = struct.pack(">BBBB", 0x01, 0x07, part, arg)
     return frame(payload)
 
 

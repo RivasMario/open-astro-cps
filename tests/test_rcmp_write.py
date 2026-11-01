@@ -78,3 +78,38 @@ def test_send_prebuilt_guards_tuning():
     bad = rcmp.build_write(PART_TUNING, 0x0001, b"\x00\x00")
     with pytest.raises(RcmpWriteError):
         c.send_prebuilt(bad)
+
+
+# -- full-framing write session (EEPROM-persist control records) -------------
+
+def test_build_begin_matches_capture_byte_exact():
+    # cps_20261023_101302.pcap device 5 record [32]
+    assert rcmp.build_begin().hex() == "0009" + "010280004700000001"
+
+
+def test_build_checksum_matches_capture_byte_exact():
+    # cps_20261023_101302.pcap device 5 record [35]
+    assert rcmp.build_checksum().hex() == "0004" + "01078000"
+
+
+def test_build_session_full_has_persist_control_framing():
+    from open_astro.protocol.write_session import CpgWriteAssembler, WriteObject
+    objs = [WriteObject(0x80, 0x0FFF, 10, b"\x01\x02\x03"),
+            WriteObject(0x80, 0x0FFC, 10, b"\x04\x05")]
+    sess = CpgWriteAssembler(objs).build_session_full()
+    recs = list(rcmp.iter_records(sess))
+    ops = [r[:2].hex() for r in recs]
+    # open, begin, prepare, prepare, checksum, 2 writes, commit
+    assert ops == ["0106", "0102", "0103", "0103", "0107", "0101", "0101", "0106"]
+    assert recs[0] == bytes([0x01, 0x06, 0x00])    # open
+    assert recs[-1] == bytes([0x01, 0x06, 0x01])   # commit
+    assert recs[1] == bytes.fromhex("010280004700000001")  # begin
+    assert recs[4] == bytes.fromhex("01078000")            # checksum
+
+
+def test_build_session_full_refuses_non_codeplug_partition():
+    from open_astro.protocol.write_session import (
+        CpgWriteAssembler, WriteObject, WriteSessionError)
+    objs = [WriteObject(0x81, 0x1006, 0, b"\x00")]
+    with pytest.raises(WriteSessionError):
+        CpgWriteAssembler(objs).build_session_full()

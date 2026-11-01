@@ -151,3 +151,43 @@ no-op does not apply. BUT a deeper risk remains:
    25 `0x80` zone objects. Dry-run (CRC byte-exact, no `0x82`) before any `--socket --confirm`.
 4. Pre-write safety: fresh backup of the radio's CURRENT 9-zone state, CPS closed, RAS up,
    `--expect-serial 721CLZ0655`, `0x80` only, NEVER `0x82`, readback-verify vs master after.
+
+## Persist-control framing EXTRACTED + synthesized session built (2026-10-31, later)
+
+Decoded the proven persistent write session `captures/cps_20261023_101302.pcap` **device 5**
+(the 205CFR2930 recovery) via `rcmp_replay_write.extract_out_records` (native usbpcap_read +
+PPP unframe + VJ + TCP reassembly — tshark `usb.capdata` is empty on the write device). 183
+OUT records. Ordered control flow:
+```
+[0]   0106 00                 session open
+[1]   0100 x1                 probe read
+[2]   0104 8512bf00000000     control (part 0x85)
+[3-28]0100 x26                CPS reads current plug
+[29]0010 [30]0011 [31]000f    control
+[32]  0102 80 0047 0000 0001  BEGIN-WRITE
+[33]  0103 80 0002 01f4       prepare/erase types 2..500
+[34]  0103 80 0e0b 0fff       prepare/erase items 3595..4095
+[35]  0107 8000               partition-0x80 CHECKSUM/arm  (right before writes)
+[36-181] 0101 x146            writes
+[182] 0106 01                 commit
+```
+Key: `0107 8000` is the **0x80 partition checksum**, NOT the `0x81` UnlockSecurity
+challenge — so a 0x80 codeplug write needs it and we can reproduce it. The old synthesized
+`build_session` omitted both `0102` begin and `0107` checksum — the likely reason a synthesized
+write would not commit to EEPROM.
+
+Implemented (offline, no transmit; suite 279 passed, 1 skipped):
+- `rcmp.build_begin()` / `rcmp.build_checksum()` — reproduce capture records [32]/[35]
+  byte-exact (`010280004700000001`, `01078000`). Tests in `tests/test_rcmp_write.py`.
+- `CpgWriteAssembler.build_session_full()` — emits the full persist framing
+  `0106 00 → 0102 → 0103×2 → 0107 8000 → writes → 0106 01`, 0x80-only (refuses 0x81).
+- Verified end-to-end: assembling from `backups/721CLZ0655.cpg` (0x80 objects, CRC-clean)
+  yields **458 write objects + control framing byte-identical to the capture**. This is a
+  complete synthesized write of Radio 4's full 13-zone codeplug (erase-prepare + full 0x80
+  rewrite → rebuilds zones cleanly, 0x81 untouched).
+
+STILL UNPROVEN (needs hardware, do NOT skip): whether CPS's read-phase records
+(`0104`/`0100`×27/`0010`/`0011`/`000f`) are required for commit — `build_session_full` omits
+them. The one real test: over `--socket` (RAS up), write + power-cycle + readback = 13 zones.
+No live-write driver wired to `build_session_full` yet; `rcmp_replay_write.apply_adds` already
+inserts writes before the `0106 01` commit if the replay-with-adds route is preferred instead.

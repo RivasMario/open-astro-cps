@@ -260,6 +260,45 @@ class CpgWriteAssembler:
             rcmp.build_prepare(PART_CODEPLUG, 0x0e0b, 0x0fff),
         ]
 
+    def build_session_full(self) -> bytes:
+        """Assemble a write session with the FULL control framing proven to
+        persist to EEPROM, reproduced from the codeplug-write capture
+        (cps_20261023_101302.pcap device 5):
+
+            0106 00 (open)
+            0102 80 0047 0000 0001 (begin-write)
+            0103 80 0002 01f4      (prepare/erase types 2..500)
+            0103 80 0e0b 0fff      (prepare/erase items 3595..4095)
+            0107 8000              (partition-0x80 checksum/arm)
+            0101 ... writes ...
+            0106 01 (commit)
+
+        This differs from build_session(), which omits the 0102 begin and the
+        0107 checksum -- the records a synthesized session needs so the radio
+        flushes and commits the partition to EEPROM instead of treating the
+        write as a no-op. Control records are emitted only for partition 0x80;
+        every write object is still partition-guarded (0x82 refused).
+
+        NOT a licence to transmit: build the records, dry-run, back up, and
+        read-back-verify on hardware before trusting persistence."""
+        self._guard()
+        parts = {w.part for w in self.objects}
+        if parts - {PART_CODEPLUG}:
+            raise WriteSessionError(
+                f"build_session_full emits 0x80-only control framing but objects "
+                f"target partitions {sorted(hex(p) for p in parts)}; use "
+                f"build_session() with captured prepare/control records for 0x81")
+        out = bytearray()
+        out += rcmp.build_session_open()                       # 0106 00
+        out += rcmp.build_begin(PART_CODEPLUG, 0x0047, 0x0000, 0x0001)  # 0102
+        out += rcmp.build_prepare(PART_CODEPLUG, 0x0002, 0x01f4)        # 0103
+        out += rcmp.build_prepare(PART_CODEPLUG, 0x0e0b, 0x0fff)        # 0103
+        out += rcmp.build_checksum(PART_CODEPLUG, 0x00)        # 0107 8000
+        for w in self.objects:
+            out += w.record()                                  # 0101 writes
+        out += rcmp.frame(bytes([0x01, 0x06, 0x01]))           # 0106 01 commit
+        return bytes(out)
+
     def build_session(self, prepare_records: Optional[List[bytes]] = None, *,
                       allow_without_prepare: bool = False,
                       synthesize_prepare: bool = False) -> bytes:
