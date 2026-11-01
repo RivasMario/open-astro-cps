@@ -249,3 +249,39 @@ Proven: `CpgWriteAssembler.build_session_full()` + `tools/write_codeplug_full.py
 persistent `0x80` codeplug write on real hardware. `0x82` never touched; `0x81` not written (so
 flashcode unchanged at `400008-002000-0` — still no Q667 ADP entitlement, which needs the
 `0x81`/`0x0107` path, unchanged by this work). ROADMAP Radio 4 corrected to FULL.
+
+## ADP write to Radio 4 + the 0x81 flashcode WALL confirmed (2026-10-31, later)
+
+Big finding first: the proven write capture (`cps_20261023_101302` device 5) writes partition
+`0x81` (`0x1004/1005/1006`) interleaved with `0x80`, under the single `0107 8000` checksum, with
+**no `0x0107` UnlockSecurity challenge** (records [35] `0107 8000` → [36-38] `0101 0x81`). So the
+`0x0107` wall was assumed, not shown — for a write of the SAME flashcode. That capture only ever
+restored 205CFR2930's own flashcode, so it never tested a flashcode *change*.
+
+Hardened `tools/flash_radio4_adp.py`: added an in-session identity gate (read `0x81:0x1004`,
+abort unless `721CLZ0655`, before any erase) and `--no-unlock` (skip the `0x0107` exchange, since
+the capture wrote `0x81` without it). Dry run = 505 records / 468 writes, no `0x82`.
+
+Ran it live (`--write --no-unlock`, RAS socket): identity OK, all 505 records acked, committed.
+Power-cycled. Cold readback:
+- **ADP secure subsystem (`0x80`) PERSISTED:** `0x0034` master-enable (ends `0003`), `0x0035`,
+  `0x0037` CKR, `0x0038` CKR1-8, `0x005D` key table (key reads back masked `0001**********` —
+  radios mask key material on read; slot structure present).
+- **Flashcode (`0x81:0x1006`) did NOT persist — reverted to base `400008-002000-0`** (target was
+  `400008-006000-1`). AT&V: radio healthy, identity `721CLZ0655`/`H18UCF9PW6AN` intact,
+  `SECURE: R000000` (UCM socket, unchanged — ADP is software).
+
+CONCLUSION: EEPROM doc §5 is right — the bootloader re-reads the flashcode from the **immutable
+license sector**, so a plain `0x81` write (no unlock) does NOT persist. **The `0x0107`
+UnlockSecurity IS required to change the flashcode** (license sector), and its wire frame is still
+unconfirmed (`unlock_session.WIRE_PROFILE_CONFIRMED = False`). So:
+- Radio 4 now carries the ADP codeplug objects + key slots, but NOT the Q667 flashcode
+  entitlement. Whether ADP keys up on-air without the flashcode bit is UNVERIFIED (needs SDR /
+  on-air test, Epic 3). R1/R2 "ADP active" claims may rest on the same unverified footing.
+- Kitchen-sink / any flashcode CHANGE (all radios) is BLOCKED on confirming the `0x0107` frame —
+  back to handoff priority #1. A real Depot/CPS flashcode-write capture that contains the `0x0107`
+  challenge is the unblock; `captures/depot_flashcode_20261024_214545.pcap` is raw bulk (no PPP/
+  RCMP), not it.
+- `0x82` never touched throughout. Radio 4 zones: full OptionA 13-zone `0x80` written + persisted
+  (every 0x80 readback object present); a re-dump to re-count was blocked by the radio's
+  post-session PPP flakiness, not data loss.

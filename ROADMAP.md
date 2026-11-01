@@ -12,7 +12,7 @@
 | **Radio 1** | "Facebook" | `205CFR2930` | `H46UCF9PW6AN` (Mod III) | 700/800 MHz | `000008-002410-2` | Empty (`R000000`) | **ONLINE.** 3-Zone fleet flashed. Ch 3 `ADP SECURE` active. |
 | **Radio 2** | "Kent PD" | `205CMB2249` | `H46UCF9PW6BN` (Mod II) | 700/800 MHz | `000008-002410-2` | Empty (`R000000`) | **ONLINE.** 3-Zone fleet flashed. Ch 3 `ADP SECURE` active (Matched to R1). |
 | **Radio 3** | "Chris's" | `407CHT0214` | `H46KDF9PW6BN` (Mod II) | VHF (136-174) | `140001-000000-3` | Empty (`R000000`) | **ONLINE.** 16-Ch PNW VHF fleet flashed (2M, MURS, Marine, WX). |
-| **Radio 4** | "Redmond PD" | `721CLZ0655` | `H18UCF9PW6AN` (Mod III) | 700/800 MHz | `400008-002000-0` (Option A `400008-006000-1` staged) | Empty (`R000000`) | **ONLINE — FULL 13-Zone/194-Ch.** Was partial (9/144) from a truncated prior flash; **completed 2026-10-31** via synthesized full-`0x80` write (`tools/write_codeplug_full.py` over RAS socket). Cold power-cycle readback = 13 zones `ZA`–`ZR`, byte-match to master. `0x82` never touched. |
+| **Radio 4** | "Redmond PD" | `721CLZ0655` | `H18UCF9PW6AN` (Mod III) | 700/800 MHz | `400008-002000-0` (Q667 ADP `400008-006000-1` does NOT persist — immutable license sector, needs `0x0107`) | Empty (`R000000`) | **ONLINE — FULL 13-Zone/194-Ch + ADP objects.** Completed 2026-10-31: full `0x80` write (13 zones `ZA`–`ZR`) + ADP secure subsystem `0x0034-0x0038/0x005D` (Key 1) all persisted. **Flashcode entitlement did NOT persist** (reverted to base on power-cycle) — ADP on-air unverified without Q667 bit; needs `0x0107` unlock. `0x82` never touched. |
 
 ---
 

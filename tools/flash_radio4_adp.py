@@ -140,6 +140,12 @@ def main():
     parser.add_argument("--write", action="store_true", help="Transmit over TCP link (default is dry run)")
     parser.add_argument("--host", default="192.168.128.1", help="Radio IP address over PPP (default 192.168.128.1)")
     parser.add_argument("--port", type=int, default=8002, help="Radio RCMP TCP port (default 8002)")
+    parser.add_argument("--no-unlock", action="store_true",
+                        help="skip the 0x0107 UnlockSecurity exchange. The proven "
+                             "codeplug-write capture (cps_20261023_101302 device 5) "
+                             "wrote partition 0x81 with NO unlock challenge -- just "
+                             "the 0107 8000 checksum already in the stream. Use this "
+                             "to transmit exactly as that working session did.")
     args = parser.parse_args()
 
     cpg_path = os.path.join(REPO, "backups", "721CLZ0655_OptionA_ADP.cpg")
@@ -171,19 +177,38 @@ def main():
     time.sleep(0.5)
     client = RcmpWriteClient.connect(host=args.host, port=args.port, allow_write=True, src_port=0)
     try:
-        def _send_raw(fr: bytes) -> None:
-            client._conn.sendall(fr)
+        # Identity gate: the first record is 0106 00 (session open); send it, then
+        # read the serial from partition 0x81 object 0x1004 IN-SESSION and abort
+        # unless it is this radio, BEFORE any 0101/0103 erase touches the codeplug.
+        assert framed[0][2:].hex() == "010600", "stream must start with 0106 00 open"
+        client.send_prebuilt(framed[0])
+        idrec = client.send_prebuilt(rcmp.build_read(0x81, 0x1004, 0x40))
+        body = bytes.fromhex(str(idrec.get("body_hex", "")))
+        serial_txt = body[12:-2].decode("latin-1", "replace") if len(body) > 14 else ""
+        if SERIAL not in serial_txt:
+            print(f"[-] serial mismatch: radio 0x81:0x1004={serial_txt!r} does not "
+                  f"contain {SERIAL!r}; ABORTING. No write/erase was sent.")
+            client.close()
+            return 2
+        print(f"[+] identity OK: radio reports {SERIAL}")
 
-        def _recv_body() -> bytes:
-            rec = client._recv_record()
-            return rec[2:] if len(rec) > 2 else b""
+        if not args.no_unlock:
+            def _send_raw(fr: bytes) -> None:
+                client._conn.sendall(fr)
 
-        usess = unlock_session.UnlockSession(_send_raw, _recv_body, part=0x81, inst=0)
-        usess.exchange()
-        ack_rec = client._recv_record()
-        print(f"[+] UnlockSecurity (0x0107) 32-byte LFSR seed->response ACKed: {ack_rec.hex()}")
+            def _recv_body() -> bytes:
+                rec = client._recv_record()
+                return rec[2:] if len(rec) > 2 else b""
 
-        for i, fr in enumerate(framed):
+            usess = unlock_session.UnlockSession(_send_raw, _recv_body, part=0x81, inst=0)
+            usess.exchange()
+            ack_rec = client._recv_record()
+            print(f"[+] UnlockSecurity (0x0107) 32-byte LFSR seed->response ACKed: {ack_rec.hex()}")
+        else:
+            print("[i] --no-unlock: skipping 0x0107 exchange (0x81 rides the "
+                  "0107 8000 checksum already in the stream, per the capture).")
+
+        for i, fr in enumerate(framed[1:], start=1):  # framed[0] already sent
             client.send_prebuilt(fr)
             time.sleep(0.005)
             if (i + 1) % 50 == 0 or (i + 1) == len(framed):
