@@ -221,3 +221,31 @@ Suite 280 passed, 1 skipped.
 If a synthesized write does NOT persist (still 9 zones after power-cycle), the read-phase
 records are required → switch to capturing a real CPS full-plug write to Radio 4 and replaying
 it, or add the missing `0104`/`000f` records to `build_session_full` from that capture.
+
+## FLASH EXECUTED + PERSISTED (2026-10-31) — Radio 4 complete
+
+Ran the full-`0x80` synthesized write to Radio 4 and it persisted to EEPROM. **The synthesized
+session (no CPS read-phase records) was sufficient** — the `0102` begin + `0107 8000` checksum
+framing was the missing persist trigger; the read-phase `0104`/`0100`×27/`000f` records are NOT
+required.
+
+Sequence that worked:
+1. Backup current 9-zone state → `backups/721CLZ0655_pre_fullflash_20261031_171334.json`.
+2. `tools/ppp_up.ps1` → RAS `OpenAstroRadio` up (dials over the COM7 modem interface; TCP 8002
+   reachable). NOTE: RAS modem is COM7 even though the raw CDC-ACM read port is COM9.
+3. First `--confirm` attempt ABORTED on the identity gate: it read the serial from `0x80:0x1004`
+   but the serial lives in **partition `0x81`** (`0x1004`), so it read empty → fail-closed (good).
+   Also learned this XTS drops PPP after *every* session, so a **separate** pre-read consumed the
+   one session and tore down RAS before the write could connect.
+4. Fixed `tools/write_codeplug_full.py` to do the identity read **in-session** on the write
+   connection (`0x81:0x1004`, right after `0106 00`, before any `0101`). Re-dialed RAS.
+5. Live write: identity OK (`721CLZ0655`), **458 `0x101` writes + `0106 01` commit all acked**,
+   full burst sustained over the OS socket (userspace PPP would have dropped ~record 60).
+   Post-session readback failed (radio drops PPP — expected).
+6. `tools/ppp_down.ps1`; **power-cycled** Radio 4; cold `open-astro rcmp-dump` →
+   **13 zones / 194 ch, names `ZA`–`ZR`, byte-match to master** (`scratchpad/721CLZ0655_postflash_*.json`).
+
+Proven: `CpgWriteAssembler.build_session_full()` + `tools/write_codeplug_full.py` produce a
+persistent `0x80` codeplug write on real hardware. `0x82` never touched; `0x81` not written (so
+flashcode unchanged at `400008-002000-0` — still no Q667 ADP entitlement, which needs the
+`0x81`/`0x0107` path, unchanged by this work). ROADMAP Radio 4 corrected to FULL.

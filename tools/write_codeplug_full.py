@@ -142,35 +142,37 @@ def main() -> int:
         return 2
 
     from open_astro.protocol.rcmp_write import RcmpWriteClient, RcmpWriteError
-    from open_astro.protocol.rcmp_transport import RcmpReadClient
 
-    # Identity gate: read the radio serial (0x80:0x1004) before writing a byte.
-    try:
-        rc = RcmpReadClient.connect(host=args.host, port=args.port, timeout=args.timeout)
-        try:
-            rc.open_session()
-            serial_raw = rc.read_object(rcmp.PART_CODEPLUG, 0x1004, 0x40)
-        finally:
-            rc.close()
-    except Exception as e:
-        print(f"[-] identity pre-read failed ({e}); is the RAS/PPP link up?")
-        return 2
-    serial_txt = serial_raw.decode("latin-1", "replace")
-    if args.expect_serial not in serial_txt:
-        print(f"[-] serial mismatch: radio 0x1004={serial_txt!r} does not contain "
-              f"{args.expect_serial!r}; ABORTING (wrong radio).")
-        return 2
-    print(f"[+] identity OK: radio reports {args.expect_serial}")
-
-    print(f"[!] TRANSMITTING {writes} writes to {args.host}:{args.port} ...")
+    # Single-session flow (this XTS drops PPP after every session, so a separate
+    # pre-read would consume the one session and the write connect would fail):
+    # connect the write client, open, do the identity read IN-SESSION (serial
+    # lives in partition 0x81, object 0x1004), abort on mismatch, then write.
     try:
         w = RcmpWriteClient.connect(host=args.host, port=args.port,
                                     timeout=args.timeout, allow_write=True)
     except RcmpWriteError as e:
-        print(f"[-] connect failed: {e}")
+        print(f"[-] connect failed: {e}; is the RAS/PPP link up?")
         return 2
     try:
-        for i, rec in enumerate(records):
+        w.send_prebuilt(records[0])            # 0106 00 session open
+        idrec = w.send_prebuilt(rcmp.build_read(0x81, 0x1004, 0x40))  # serial read
+        body = bytes.fromhex(str(idrec.get("body_hex", "")))
+        serial_txt = body[12:-2].decode("latin-1", "replace") if len(body) > 14 else ""
+        if args.expect_serial not in serial_txt:
+            print(f"[-] serial mismatch: radio 0x81:0x1004={serial_txt!r} does not "
+                  f"contain {args.expect_serial!r}; ABORTING (wrong radio). "
+                  f"No 0101 write was sent.")
+            w.close()
+            return 2
+        print(f"[+] identity OK: radio reports {args.expect_serial}")
+    except RcmpWriteError as e:
+        print(f"[-] identity read failed ({e}); no write sent.")
+        w.close()
+        return 2
+
+    print(f"[!] TRANSMITTING {writes} writes to {args.host}:{args.port} ...")
+    try:
+        for i, rec in enumerate(records[1:], start=1):  # records[0] already sent
             w.send_prebuilt(rec)
             if i % 50 == 0 or rec[2:4].hex() == "0106":
                 print(f"    [{i:3d}/{n}] sent 0x{rec[2:4].hex()}")
