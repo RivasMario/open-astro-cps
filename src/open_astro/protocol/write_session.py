@@ -299,6 +299,13 @@ class CpgWriteAssembler:
         out += rcmp.frame(bytes([0x01, 0x06, 0x01]))           # 0106 01 commit
         return bytes(out)
 
+    def full_session_records(self) -> List[bytes]:
+        """The full-framing session as an ordered list of individually framed
+        records (open, begin, prepares, checksum, writes, commit), so a live
+        driver can send and ack-check one record at a time. Same bytes as
+        build_session_full(), just not concatenated."""
+        return [rcmp.frame(p) for p in rcmp.iter_records(self.build_session_full())]
+
     def build_session(self, prepare_records: Optional[List[bytes]] = None, *,
                       allow_without_prepare: bool = False,
                       synthesize_prepare: bool = False) -> bytes:

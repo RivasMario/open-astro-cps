@@ -113,3 +113,16 @@ def test_build_session_full_refuses_non_codeplug_partition():
     objs = [WriteObject(0x81, 0x1006, 0, b"\x00")]
     with pytest.raises(WriteSessionError):
         CpgWriteAssembler(objs).build_session_full()
+
+
+def test_full_session_records_roundtrips_build_session_full():
+    from open_astro.protocol.write_session import CpgWriteAssembler, WriteObject
+    objs = [WriteObject(0x80, 0x0FFF, 10, b"\x01\x02"),
+            WriteObject(0x80, 0x0FFD, 10, b"\x03\x04\x05")]
+    asm = CpgWriteAssembler(objs)
+    recs = asm.full_session_records()
+    # Re-concatenating the framed records == the one-shot byte stream.
+    assert b"".join(recs) == asm.build_session_full()
+    # Each element is a single valid framed record.
+    for r in recs:
+        assert list(rcmp.iter_records(r)) == [r[2:]]

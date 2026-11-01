@@ -189,5 +189,35 @@ Implemented (offline, no transmit; suite 279 passed, 1 skipped):
 STILL UNPROVEN (needs hardware, do NOT skip): whether CPS's read-phase records
 (`0104`/`0100`×27/`0010`/`0011`/`000f`) are required for commit — `build_session_full` omits
 them. The one real test: over `--socket` (RAS up), write + power-cycle + readback = 13 zones.
-No live-write driver wired to `build_session_full` yet; `rcmp_replay_write.apply_adds` already
-inserts writes before the `0106 01` commit if the replay-with-adds route is preferred instead.
+
+## Live-write + readback driver built (2026-10-31, later) — `tools/write_codeplug_full.py`
+
+Driver that assembles the full 0x80 session from a source `.cpg` and, with `--confirm`,
+transmits it over `--socket` (RAS/pppd) record-by-record (ack-checked via
+`RcmpWriteClient.send_prebuilt`), then reconnects read-only and verifies zone count/names.
+
+Safety gates (all verified offline):
+- DRY RUN by default — assembles, validates control framing == proven capture, prints
+  summary, transmits nothing.
+- `--confirm` without `--socket` → refused. `--socket --confirm` without `--expect-serial`
+  → refused.
+- With `--confirm`: reads radio serial `0x80:0x1004` first and ABORTS unless it contains
+  `--expect-serial` (wrong-radio guard).
+- 0x80-only (assembler refuses 0x81); 0x82 never emitted.
+- CRC-clean gate: any 0x80 object failing CRC aborts assembly.
+
+Dry run on `backups/721CLZ0655.cpg`: 464 records, 458 writes, control framing matches the
+capture, commit `0106 01`. Test: `tests/test_rcmp_write.py::test_full_session_records_roundtrips_build_session_full`.
+Suite 280 passed, 1 skipped.
+
+### THE flash procedure (when Mario is at the bench — NOT yet run)
+1. Power-cycle Radio 4; confirm COM9 stable (not cycling) ~15s; CPS closed.
+2. Fresh backup of CURRENT 9-zone state: `open-astro rcmp-dump --serial COM9 -o backups/721CLZ0655_pre_fullflash_<ts>.json` (then lower PPP).
+3. Bring up RAS: `tools/ppp_up.ps1` (dials "OpenAstroRadio"; 192.168.128.1 reachable).
+4. Dry run first: `python tools/write_codeplug_full.py backups/721CLZ0655.cpg`.
+5. Live: `python tools/write_codeplug_full.py backups/721CLZ0655.cpg --socket --expect-serial 721CLZ0655 --confirm`.
+6. If the write fails mid-burst (watchdog), power-cycle and re-read; 0x82 was never touched so soft-pots are safe.
+7. Verify: readback prints zones; expect 13 zones / 194 ch (`ZA`–`ZR`). Lower PPP (`tools/ppp_down.ps1`).
+If a synthesized write does NOT persist (still 9 zones after power-cycle), the read-phase
+records are required → switch to capturing a real CPS full-plug write to Radio 4 and replaying
+it, or add the missing `0104`/`000f` records to `build_session_full` from that capture.
