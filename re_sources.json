@@ -4,7 +4,8 @@
   "binaries": {
     "patport":    "ASTRO25 Portable CPS R20.01.00/ASTRO25 Portable CPS R20.01.00/Crack/PatPort.exe",
     "bytedata10": "ASTRO25 Portable CPS R20.01.00/ASTRO25 Portable CPS R20.01.00/NetworkRadioProgrammer/System32/ByteData10.dll",
-    "nextgen10":  "ASTRO25 Portable CPS R20.01.00/ASTRO25 Portable CPS R20.01.00/NetworkRadioProgrammer/System32/NextGenNon98/NextGen10.dll"
+    "nextgen10":  "ASTRO25 Portable CPS R20.01.00/ASTRO25 Portable CPS R20.01.00/NetworkRadioProgrammer/System32/NextGenNon98/NextGen10.dll",
+    "radiocuststack10": "ASTRO25 Portable CPS R20.01.00/ASTRO25 Portable CPS R20.01.00/NetworkRadioProgrammer/System32/RadioCustStack10.dll"
   },
   "fallback_roots": [
     "G:/My Drive/RADIO/ASTRO25SOFTWARE/astro25portablecpsr20.01.00",

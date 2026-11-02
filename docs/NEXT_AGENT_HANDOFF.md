@@ -6,7 +6,52 @@
 
 ---
 
-## 🔭 LATEST — 2026-10-28 Fedora session (Claude, Opus 4.8)
+## 🔭 LATEST — 2026-11-01 (Claude, Opus 4.8) — DEPOT FLASHES OVER A DIFFERENT USB PATH, NOT RCMP
+
+Full detail: [`docs/SESSION_LOG_20261101.md`](SESSION_LOG_20261101.md).
+
+**Depot programs over its OWN compressed PPP stack, on a different USB interface than CPS.**
+The 2026-10-24 Depot captures (`captures/depot_write_*`, `depot_adp_*`) have **no device 5** (the
+Windows-RAS RCMP/PPP pipe CPS + our tools use). Depot runs on **device 13** (OUT 195–391 KB, fixed
+1920-byte transfers) + **device 35** (IN status). Device-13 bytes don't decode with our tooling
+(`extract_out_records`→0; `parse_ppp_frames`→noise protos; entropy ~7.6; no plaintext) — but that
+is because it is **Depot's own stack, not a foreign protocol**: `ByteData10.dll` imports
+`RadioCustStack10.dll` (`CUSNETppp::PPPConnect`, `CUSNETdpi::Nread/Nwrite`) + WS2_32 + serial, with
+VJ compression. So device 13 is almost certainly the **same RCMP wrapped in Depot's custom
+async-HDLC PPP + VJ**, which our standard (device-5 RAS) parser can't unframe. The `0x0107` may be
+inside those frames.
+
+**RESOLVED (2026-11-01, later) — transport fully RE'd; it is NOT the flashcode secret.**
+`RadioCustStack10.dll` = the **US Software "USNET" embedded PPP stack** (Motorola wrapper, 2003-2005):
+plaintext `CLIENT`/`CLIENTSERVER` chat (`PPPHandshake@0x1000ef60`) then USNET async-HDLC PPP. USNET
+PPP and our Windows-RAS PPP deliver **identical RCMP** to the radio at `192.168.128.1:8002`, so the
+transport is interchangeable and device 13 does not need unframing to flash. Also re-RE'd
+`NextGen10.dll` end-to-end: LFSR unlock (`FUN_1000fd89`) + `UnlockSecurity` sequence (`FUN_1000cce7`:
+build `+0x60`→LFSR→send `+0x5c`→commit `+0xb0`) confirmed a 3rd time; RCMP wire = `BundleTCP` 2-byte
+BE length prefix + `SendRequest` `01 01` records, ≤`0x410` chunks; `LoadServer` (`FUN_1000b2ad`)
+`CoCreateInstance`s the RCMP-core COM servers → **the opcode bytes live in a separate COM DLL, which
+is where the static call graph ends**. Flashcode/serial/model are ordinary ISH-item `0x81` writes
+(`ReadWriteRadioSerialNumber@0x1000ace8`). Full map: [`docs/re/RE_0107_UNLOCKSECURITY.md`](re/RE_0107_UNLOCKSECURITY.md)
+§"Third re-confirmation" + `docs/SESSION_LOG_20261101.md` §4.
+
+**New top priority — capture ONE live CPS `0x81` write to confirm the UnlockSecurity wire.**
+Crypto solved (`unlock.py`); exchange shape solved; only the wire bytes are unconfirmed
+(`unlock_session.WIRE_PROFILE_CONFIRMED=False`: `0x0107` vs `0x2011` on the record header, request
+body, seed offset in reply). Verified 2026-11-01 that **no held capture has a decodable `0107`**:
+`cps_20261023_*` are read-only (OUT = `0106`/`0103`/`0100`, no `0107`); Depot caps are device-13
+USNET. To close it: capture a live CPS session that **writes `0x81`** (change radio model/serial, or
+a flashcode op) over **device 5** (CPS, decodable), run `tools/decode_usb_ppp.py`, read the `0107`
+request + 32-byte seed + response, drop constants into `unlock_session.py`, flip the flag. Do NOT
+transmit a guessed UnlockSecurity frame. (Plain RCMP `0x81` writes don't persist without this —
+why `flash_radio4_adp.py --no-unlock` reverted `0x81:1006`.)
+
+**Also VERIFIED 2026-11-01:** Depot's "unable to determine zone channel assignment" was a
+**duplicate `0x000D` zone name** (`ZE` twice, no `ZF`). Fixed → `backups/721CLZ0655_OptionA_ADP_zfix.cpg`,
+flashed `0x80`-only, Depot now reads Radio 4 clean. Commit `c4a1ade`.
+
+---
+
+## 🔭 2026-10-28 Fedora session (Claude, Opus 4.8)
 
 Radio 4 (`721CLZ0655`, XTS 5000) on this Fedora laptop via `/dev/ttyACM0` (`0cad:1002`).
 Full detail in [`docs/SESSION_LOG_20261028.md`](SESSION_LOG_20261028.md).
