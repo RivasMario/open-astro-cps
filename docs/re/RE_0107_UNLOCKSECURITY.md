@@ -99,3 +99,77 @@ bVar8 = bVar8 ^ (char)uVar7 << (iVar4 & 0x1f);             // out bit ^= fb
 earlier Fedora analysis. Live hardware/real-CPS seed/response vector (open item
 #3) remains the only acceptance still pending — see
 `docs/FEDORA_CAPTURE_HANDOFF.md`.
+
+## Third re-confirmation + full flash-path map (2026-11-01, Ghidra 12.1.4, Windows x64)
+
+Cold re-analysis of `NextGen10.dll` (SHA256 `99fa3efbf1b7aa58722558841336c68035b9c4d562bf656f8f180d4f60348746`,
+245760 bytes, 1814 procedures) plus the transport DLL `RadioCustStack10.dll`
+(SHA256 `58539e91beba47780a01db38a95535c16cdd4e7b005b4146011836c8a8a6c0c4`). The LFSR
+scrambler `FUN_1000fd89` and the `CRcmpBundler::UnlockSecurity` sequence
+(`FUN_1000cce7`: build `+0x60` → `FUN_1000fd89` → send `+0x5c` → commit `+0xb0`,
+errors `0x97/0x98/0x99`) both re-recovered verbatim. New findings below.
+
+### Transport layer — NOT RCMP's secret (RadioCustStack10.dll)
+Depot's USB "device 13" link is the **US Software "USNET" embedded TCP/IP stack**,
+wrapped by Motorola as `RadioCustStack` (version resource: "Motorola", "Copyright
+2003-2005"). Serial via `CCommPort` (`I8250` 16550 driver) from `RadioSerial10.dll`.
+Link bring-up (`CUSNETppp::PPPConnect@0x1000ee10`): a **plaintext ASCII chat**
+(`CUSNETppp::PPPHandshake@0x1000ef60` writes `"CLIENT"`, waits for `"CLIENTSERVER"`;
+modem `ATA`/`CONNECT` script strings present) then USNET PPP in a pump thread
+(`0x10001420`), async-HDLC framed (device-13 `0x7e` suppressed ~2× = byte-stuffing
+active). **Conclusion:** USNET PPP and our Windows-RAS PPP deliver identical RCMP to
+the radio at `192.168.128.1:8002`. The transport is interchangeable; flashcode
+persistence is an *application-layer* (RCMP opcode) matter, not a link-layer one.
+Full notes: `docs/SESSION_LOG_20261101.md` §4.
+
+### RCMP wire framing (CRcmpProtocol)
+- `CRcmpProtocol::BundleTCP` (`FUN_100187b6`): RCMP-over-TCP frame = `[len_hi][len_lo][payload]`
+  — a 2-byte **big-endian length prefix** (payload shifted right 2, length += 2).
+- `CRcmpProtocol::SendRequest` (`FUN_10018123`): request records begin `01 01`;
+  a global byte-progress counter advances by `payload[7]<<8 | payload[8]` for `01 01`
+  records; payload is sent in ≤ `0x410` (1040)-byte chunks; transport-mode values
+  `{4,8,9,10,0xc,0xd}` at `this+0x30` select the `BundleTCP` TCP framing, mode `0xd`
+  = OTAP (`SetOtapAbortFlag`).
+
+### Where the static call graph ENDS (the COM boundary)
+`FUN_1000b2ad` = `CRcmpBundler::LoadServer`: when `this+0x20 != 1` it
+`CoCreateInstance`s three COM objects (CLSIDs at `DAT_10025aa0`/`10025b00`, plus
+`10025af0`+riid `10025ad0` when the arg == 3 [OTAP/network transport] else
+`10025a90`+`10025a30` [serial]) into `this+0x18/+0x14/+0xc|+0x8`, then sets
+`this+0x20 = 1`. **The actual RCMP opcode bytes (`0x0106`/`0x0107`/`0x0101`/`0x0100`)
+are built inside those separate RCMP-core COM servers, not inside NextGen10.**
+NextGen10 is the orchestration ("Bundler") layer; `UnlockSecurity`'s `+0x60/+0x5c/+0xb0`
+are vtable calls into the COM transport object. This is why the wire opcode of the
+unlock request (`0x0107` vs the `0x2011` message tag — open item #2) **cannot be
+resolved from NextGen10 alone**; it needs either the RCMP-core COM DLL or a live wire capture.
+
+### Flash-write path (how a 0x81 write works)
+- Flashcode `0x81:1006`, serial, and model are all **ISH items**; `ReadWriteRadioSerialNumber`
+  (`FUN_1000ace8`) writes them through the generic single-instance ISH R/W primitive
+  (`FUN_1000b8b5`/`FUN_1000a201`), dispatching local vs remote-proxy on `this+0x80==0xc`.
+- `EnterWriteMode` (`FUN_10016776`) is the **OTAP** entry: builds a VT `0x2011` SAFEARRAY
+  size `0x410`, sends via `FUN_1000b5b0`, reads reply where `reply[2]`=status
+  (`2`="Radio is Not an OTAP Enabled…", `reply[3]==4`="Radio is Busy", else "Radio is
+  Not Responding"). Not required for a direct serial `0x81` write.
+- A second unlock variant `FUN_100133df` runs the same challenge→LFSR→response, then
+  reads back three fields (`FUN_10012a96/d25/d76` → `this+0x2a/0x29/0x28`) — a
+  capability/version read gated behind unlock.
+
+### Capture-evidence check (2026-11-01)
+No capture on hand contains a decodable `UnlockSecurity`:
+- `captures/cps_20261023_*.pcap` (CPS, **device 5** = RCMP-over-RAS-PPP, fully decodable
+  by `tools/decode_usb_ppp.py`): OUT/command streams show only `0106`/`0103`/`0100`
+  (session + reads). **No `0107` OUT** — these are read-only sessions. (The lone `0107`
+  in an IN stream is incidental data inside an ISH descriptor list `11 17 21 27 31 …`.)
+- `captures/depot_*.pcap` (Depot, device 13): USNET async-HDLC, undecodable by the
+  device-5 parser and missing the chat handshake (capture began after link-up).
+
+### THE remaining gap + how to close it
+Crypto = solved (`unlock.py`). Exchange shape = solved (build→seed→scramble→respond→commit).
+Unconfirmed = the **wire bytes**: `0x0107` vs `0x2011` on the record header, the request
+body, and the seed's byte offset in the reply (`unlock_session.WIRE_PROFILE_CONFIRMED=False`).
+To close it, capture **one live CPS session that writes `0x81`** (e.g. change radio
+model/serial/flashcode) over **device 5** (CPS, not Depot — decodable), then read the
+`0107` request + 32-byte seed reply + response straight out of
+`tools/decode_usb_ppp.py` output and drop the constants into `unlock_session.py`.
+Do NOT transmit a guessed UnlockSecurity frame to a radio.

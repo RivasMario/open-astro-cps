@@ -3,9 +3,12 @@
 Unified Open‑Astro CLI
 
 Usage:
-    python open_astro.py flash   # Flash both XTS 2500 and XTS 5000 (captures saved)
-    python open_astro.py read    # Read full code‑plug (partition 0x80) from virtual radio
-    python open_astro.py diff <capture1.jsonl> <capture2.jsonl>
+    python astro_tasks.py flash # Flash both XTS 2500 and XTS 5000 (captures saved)
+    python astro_tasks.py read    # Read full code‑plug (partition 0x80) from virtual radio
+    python astro_tasks.py diff <capture1.jsonl> <capture2.jsonl>
+
+Renamed from open_astro.py: that name shadowed the installed open_astro
+package (src/open_astro) and broke `python -m open_astro.cli`.
 
 Options can be extended: e.g. --host, --port, --model to target real hardware.
 The script simply wraps the existing helper scripts:
