@@ -59,8 +59,10 @@ scratch*/
 !backups/
 !backups/**
 
-# Live USB captures: large binary pcaps stay out (decoded .json kept as ground truth)
-captures/*.pcap
+# Live USB captures: raw pcaps now TRACKED (owner's own surplus hardware; decoded
+# .json still kept as ground truth). Re-enable the ignore below if repo size becomes
+# a problem. Never commit a capture of someone else's radio.
+# captures/*.pcap
 # Transient decode scratch output
 codeplug.json
 # CPS write-test junk (real backups are whitelisted above; these are not)
