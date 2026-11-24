@@ -1,9 +1,26 @@
 # Next-Agent Handoff & Mission Brief — OpenAstro CPS
 
-> **Single Entry Point for AI Agents (Antigravity `agy`, Claude Code `claude`, Gemini CLI `gemini`).**  
+> **Single Entry Point for AI Agents (Antigravity `agy`, Claude Code `claude`, Gemini CLI `gemini`, Hermes/Qwen).**  
 > Supersedes `AGENT_HANDOFF_AND_MISSION_BRIEF.md`.  
-> Last updated: **2026-11-01** | Branch: `fix/cps-cli-and-capture-validators`
-> Newest work is the **2026-11-01** section below (Radio 4 flashed over RCMP; Depot transport RE'd). The **2026-10-30** winxp-rig section follows it.
+> Last updated: **2026-11-24** | Branch: `fix/cps-cli-and-capture-validators`
+> Newest work is the **2026-11-24** Home AI Pipeline section below, followed by **2026-11-01** (Radio 4 flashed; Depot transport RE'd) and **2026-10-30** (winxp-rig).
+
+---
+
+## 🤖 LATEST — 2026-11-24 — Autonomous Home AI Pipeline (`$0` Local Forgejo + RTX 3080)
+
+`open-astro-cps` is now mirrored on Mario's self-hosted **Forgejo** (`http://100.81.194.15:30142/mario/open-astro-cps`) with a native CI runner (`forgejo-runner` v6.3.1 on Proxmox LXC 112) and an autonomous `$0` AI dev worker (`homelab/scripts/forgejo-ai-worker.py`, cron every 2h):
+
+- **Builder + Self-Repair:** Local **`qwen2.5-coder:14b`** on TrueNAS Ollama (`:30068`, RTX 3080 10 GB VRAM, locked to `num_ctx=8192` so it stays in VRAM at `31–44s`/pass; optional free-tier Gemini Flash-Lite verifier).
+- **Quality Gate:** Deterministic `AST` check (syntax, no duplicate/nested `test_*`, verifies all backticked `test_*` names in issue body) + `pytest --tb=short`. Failed issues auto-swap `ai-ready` → `ai-needs-human` and post the traceback comment so the queue never jams.
+- **Hard Safety Rule:** Automated runs are **offline-only** (code/tests/docs); partition `0x82` and live radio writes are strictly forbidden.
+- **Current Forgejo Board (2026-11-24):**
+  - **Open green PRs ready to merge:** **PR #4** (`ai/issue-1`, partition policy tests) and **PR #8** (`ai/issue-7`, CLI trunking tests).
+  - **Queued `ai-ready` offline test issues:** **#9** (`test_csv_roundtrip.py`, kicked off), **#10** (`test_unlock.py`), **#11** (`test_cps_schema.py`), **#12** (`test_rcmp.py`).
+  - **Tagged `ai-needs-human` (1 assertion shy each):** **#5** (`test_write_session.py`) and **#6** (`test_channel_patch.py`).
+- **What's left for Hardware (Mario at home) vs. Home AI (offline):**
+  - **Hardware-only:** (1) Copy raw Depot `0x81` pcap (`captures/depot_write_*.pcap`) and run `tools/usnet_unframe.py` (`dbab606`) to lift `0x0107` UnlockSecurity wire bytes; (2) run one `--serial-write` test on `205CFR2930` to retire Windows RAS dial-up; (3) capture CPS button/concentric-switch pcap + verify over-the-air ADP with RTL-SDR/DSD-FME.
+  - **Home AI offline queue:** Unit tests across `tests/`, wrapping `tools/write_codeplug_full.py` into `open-astro write --dry-run`, codeplug password clear (`0x0047`/`0x0002`), and zero-dongle trunking helpers (`0x0FD0`–`0x0FDF`).
 
 ---
 
