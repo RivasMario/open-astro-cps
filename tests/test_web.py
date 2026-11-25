@@ -117,3 +117,41 @@ def test_static_index_served():
     r = client.get("/")
     assert r.status_code == 200
     assert "OpenAstro" in r.text
+
+
+def test_buttons_endpoint_returns_assignments():
+    r = client.get("/api/buttons", params={"path": CPG})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["button_count"] > 0
+    assert body["transmitted"] is False
+    assert any(b["slug"] == "orange" and b["short"] for b in body["buttons"])
+
+
+def test_channel_edit_preview_emits_edits_without_transmitting():
+    r = client.post(
+        "/api/channel-edit",
+        json={
+            "path": CPG,
+            "zone": 1,
+            "channel": 1,
+            "name": "WEB TEST",
+            "rx_frequency": 851.0125,
+            "tx_frequency": 806.0125,
+            "simplex": False,
+        },
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["transmitted"] is False
+    assert body["edit_count"] >= 1
+    assert all(e.startswith("80:") for e in body["edits"])
+
+
+def test_channel_edit_invalid_channel_returns_400():
+    r = client.post(
+        "/api/channel-edit",
+        json={"path": CPG, "zone": 1, "channel": 999, "name": "BAD"},
+    )
+    assert r.status_code == 400
+    assert "error" in r.json()

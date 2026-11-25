@@ -111,6 +111,18 @@ class ExportRequest(BaseModel):
     output_dir: Optional[str] = Field(None, description="Output dir inside the repo (default: exports/sdr)")
 
 
+class ChannelEditRequest(BaseModel):
+    path: str = Field(..., description="Path to a .cpg inside the repository (e.g. backups/205CFR2930.cpg)")
+    zone: int = Field(..., ge=1, description="1-based zone number")
+    channel: int = Field(..., ge=1, description="1-based channel number")
+    name: Optional[str] = Field(None, description="New channel name (up to 14 chars)")
+    rx_frequency: Optional[float] = Field(None, description="RX frequency in MHz")
+    tx_frequency: Optional[float] = Field(None, description="TX frequency in MHz")
+    rx_pl_tone: Optional[float] = Field(None, description="RX CTCSS PL tone in Hz")
+    tx_pl_tone: Optional[float] = Field(None, description="TX CTCSS PL tone in Hz")
+    simplex: Optional[bool] = Field(None, description="Set simplex/direct mode")
+
+
 # --------------------------------------------------------------------------- #
 # App
 # --------------------------------------------------------------------------- #
@@ -385,6 +397,94 @@ def personalities(path: str) -> Dict[str, Any]:
         "path": str(cpg.relative_to(REPO_ROOT)).replace("\\", "/"),
         "personality_count": len(out),
         "personalities": out,
+    }
+
+
+@app.get("/api/buttons")
+def buttons_info(path: str) -> Dict[str, Any]:
+    """Read-only inspection of conventional button assignments (0x0016/0x0017) in a .cpg."""
+    from ..parsers.button_edit import (
+        ButtonPatcher, ButtonPatchError, BUTTON_POSITIONS, function_label,
+    )
+
+    cpg = _resolve_in_repo(path)
+    if cpg.suffix.lower() != ".cpg":
+        raise ApiError(f"not a .cpg file: {path!r}")
+
+    try:
+        patcher = ButtonPatcher.from_file(str(cpg))
+        short_toks = patcher.current_tokens("short")
+        long_toks = patcher.current_tokens("long")
+        count = patcher.button_count()
+    except ButtonPatchError as exc:
+        raise ApiError(f"could not read buttons: {exc}")
+    except Exception as exc:
+        raise ApiError(f"failed to open .cpg: {exc}")
+
+    rows = []
+    for slug, (idx, desc) in sorted(BUTTON_POSITIONS.items(), key=lambda kv: kv[1][0]):
+        if idx >= count:
+            continue
+        s_tok = short_toks[idx] if idx < len(short_toks) else None
+        l_tok = long_toks[idx] if idx < len(long_toks) else None
+        rows.append({
+            "slug": slug,
+            "index": idx,
+            "description": desc,
+            "short": function_label(s_tok) if s_tok is not None else None,
+            "long": function_label(l_tok) if l_tok is not None else None,
+        })
+
+    return {
+        "path": str(cpg.relative_to(REPO_ROOT)).replace("\\", "/"),
+        "button_count": count,
+        "buttons": rows,
+        "transmitted": False,
+    }
+
+
+@app.post("/api/channel-edit")
+def channel_edit_preview(req: ChannelEditRequest) -> Dict[str, Any]:
+    """Offline in-memory channel patch preview. Returns --edit flags without writing disk or radio."""
+    from ..parsers.cpg_parser import CpgParser
+    from ..parsers.channel_patch import ChannelPatcher, ChannelPatchError
+
+    cpg = _resolve_in_repo(req.path)
+    if cpg.suffix.lower() != ".cpg":
+        raise ApiError(f"not a .cpg file: {req.path!r}")
+
+    try:
+        parser = CpgParser(str(cpg))
+        try:
+            orig_objs = parser.objects()
+        finally:
+            parser.close()
+    except Exception as exc:
+        raise ApiError(f"could not open .cpg: {exc}")
+
+    try:
+        patcher = ChannelPatcher(orig_objs)
+        patcher.patch_channel(
+            req.zone,
+            req.channel,
+            name=req.name,
+            rx_frequency=req.rx_frequency,
+            tx_frequency=req.tx_frequency,
+            rx_pl_tone=req.rx_pl_tone,
+            tx_pl_tone=req.tx_pl_tone,
+            simplex=req.simplex,
+        )
+        edits = patcher.generate_edits(orig_objs)
+    except ChannelPatchError as exc:
+        raise ApiError(f"channel edit failed: {exc}")
+
+    return {
+        "path": str(cpg.relative_to(REPO_ROOT)).replace("\\", "/"),
+        "zone": req.zone,
+        "channel": req.channel,
+        "edit_count": len(edits),
+        "edits": edits,
+        "transmitted": False,
     }
 
 
