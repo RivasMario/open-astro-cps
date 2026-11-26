@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenAstro CPS — Radio Flash / EEPROM Tarkov Stash &amp; RE Map</title>
+  <style>
+    :root {
+      --bg: #0c0e12;
+      --panel: #14171e;
+      --slot-bg: #1a1f29;
+      --slot-border: #2a3140;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --purple: #a371f7;
+      --cyan: #39c5cf;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+    h1 { margin: 0 0 6px; font-size: 26px; color: #f0f6fc; letter-spacing: 0.4px; }
+    h2 { margin: 28px 0 12px; font-size: 18px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 1px solid #262c36; padding-bottom: 6px; }
+    .subtitle { color: var(--muted); margin-bottom: 20px; font-size: 14px; }
+
+    /* Tarkov Stash Containers */
+    .stash-layout { display: grid; grid-template-columns: 1.55fr 1fr; gap: 18px; }
+    @media (max-width: 980px) { .stash-layout { grid-template-columns: 1fr; } }
+
+    .rig {
+      background: var(--panel);
+      border: 1px solid #2b3240;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    }
+    .rig-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .rig-title { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+    .rig-meta { font-size: 12px; color: var(--muted); font-family: Consolas, monospace; }
+
+    .fill-bar {
+      height: 8px;
+      background: #0b0d11;
+      border: 1px solid #2a3140;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .fill-inner { height: 100%; }
+
+    /* Tarkov Grid */
+    .tarkov-grid {
+      display: grid;
+      gap: 3px;
+      background: #090b0f;
+      padding: 6px;
+      border: 1px solid #2a3140;
+      border-radius: 6px;
+    }
+    .g-80 { grid-template-columns: repeat(8, 1fr); grid-auto-rows: 52px; }
+    .g-81 { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 54px; }
+    .g-82 { grid-template-columns: repeat(8, 1fr); grid-auto-rows: 46px; }
+
+    .item {
+      position: relative;
+      border-radius: 4px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid rgba(255,255,255,0.16);
+      background-image: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.22));
+      cursor: default;
+      transition: transform 0.12s ease, border-color 0.12s ease;
+      overflow: hidden;
+    }
+    .item:hover {
+      transform: translateY(-1px);
+      border-color: #fff;
+      z-index: 2;
+    }
+    .item .tag { font-family: Consolas, monospace; font-size: 11px; opacity: 0.85; }
+    .item .name { font-weight: 700; font-size: 12px; line-height: 1.15; }
+    .item .size { font-family: Consolas, monospace; font-size: 10px; color: #c9d1d9; align-self: flex-end; }
+
+    /* Item rarity/type colors */
+    .c-blue   { background-color: #162b44; border-color: #2f6aa8; }
+    .c-cyan   { background-color: #12333a; border-color: #2c7f8e; }
+    .c-green  { background-color: #163322; border-color: #2e7d4b; }
+    .c-purple { background-color: #2a1d3d; border-color: #6e46a8; }
+    .c-gold   { background-color: #3a2b12; border-color: #9e7423; }
+    .c-red    { background-color: #3a1619; border-color: #9e3138; }
+    .c-empty  {
+      background: repeating-linear-gradient(45deg, #12161e, #12161e 6px, #161b24 6px, #161b24 12px);
+      border: 1px dashed #2a3140;
+      color: #6e7681;
+    }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .ok { background: rgba(63,185,80,0.18); color: var(--green); border: 1px solid rgba(63,185,80,0.35); }
+    .warn { background: rgba(210,153,34,0.18); color: var(--yellow); border: 1px solid rgba(210,153,34,0.35); }
+    .lock { background: rgba(248,81,73,0.18); color: var(--red); border: 1px solid rgba(248,81,73,0.35); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0 20px; font-size: 12px; color: var(--muted); }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid #2b3240;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 18px;
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #262c36; }
+    th { color: var(--accent); }
+    code { background: #21262d; padding: 2px 5px; border-radius: 4px; font-size: 12px; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' });</script>
+</head>
+<body>
+  <div class="container">
+    <h1>ASTRO 25 Radio Flash &amp; EEPROM — Tarkov Inventory View</h1>
+    <div class="subtitle">Motorola XTS 2500 / XTS 5000 / PRC-153 · 169 ISH Codeplug Block Types across 4 Hardware Partitions</div>
+
+    <div class="legend">
+      <span><i class="dot" style="background:#2f6aa8"></i> RF / Channels / Zones</span>
+      <span><i class="dot" style="background:#2c7f8e"></i> Personalities / Scan / UI</span>
+      <span><i class="dot" style="background:#6e46a8"></i> ADP Crypto / Trunking</span>
+      <span><i class="dot" style="background:#9e7423"></i> Locked EEPROM Identity (0x81 / 0x85)</span>
+      <span><i class="dot" style="background:#9e3138"></i> ReadOnly RF Soft-Pots (0x82 — DO NOT TOUCH)</span>
+      <span><i class="dot" style="background:#161b24; border:1px dashed #3d4657"></i> Free / Unallocated Flash</span>
+    </div>
+
+    <div class="stash-layout">
+      <!-- PARTITION 0x80: MAIN CODEPLUG STASH -->
+      <div class="rig">
+        <div class="rig-header">
+          <div class="rig-title">Partition <code>0x80</code> — Codeplug Flash <span class="badge ok">ReadWrite</span></div>
+          <div class="rig-meta">0x10020000 · 6 × 64 KB = 384 KB · 164 Block Types · ~110–500 Objects</div>
+        </div>
+        <div class="fill-bar" title="Typical codeplug fills ~10%–35% of the 384 KB 0x80 partition depending on channel/zone count (e.g. 110–500 ISH objects)">
+          <div class="fill-inner" style="width:28%; background:linear-gradient(90deg, #2f6aa8, #3fb950);"></div>
+        </div>
+        <div class="tarkov-grid g-80">
+          <!-- Row 1-2: Channel Freqs (4x2) + Personalities (4x2) -->
+          <div class="item c-blue" style="grid-column: span 4; grid-row: span 2;" title="0x0FFD (4093): 35 bytes per channel entry (RX freq @12, TX freq @16, RX/TX squelch @24-26, simplex bit @27)">
+            <span class="tag">0x0FFD (4093)</span>
+            <span class="name">Channel Frequency Tables<br/><small style="font-weight:400;color:#9ecbff">RX/TX Freq, NAC, CTCSS, Simplex</small></span>
+            <span class="size">35B × N chans</span>
+          </div>
+          <div class="item c-cyan" style="grid-column: span 4; grid-row: span 2;" title="0x0FFB: Conventional &amp; Trunking Personalities">
+            <span class="tag">0x0FFB</span>
+            <span class="name">Conv &amp; Trunk Personalities<br/><small style="font-weight:400;color:#99e6ec">TX Power, Timeouts, Signaling</small></span>
+            <span class="size">Multi-inst</span>
+          </div>
+
+          <!-- Row 3: Channel Names (3x1) + Zone Names (2x1) + Talkgroups (3x1) -->
+          <div class="item c-blue" style="grid-column: span 3;" title="0x0FFF (4095): List of channel display names">
+            <span class="tag">0x0FFF (4095)</span>
+            <span class="name">Channel Names</span>
+            <span class="size">String list</span>
+          </div>
+          <div class="item c-blue" style="grid-column: span 2;" title="0x000D: Zone Names &amp; ASTRO Systems">
+            <span class="tag">0x000D</span>
+            <span class="name">Zone List</span>
+            <span class="size">Unique names</span>
+          </div>
+          <div class="item c-purple" style="grid-column: span 3;" title="0x0FF8 (4088) / 0x0FD0: Trunking Systems &amp; Talkgroup Names">
+            <span class="tag">0x0FF8 / 0x0FD0</span>
+            <span class="name">Trunking &amp; Talkgroups</span>
+            <span class="size">TGIDs + Names</span>
+          </div>
+
+          <!-- Row 4: ADP Secure (3x1) + Scan Lists (2x1) + Controls/Buttons (3x1) -->
+          <div class="item c-purple" style="grid-column: span 3;" title="0x0034 (master), 0x0037/38 (CKR), 0x005D (40-bit RC4 ADP key table)">
+            <span class="tag">0x0034 / 37 / 38 / 5D</span>
+            <span class="name">ADP Crypto &amp; Keys</span>
+            <span class="size">Key slots</span>
+          </div>
+          <div class="item c-cyan" style="grid-column: span 2;" title="0x0FF1: Scan Lists">
+            <span class="tag">0x0FF1</span>
+            <span class="name">Scan Lists</span>
+            <span class="size">Priority/Nuis</span>
+          </div>
+          <div class="item c-cyan" style="grid-column: span 3;" title="0x0020: Radio Controls, Knobs, Side Buttons &amp; Switches">
+            <span class="tag">0x0020</span>
+            <span class="name">Buttons &amp; Switches</span>
+            <span class="size">Model layout</span>
+          </div>
+
+          <!-- Row 5-6: Remaining 150+ small ISH blocks + Free space -->
+          <div class="item c-green" style="grid-column: span 3;" title="Remaining ~154 ISH block types (Display, Audio, MDC1200, Emergency, Radio-Wide)">
+            <span class="tag">~154 ISH Types</span>
+            <span class="name">Radio-Wide / MDC / Audio</span>
+            <span class="size">0x80 RW</span>
+          </div>
+          <div class="item c-empty" style="grid-column: span 5; grid-row: span 2;" title="Unallocated 64 KB erase sectors in Partition 0x80">
+            <span class="tag">FREE FLASH SECTORS</span>
+            <span class="name">~250–340 KB Unallocated (384 KB Total)</span>
+            <span class="size">6 × 64 KB</span>
+          </div>
+          <div class="item c-empty" style="grid-column: span 3;">
+            <span class="tag">ERASED ON WRITE</span>
+            <span class="name">0x0103 DelIshTypes</span>
+            <span class="size">2..500, 3595..4095</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: 0x81 EEPROM, 0x85, 0x82 -->
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <!-- PARTITION 0x81: LOCKED EEPROM -->
+        <div class="rig">
+          <div class="rig-header">
+            <div class="rig-title">Partition <code>0x81</code> — EEPROM / Security <span class="badge warn">RW Locked</span></div>
+            <div class="rig-meta">0x1000A000 · 2 × 8 KB = 16 KB · 3 Block Types</div>
+          </div>
+          <div class="fill-bar" title="Tiny metadata footprint (&lt;1 KB) inside 16 KB locked EEPROM partition">
+            <div class="fill-inner" style="width:12%; background:#d29922;"></div>
+          </div>
+          <div class="tarkov-grid g-81">
+            <div class="item c-gold" style="grid-column: span 2;" title="0x1004 (4100): Radio Serial Number">
+              <span class="tag">0x1004 (4100)</span>
+              <span class="name">Serial Number</span>
+              <span class="size">e.g. 205CFR2930</span>
+            </div>
+            <div class="item c-gold" style="grid-column: span 2;" title="0x1006 (4102): 16-byte ASCII FLASHcode string">
+              <span class="tag">0x1006 (4102)</span>
+              <span class="name">FLASHcode String</span>
+              <span class="size">16 Bytes</span>
+            </div>
+            <div class="item c-gold" style="grid-column: span 4;" title="0x1005 (4101): 43-byte binary feature entitlement bitmask read by radio OS kernel">
+              <span class="tag">0x1005 (4101) — Kernel Feature Bitmask</span>
+              <span class="name">FLASHcode Bitmask (Needs 0x0107 UnlockSecurity)</span>
+              <span class="size">43 Bytes</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PARTITION 0x85 -->
+        <div class="rig">
+          <div class="rig-header">
+            <div class="rig-title">Partition <code>0x85</code> — Locked System <span class="badge warn">RW Locked</span></div>
+            <div class="rig-meta">2 Block Types · Needs Session Unlock</div>
+          </div>
+          <div class="tarkov-grid g-81">
+            <div class="item c-gold" style="grid-column: span 2;"><span class="tag">0x12BE (4798)</span><span class="name">Sys Block A</span><span class="size">Locked</span></div>
+            <div class="item c-gold" style="grid-column: span 2;"><span class="tag">0x12BF (4799)</span><span class="name">Sys Block B</span><span class="size">Locked</span></div>
+          </div>
+        </div>
+
+        <!-- PARTITION 0x82: TUNING / SOFT-POTS -->
+        <div class="rig">
+          <div class="rig-header">
+            <div class="rig-title">Partition <code>0x82</code> — RF Soft-Pots <span class="badge lock">ReadOnly — NEVER WRITE</span></div>
+            <div class="rig-meta">0x10100000 · 8 × 64 KB = 512 KB</div>
+          </div>
+          <div class="tarkov-grid g-82">
+            <div class="item c-red" style="grid-column: span 4;"><span class="tag">RF CAL</span><span class="name">Oscillator Warp &amp; Dev</span><span class="size">Locked RO</span></div>
+            <div class="item c-red" style="grid-column: span 4;"><span class="tag">PA BIAS</span><span class="name">TX Power &amp; Squelch</span><span class="size">Locked RO</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2>OpenAstro Project Status &amp; Unified Rust Plan (CLI + Web App)</h2>
+    <div class="card">
+      <div class="mermaid">
+flowchart LR
+    S1["1. RE &amp; Decompilation&lt;br/&gt;504/504 funcs ✅"] --> S2["2. Python Reference&lt;br/&gt;285 pytest + Web Proto ✅"]
+    S2 --> S3["3. Rust Core (In Progress)&lt;br/&gt;open_astro_cli.exe built 🟡"]
+    S3 --> S4["4. 0x0107 Capture (LXC 120)&lt;br/&gt;Confirm WIRE_PROFILE ❌"]
+    S4 --> S5["5. Unified Rust Binary&lt;br/&gt;CLI + Web UI + Serial/PPP 🎯"]
+      </div>
+      <table>
+        <thead><tr><th>Component</th><th>Current State</th><th>Status</th><th>Next Action</th></tr></thead>
+        <tbody>
+          <tr><td><strong>CPS &amp; Depot RE</strong></td><td>504 functions analyzed (Batches 1–5) + synthesis doc</td><td><span class="badge ok">100% Done</span></td><td>Reference in <code>CPS_DEPOT_COMPLETE_RE_SYNTHESIS.md</code></td></tr>
+          <tr><td><strong>Python Codeplug &amp; RCMP</strong></td><td>285 passed, 1 skipped; <code>0x80</code> live read/write proven</td><td><span class="badge ok">Verified</span></td><td>Keep as offline schema/test oracle</td></tr>
+          <tr><td><strong>Simulated Radio &amp; Web App</strong></td><td><code>mock_radio_capture.py</code> + <code>web_app.py</code> (port 8765)</td><td><span class="badge ok">Working</span></td><td>Port web UI into Rust <code>open_astro_cli web</code></td></tr>
+          <tr><td><strong>Rust CLI (<code>open_astro_cli</code>)</strong></td><td>1.0 MB Windows binary built (<code>clap</code>, <code>tokio</code>, LFSR)</td><td><span class="badge warn">Prototype</span></td><td>Add CRC-16, <code>0x82</code> block, <code>--expect-serial</code>, <code>serialport</code>, embedded web server</td></tr>
+          <tr><td><strong><code>0x0107</code> EEPROM Unlock</strong></td><td>LFSR math solved; wire framing unconfirmed</td><td><span class="badge lock">Pending</span></td><td>1 capture from CPS/Depot in <code>LXC 120</code> against <code>mock_radio_capture.py</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Original Motorola CPS/Depot vs New OpenAstro</h2>
+    <div class="stash-layout">
+      <div class="card">
+        <div class="rig-title" style="margin-bottom:10px; color:var(--red);">Original CPS / Depot (7-Layer Legacy Stack)</div>
+        <div class="mermaid">
+flowchart TD
+    O1["PatPort.exe / PatPortDepot.exe (24 MB MFC)"] --> O2["cgIsh10c (169 C++ builders) + fhAdk10c (RC4 .cpg)"]
+    O2 --> O3["UdcDrIsh10c (SAFEARRAY marshaling)"]
+    O3 -->|"COM IVirtualRadio::WriteCodeplug"| O4["NextGen10.dll (CVirtualRadio -> CRcmpBundler -> CRcmpProtocol)"]
+    O4 -->|"COM IRawBytes"| O5["ByteData10.dll + Windows Registry (CPSinVals)"]
+    O5 --> O6["RAS Modem OR USNET PPP (RadioCustStack10) + ConnWinSock10"]
+    O6 -->|"TCP:8002"| O7["Radio MCU (0x80 / 0x81)"]
+        </div>
+      </div>
+      <div class="card">
+        <div class="rig-title" style="margin-bottom:10px; color:var(--green);">New OpenAstro (3-Stage Clean-Room Stack)</div>
+        <div class="mermaid">
+flowchart TD
+    N1["Human-Readable JSON / YAML / CSV (Git-diffable)"] --> N2["Declarative Schema Encoder (schema/field_layouts.json + PartitionPolicy)"]
+    N2 -->|"Hard 0x82 Firewall + --expect-serial Gate"| N3["Direct RCMP Framer (0x0106/0102/0103/0101/0106 01)"]
+    N3 -->|"ACK-tracked Windowed PPP/TCP (Python or Rust)"| N4["Radio MCU (192.168.128.1:8002)"]
+    N4 -->|"Auto Read-Back Diff"| N5["Verified Permanent State"]
+        </div>
+      </div>
+    </div>
+
+    <h2>RE Conveyor Belt &amp; Decompilation Status (Ghidra 12.2 + Homelab qwen2.5-coder:14b)</h2>
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>Batch</th><th>Modules</th><th>Progress</th><th>Status</th><th>Role in Architecture</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Batch 1</strong></td><td><code>NextGen10.dll</code>, <code>ByteData10.dll</code></td><td>20 / 20</td><td><span class="badge ok">Done</span></td><td><code>WriteCodeplug</code>, <code>Send ReOrg</code>, <code>ResetRequest</code>, <code>WriteIshList</code>, <code>DelIshTypes</code></td></tr>
+          <tr><td><strong>Batch 2</strong></td><td><code>NextGen10.dll</code>, <code>ByteData10.dll</code></td><td>26 / 26</td><td><span class="badge ok">Done</span></td><td><code>VerifyRadioParams</code>, <code>WriteDataToRadio</code>, <code>OpenPort</code> (<code>0x0C/0x0D</code>), Winsock/USB glue</td></tr>
+          <tr><td><strong>Batch 3</strong></td><td><code>NextGen10</code> Trace3, <code>ConnWinSock10</code>, <code>NewProto10</code>, <code>PortManager10</code></td><td>56 / 56</td><td><span class="badge ok">Done</span></td><td>Socket transport, protocol framing, COM/USB device enumeration</td></tr>
+          <tr><td><strong>Batch 4</strong></td><td><code>PatComm10</code>, <code>RadioSerial10</code>, <code>otaprwcdtimer</code></td><td>53 / 53</td><td><span class="badge ok">Done</span></td><td>Win32 serial COM wrapper &amp; OTAP registry timer flags</td></tr>
+          <tr><td><strong>Batch 5</strong></td><td><code>EncatenComponent</code>, <code>PBT2.dll</code> (Depot), <code>RemoteProtocols01</code>, <code>UdcDrIsh10c</code>, <code>udcDrXAdk10c</code></td><td>349 / 349</td><td><span class="badge ok">Done</span></td><td>Codeplug image assembly, Depot-only <code>PBT2.dll</code>, legacy SB9600, UDC write bridge</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Homelab AI vs Cloud (504 Functions: ~268K In / ~157K Out Tokens)</h2>
+    <div class="stash-layout">
+      <div class="card">
+        <div class="rig-title" style="margin-bottom:12px;">Cost Comparison (504 Functions)</div>
+        <table>
+          <thead><tr><th>Model / Provider</th><th>Est. Cost</th><th>Speed (504 funcs)</th><th>Quality Notes</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Local <code>qwen2.5-coder:14b</code></strong> (RTX 3080)</td><td><span class="badge ok">$0.00</span></td><td>~2.4 hrs (1-at-a-time, ~17s/fn)</td><td>Strong on single-function C/API summary; occasionally over-speculates on CRT boilerplate.</td></tr>
+            <tr><td>Gemini Flash-Lite</td><td>~$0.09</td><td>~2–4 min (parallel)</td><td>Fast bulk pass; similar single-func accuracy.</td></tr>
+            <tr><td>Gemini Flash</td><td>~$0.47</td><td>~2–4 min (parallel)</td><td>Stronger cross-function reasoning.</td></tr>
+            <tr><td>Claude Sonnet</td><td>~$3.17</td><td>~3–5 min (parallel)</td><td>High architectural synthesis &amp; fewer boilerplate false positives.</td></tr>
+            <tr><td>Claude Opus</td><td>~$15.83</td><td>~5–8 min (parallel)</td><td>Highest reasoning, overkill for 500 single-function summaries.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="rig-title" style="margin-bottom:12px;">TrueNAS RTX 3080 Live &amp; Baseline Health</div>
+        <div style="font-size:13px; color:#c9d1d9; margin-bottom:10px;">
+          <strong>Live VRAM (<code>:30068/api/ps</code>):</strong> <code>8.99 GB / 10.06 GB</code> (<strong>89.4% in VRAM</strong>, <code>num_ctx=8192</code>)
+        </div>
+        <div class="fill-bar"><div class="fill-inner" style="width:89.4%; background:linear-gradient(90deg, #3fb950, #d29922);"></div></div>
+        <div style="font-size:12px; color:var(--muted); line-height:1.6;">
+          • <strong>Throughput:</strong> Steady ~17s/func across 485+ consecutive calls (no thermal/OOM stalls).<br/>
+          • <strong>Documented Baseline (<code>homelab/RESUME.md</code>):</strong> NAS CPU ~68°C, RTX 3080 ~52°C idle, drives 30–36°C, <code>/dev/sdb</code> 2160 pending sectors (stable).<br/>
+          • <strong>Historical Charts:</strong> Live in Beszel (<code>LXC 103 :8090</code>) &amp; Scrutiny on your LAN (SSH key <code>~/.ssh/homelab</code> not on this work PC).
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

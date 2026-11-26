@@ -17,6 +17,17 @@
 
 use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
+
+mod rcmp_crc;
+mod partition_policy;
+mod serial_gate;
+mod cpg_codec;
+mod flashcode;
+mod channel_patch;
+mod hdlc;
+mod ppp_ipcp;
+mod relay;
+mod web_ui;
 use serde::Serialize;
 use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -48,6 +59,30 @@ enum Commands {
     Diff {
         file_a: String,
         file_b: String,
+    },
+    /// Launch the embedded pure-Rust local Web UI (default http://127.0.0.1:8766).
+    Web {
+        #[arg(long, default_value_t = 8766)]
+        port: u16,
+    },
+    /// Run bidirectional TCP relay for Tailscale remote workbench forwarding.
+    Relay {
+        #[arg(long, default_value = "127.0.0.1:8002")]
+        listen: String,
+        #[arg(long, default_value = "192.168.128.1:8002")]
+        target: String,
+    },
+    /// Compute Luhn mod-10 FLASHcode from 12 hex nibbles.
+    Flashcode {
+        #[arg(long, default_value = "000008002410")]
+        start: String,
+    },
+    /// Verify PartitionPolicy against a target partition byte (e.g. 0x80, 0x81, 0x82).
+    CheckPartition {
+        #[arg(long)]
+        partition: String,
+        #[arg(long, default_value_t = false)]
+        unlock_81: bool,
     },
 }
 
@@ -246,6 +281,28 @@ async fn main() -> Result<()> {
         }
         Commands::Diff { file_a, file_b } => {
             diff_files(&file_a, &file_b).await?;
+        }
+        Commands::Web { port } => {
+            web_ui::run_web_server(port).await?;
+        }
+        Commands::Relay { listen, target } => {
+            let listener = relay::bind_relay(&listen).await?;
+            eprintln!("Relay listening on {} -> {}", listen, target);
+            loop {
+                let (client, _) = listener.accept().await?;
+                let tgt = target.clone();
+                tokio::spawn(async move {
+                    let _ = relay::proxy_stream(client, &tgt).await;
+                });
+            }
+        }
+        Commands::Flashcode { start } => {
+            println!("{}", flashcode::format_flashcode(&start)?);
+        }
+        Commands::CheckPartition { partition, unlock_81 } => {
+            let p = u8::from_str_radix(partition.trim_start_matches("0x"), 16)?;
+            partition_policy::PartitionPolicy::new(unlock_81).check_write(p)?;
+            println!("OK: partition 0x{:02X} write allowed (unlock_81={})", p, unlock_81);
         }
     }
     Ok(())
