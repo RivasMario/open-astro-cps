@@ -34,7 +34,7 @@ sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
 
-This ensures that whenever you plug in an FTDI, Prolific, or CH340 programming cable, Linux automatically grants read and write permissions to your user account.
+This grants read/write access to FTDI, Prolific, CH340, and native Motorola USB CDC-ACM (`0cad:1001` $\rightarrow$ `/dev/ttyACM0` / `/dev/motorola-xts2500`) and tells Fedora's `ModemManager` (`ID_MM_DEVICE_IGNORE=1`) not to probe or lock the radio port. If `ModemManager` already grabbed the port, run `sudo systemctl restart ModemManager` (or `sudo systemctl stop ModemManager`) and re-plug the radio.
 
 ---
 
