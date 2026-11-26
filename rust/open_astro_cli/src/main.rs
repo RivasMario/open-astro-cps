@@ -28,6 +28,7 @@ mod hdlc;
 mod ppp_ipcp;
 mod relay;
 mod web_ui;
+mod serial_ppp;
 use serde::Serialize;
 use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -51,8 +52,15 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Perform a full flash (kitchen‑sink) on both XTS 2500 and XTS 5000.
-    Flash {},
+    /// Perform a FLASHcode write (with PartitionPolicy + optional --expect-serial gate).
+    Flash {
+        #[arg(long)]
+        expect_serial: Option<String>,
+        #[arg(long, default_value_t = false)]
+        unlock_81: bool,
+        #[arg(long, default_value = "540408-00078C-6")]
+        flashcode: String,
+    },
     /// Read the complete code‑plug (partition 0x80) and emit JSON lines.
     Read {},
     /// Diff two JSONL capture files (timestamps ignored).
@@ -84,6 +92,15 @@ enum Commands {
         #[arg(long, default_value_t = false)]
         unlock_81: bool,
     },
+    /// List available serial ports (COMx on Windows, /dev/ttyACM* on Linux).
+    Ports {},
+    /// Probe native userspace PPP ("CLIENT" -> "CLIENTSERVER" + LCP/IPCP) on a serial port.
+    PppProbe {
+        #[arg(long)]
+        serial: String,
+        #[arg(long, default_value_t = serial_ppp::DEFAULT_BAUD)]
+        baud: u32,
+    },
 }
 
 /// Simple representation of a captured RCMP packet for JSON output.
@@ -96,19 +113,11 @@ struct RcmpPacket {
     // Timestamp is omitted for deterministic diffs.
 }
 
-/// Encode a payload as RCMP frame (2‑byte length prefix + payload).
-fn encode_frame(payload: &[u8]) -> Vec<u8> {
-    let mut out = Vec::with_capacity(2 + payload.len());
-    out.extend_from_slice(&(payload.len() as u16).to_be_bytes());
-    out.extend_from_slice(payload);
-    out
-}
-
-/// Send a frame and read the response (opcode + body).
+/// Send a CRC-16-CCITT framed RCMP packet and verify the response CRC.
 async fn tx(stream: &mut TcpStream, opcode: u16, body: &[u8]) -> Result<(u16, Vec<u8>)> {
     let mut payload = opcode.to_be_bytes().to_vec();
     payload.extend_from_slice(body);
-    let frame = encode_frame(&payload);
+    let frame = rcmp_crc::frame_with_crc(&payload);
     stream.write_all(&frame).await?;
 
     // Read length prefix
@@ -117,8 +126,12 @@ async fn tx(stream: &mut TcpStream, opcode: u16, body: &[u8]) -> Result<(u16, Ve
     let len = u16::from_be_bytes(len_bytes) as usize;
     let mut buf = vec![0u8; len];
     stream.read_exact(&mut buf).await?;
-    let op = u16::from_be_bytes([buf[0], buf[1]]);
-    Ok((op, buf[2..].to_vec()))
+    let clean = rcmp_crc::verify_and_strip_crc(&buf)?;
+    if clean.len() < 2 {
+        return Err(anyhow!("RCMP response too short ({} bytes)", clean.len()));
+    }
+    let op = u16::from_be_bytes([clean[0], clean[1]]);
+    Ok((op, clean[2..].to_vec()))
 }
 
 /// Perform the UnlockSecurity 0x0107 handshake and return true on success.
@@ -176,42 +189,52 @@ fn unlock_lfsr(seed: &[u8]) -> Result<Vec<u8>> {
 }
 
 /// Perform a write of a flashcode string to partition 0x81, object 0x1006.
-async fn write_flashcode(stream: &mut TcpStream, payload: &str) -> Result<()> {
+async fn write_flashcode(stream: &mut TcpStream, payload: &str, unlock_81: bool) -> Result<()> {
+    partition_policy::PartitionPolicy::new(unlock_81).check_write(partition_policy::PART_EEPROM_LOCKED)?;
     // Build RCMP WRITE payload: B (partition) H (object) H (instance) H (length) + data
     // Partition 0x81, object 0x1006, instance 0, length = payload.len()
     let mut body = Vec::new();
-    body.push(0x81u8);
+    body.push(partition_policy::PART_EEPROM_LOCKED);
     body.extend_from_slice(&0x1006u16.to_be_bytes());
     body.extend_from_slice(&0u16.to_be_bytes()); // instance
     body.extend_from_slice(&(payload.len() as u16).to_be_bytes());
     body.extend_from_slice(payload.as_bytes());
-    let (op, _) = tx(stream, 0x0100, &body).await?;
-    if op != 0x8100 {
-        return Err(anyhow!("Flashcode write not ACKed (opcode {})", op));
+    let (op, _) = tx(stream, 0x0101, &body).await?;
+    if op != 0x8101 {
+        return Err(anyhow!("Flashcode write not ACKed (opcode 0x{:04X})", op));
     }
     Ok(())
 }
 
-/// High‑level flash routine used for both XTS models.
-async fn flash_routine(host: &str, port: u16, _serial: &str, flashcode: &str) -> Result<()> {
+/// High‑level flash routine with PartitionPolicy and optional serial gate.
+async fn flash_routine(
+    host: &str,
+    port: u16,
+    expect_serial: Option<&str>,
+    unlock_81: bool,
+    flashcode: &str,
+) -> Result<()> {
+    partition_policy::PartitionPolicy::new(unlock_81).check_write(partition_policy::PART_EEPROM_LOCKED)?;
     let addr: SocketAddr = format!("{}:{}", host, port).parse()?;
     let mut stream = TcpStream::connect(addr).await?;
 
     // Session start
     tx(&mut stream, 0x0106, &[0x00]).await?;
-    // Identity reads (model, serial, depot, etc.) – we keep them minimal.
+    // Identity reads (model, serial 0x81:0x1004, depot, etc.)
     tx(&mut stream, 0x0012, &[]).await?; // model
-    tx(&mut stream, 0x0011, &[0x00]).await?; // serial placeholder
-    tx(&mut stream, 0x000F, &[0x00]).await?; // depot
-    tx(&mut stream, 0x000F, &[0x10]).await?; // tuner mode
+    let (_op_ser, serial_resp) = tx(&mut stream, 0x0100, &[0x81, 0x10, 0x04, 0x00, 0x00, 0x00, 0x00]).await?;
+    if let Some(expected) = expect_serial {
+        let actual = serial_gate::extract_serial_ascii(&serial_resp)?;
+        serial_gate::verify_expected_serial(&actual, expected)?;
+    }
 
     // Secret handshake
     unlock_security(&mut stream).await?;
 
     // Write flashcode (actual payload string)
-    write_flashcode(&mut stream, flashcode).await?;
+    write_flashcode(&mut stream, flashcode, unlock_81).await?;
 
-    // Session end
+    // Session end (commit)
     tx(&mut stream, 0x0106, &[0x01]).await?;
     Ok(())
 }
@@ -270,11 +293,20 @@ async fn diff_files(a: &str, b: &str) -> Result<()> {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::Flash {} => {
-            // Flash XTS 2500 (flashcode 540408-00078C-6) and XTS 5000 (400008-006000-1)
-            flash_routine(&cli.host, cli.port, "205CFR2930", "540408-00078C-6").await?;
-            flash_routine(&cli.host, cli.port, "721CLZ0655", "400008-006000-1").await?;
-            eprintln!("✅ Flash completed for both radios.");
+        Commands::Flash {
+            expect_serial,
+            unlock_81,
+            flashcode,
+        } => {
+            flash_routine(
+                &cli.host,
+                cli.port,
+                expect_serial.as_deref(),
+                unlock_81,
+                &flashcode,
+            )
+            .await?;
+            eprintln!("✅ Flash completed ({}).", flashcode);
         }
         Commands::Read {} => {
             read_codeplug(&cli.host, cli.port).await?;
@@ -303,6 +335,15 @@ async fn main() -> Result<()> {
             let p = u8::from_str_radix(partition.trim_start_matches("0x"), 16)?;
             partition_policy::PartitionPolicy::new(unlock_81).check_write(p)?;
             println!("OK: partition 0x{:02X} write allowed (unlock_81={})", p, unlock_81);
+        }
+        Commands::Ports {} => {
+            for p in serial_ppp::list_serial_ports()? {
+                println!("{}", p);
+            }
+        }
+        Commands::PppProbe { serial, baud } => {
+            let pkts = serial_ppp::probe_ppp_serial(&serial, baud)?;
+            println!("PPP probe received {} frames on {} @ {}", pkts.len(), serial, baud);
         }
     }
     Ok(())

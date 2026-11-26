@@ -16,7 +16,7 @@ flowchart TB
         CG["cgIsh10c.dll ✅\nISH Schema & Partition Rights (0x80/0x81/0x82)"]
         FH["fhAdk10c.dll ✅\n.cpg Container, RC4 ('A8Z6J9QP5'), CRC"]
         UDC["UdcDrIsh10c.dll / udcIsh10c.dll 🟡\nCudcDrIshDoc -> WriteToDevice()"]
-        SEC["SECURITYLIB.dll / Security.exe / authAES.dll ❌\nASK / Feature-Level Licensing"]
+        SEC["SECURITYLIB.dll / authAES.dll ✅\nWindows ADK Registry / AES Key-Store Helper (No Radio EEPROM)"]
     end
 
     subgraph L3["Layer 3: Virtual Radio & RCMP Session Engine (NextGen10.dll)"]
@@ -62,7 +62,7 @@ flowchart TB
 | **4. Byte & Socket Glue** | `ByteData10.dll` (131 KB) | **415** | **10** (Batch 1 + Batch 2) | 🟡 In Progress | `CRawBytes::Open` (`1100421d`), `fudally_usb` (`11005601`), Batch 2 inner handlers (`110032cf`, `11004c07`, `11004c4b`, etc.) |
 | **4. Custom PPP / TCP** | `RadioCustStack10.dll` (122 KB) | **382** | Core USNET PPP + chat | ✅ Done | USNET embedded TCP/IP, `PPPConnect@1000ee10`, `PPPHandshake@1000ef60` (`CLIENT`/`CLIENTSERVER`), async-HDLC framing |
 | **4. Serial & Port Enum** | `RadioSerial10.dll`, `PortManager10.dll`, `PatComm10.dll` | Small wrappers | Exports & role | 🟡 Role Known | Win32 `CreateFile`/`SetCommState` and USB/COM port enumeration |
-| **5. Unopened / Security** | `SECURITYLIB.dll`, `authAES.dll`, `EncatenComponent.dll`, `OtapRWCDTimer.dll`, `RemoteProtocols01.dll` | — | Not yet opened | ❌ Pending | ASK / AES auth, legacy SB9600/SBEP, OTAP timer |
+| **5. Security & Legacy Protocols** | `SECURITYLIB.dll`, `authAES.dll`, `RemoteProtocols01.dll`, `EncatenComponent.dll`, `otaprwcdtimer.dll` | — | Batches 4–6 | ✅ Done | `SECURITYLIB.dll` is Windows Registry/XML UI gating (`SOFTWARE\Motorola\ADK\Security`, `SPS.DAT`); `authAES.dll` is AES key-store test/wrapper (`encrypt_function`/`decrypt_function`); zero radio EEPROM/RCMP logic |
 
 ---
 

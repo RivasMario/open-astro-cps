@@ -1,6 +1,7 @@
 use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use serde_json::json;
+use serde_json::{json, Value};
+use std::path::{Path, PathBuf};
 
 pub fn render_http_response(status: &str, content_type: &str, body: &str) -> Vec<u8> {
     format!(
@@ -13,19 +14,129 @@ pub fn render_http_response(status: &str, content_type: &str, body: &str) -> Vec
     .into_bytes()
 }
 
+fn find_backups_dir() -> Option<PathBuf> {
+    for cand in ["backups", "../backups", "../../backups"] {
+        let p = Path::new(cand);
+        if p.is_dir() {
+            return Some(p.to_path_buf());
+        }
+    }
+    None
+}
+
+fn safe_backup_path(filename: &str) -> Option<PathBuf> {
+    if filename.contains('/') || filename.contains('\\') || filename.contains("..") || !filename.ends_with(".json") {
+        return None;
+    }
+    let dir = find_backups_dir()?;
+    let full = dir.join(filename);
+    if full.is_file() { Some(full) } else { None }
+}
+
+fn url_decode(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' && i + 2 < bytes.len() {
+            if let Ok(hex_str) = std::str::from_utf8(&bytes[i + 1..i + 3]) {
+                if let Ok(val) = u8::from_str_radix(hex_str, 16) {
+                    out.push(val as char);
+                    i += 3;
+                    continue;
+                }
+            }
+        } else if bytes[i] == b'+' {
+            out.push(' ');
+            i += 1;
+            continue;
+        }
+        out.push(bytes[i] as char);
+        i += 1;
+    }
+    out
+}
+
 pub fn handle_http_request(req: &str) -> Vec<u8> {
-    let lines: Vec<&str> = req.lines().collect();
+    let (head, body) = if let Some((h, b)) = req.split_once("\r\n\r\n") {
+        (h, b)
+    } else if let Some((h, b)) = req.split_once("\n\n") {
+        (h, b)
+    } else {
+        (req, "")
+    };
+
+    let lines: Vec<&str> = head.lines().collect();
     if lines.is_empty() {
         return render_http_response("400 Bad Request", "text/plain", "Invalid request");
     }
 
-    let request_line = lines[0];
-    let parts: Vec<&str> = request_line.split_whitespace().collect();
-    if parts.len() != 3 || parts[0] != "GET" {
+    let parts: Vec<&str> = lines[0].split_whitespace().collect();
+    if parts.len() != 3 {
+        return render_http_response("400 Bad Request", "text/plain", "Invalid request line");
+    }
+    let method = parts[0];
+    let uri = parts[1];
+
+    if method == "POST" && uri == "/api/save-channel" {
+        let Ok(payload) = serde_json::from_str::<Value>(body.trim()) else {
+            return render_http_response("400 Bad Request", "application/json", r#"{"error":"Invalid JSON body"}"#);
+        };
+        let Some(file) = payload.get("file").and_then(|v| v.as_str()) else {
+            return render_http_response("400 Bad Request", "application/json", r#"{"error":"Missing file"}"#);
+        };
+        let Some(path) = safe_backup_path(file) else {
+            return render_http_response("404 Not Found", "application/json", r#"{"error":"Backup file not found"}"#);
+        };
+        let Ok(raw) = std::fs::read_to_string(&path) else {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Failed to read file"}"#);
+        };
+        let Ok(mut doc) = serde_json::from_str::<Value>(&raw) else {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Invalid codeplug JSON"}"#);
+        };
+        let zi = payload.get("zone_index").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+        let ci = payload.get("channel_index").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+        let Some(ch) = doc.get_mut("zones")
+            .and_then(|z| z.get_mut(zi))
+            .and_then(|z| z.get_mut("channels"))
+            .and_then(|c| c.get_mut(ci))
+            .and_then(|c| c.as_object_mut()) else {
+            return render_http_response("404 Not Found", "application/json", r#"{"error":"Zone/channel index not found"}"#);
+        };
+
+        let old_name = ch.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        if let Some(n) = payload.get("name").and_then(|v| v.as_str()) {
+            ch.insert("name".into(), json!(n));
+        }
+        if let Some(rx) = payload.get("rx_frequency").and_then(|v| v.as_f64()) {
+            ch.insert("rx_frequency".into(), json!(rx));
+        }
+        if let Some(tx) = payload.get("tx_frequency").and_then(|v| v.as_f64()) {
+            ch.insert("tx_frequency".into(), json!(tx));
+        }
+        if let Some(rx_only) = payload.get("rx_only").and_then(|v| v.as_bool()) {
+            ch.insert("rx_only".into(), json!(rx_only));
+        }
+        let new_name = ch.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+
+        let Ok(pretty) = serde_json::to_string_pretty(&doc) else {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Serialize failed"}"#);
+        };
+        if std::fs::write(&path, pretty).is_err() {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Write failed"}"#);
+        }
+        let resp = json!({
+            "status": "saved",
+            "file": file,
+            "diff": format!("zone[{}].ch[{}]: '{}' -> '{}'", zi, ci, old_name, new_name)
+        }).to_string();
+        return render_http_response("200 OK", "application/json", &resp);
+    }
+
+    if method != "GET" {
         return render_http_response("405 Method Not Allowed", "text/plain", "Method not allowed");
     }
 
-    let uri = parts[1];
     match uri {
         "/" => {
             let html_content = r#"<!DOCTYPE html>
@@ -38,7 +149,7 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
     :root { --bg:#0c0e12; --panel:#14171e; --tree:#101319; --border:#2a3140; --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --yellow:#d29922; --red:#f85149; }
     * { box-sizing:border-box; }
     body { margin:0; font-family:"Segoe UI",-apple-system,sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; }
-    header { padding:10px 18px; background:var(--panel); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+    header { padding:10px 18px; background:var(--panel); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:12px; }
     .pill { padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; background:rgba(248,81,73,0.18); color:var(--red); }
     .okpill { background:rgba(63,185,80,0.18); color:var(--green); }
     .main { display:flex; flex:1; overflow:hidden; }
@@ -51,9 +162,9 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
     .card { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; }
     h2 { margin:0 0 12px; font-size:15px; color:var(--accent); text-transform:uppercase; }
     table { width:100%; border-collapse:collapse; font-size:13px; }
-    th, td { text-align:left; padding:8px; border-bottom:1px solid #222733; }
+    th, td { text-align:left; padding:7px; border-bottom:1px solid #222733; }
     th { color:var(--muted); }
-    input, button { background:#0b0d11; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:7px 10px; font-size:13px; }
+    input, select, button { background:#0b0d11; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:6px 9px; font-size:13px; }
     button { background:#1f6feb; border-color:#388bfd; font-weight:600; cursor:pointer; }
     pre { background:#090b0f; border:1px solid var(--border); border-radius:6px; padding:10px; font-size:12px; overflow:auto; }
     .stash { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
@@ -67,7 +178,11 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
 <body>
   <header>
     <div><strong>OpenAstro CPS</strong> <span class="pill okpill" id="healthBadge">Rust Engine</span></div>
-    <div><span class="pill">Partition 0x82 Firewall: ACTIVE</span></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <select id="cpSelect" style="min-width:240px;"></select>
+      <button onclick="loadCodeplug()">Load Codeplug</button>
+      <span class="pill">Partition 0x82 Firewall: ACTIVE</span>
+    </div>
   </header>
   <div class="main">
     <aside>
@@ -84,7 +199,11 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
     <section>
       <div id="pane-info" class="pane">
         <div class="card">
-          <h2>Radio Identity &amp; FLASHcode Decoder (0x81:1006)</h2>
+          <h2>Loaded Radio Identity</h2>
+          <pre id="radioMeta">Select a codeplug JSON from the header dropdown...</pre>
+        </div>
+        <div class="card">
+          <h2>FLASHcode Decoder (0x81:1006)</h2>
           <div style="margin-bottom:10px;">
             <input id="fcStart" value="000008002410" style="width:160px;font-family:Consolas,monospace;" />
             <button onclick="calcFc()">Decode / Check</button>
@@ -96,8 +215,9 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
 
       <div id="pane-zones" class="pane hidden">
         <div class="card">
-          <h2>Zones &amp; Channels (Manual Inspector / Editor)</h2>
-          <table><thead><tr><th>Zone</th><th>Channel</th><th>RX (MHz)</th><th>TX (MHz)</th><th>Mode / NAC / PL</th></tr></thead><tbody id="chanBody"></tbody></table>
+          <h2>Zones &amp; Channels (Live JSON Inspector / Inline Editor)</h2>
+          <pre id="editStatus" style="margin-bottom:10px;">Edit any channel name/RX/TX and click Save to update the codeplug JSON.</pre>
+          <table><thead><tr><th>Zone</th><th>Channel</th><th>RX (MHz)</th><th>TX (MHz)</th><th>Mode / NAC / PL</th><th>Action</th></tr></thead><tbody id="chanBody"></tbody></table>
         </div>
       </div>
 
@@ -136,6 +256,7 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
     </section>
   </div>
   <script>
+    let activeFile = '';
     function showPane(name, el) {
       document.querySelectorAll('.pane').forEach(p => p.classList.add('hidden'));
       document.getElementById('pane-' + name).classList.remove('hidden');
@@ -150,19 +271,96 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
       const r = await fetch('/api/flashcode?start=' + encodeURIComponent(s));
       document.getElementById('fcOut').textContent = await r.text();
     }
-    fetch('/api/sample-channels').then(r=>r.json()).then(rows=>{
-      const b = document.getElementById('chanBody');
-      rows.forEach(c => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${c.zone}</td><td><strong>${c.name}</strong></td><td>${c.rx}</td><td>${c.tx}</td><td>${c.mode}</td>`;
-        b.appendChild(tr);
+    async function initBackups() {
+      const r = await fetch('/api/backups');
+      const files = await r.json();
+      const sel = document.getElementById('cpSelect');
+      files.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f; opt.textContent = f;
+        if (f.includes('721CLZ0655_codeplug.json')) opt.selected = true;
+        sel.appendChild(opt);
       });
-    });
+      if (files.length > 0) loadCodeplug();
+    }
+    async function loadCodeplug() {
+      activeFile = document.getElementById('cpSelect').value;
+      if (!activeFile) return;
+      const r = await fetch('/api/codeplug?file=' + encodeURIComponent(activeFile));
+      const cp = await r.json();
+      document.getElementById('radioMeta').textContent = JSON.stringify({
+        file: activeFile,
+        radio_model: cp.radio_model,
+        serial_number: cp.serial_number,
+        bandsplit: cp.bandsplit,
+        flashcode: cp.flashcode,
+        zone_count: (cp.zones || []).length
+      }, null, 2);
+      if (cp.flashcode) {
+        document.getElementById('fcStart').value = cp.flashcode.replaceAll('-', '').slice(0, 12);
+        calcFc();
+      }
+      const b = document.getElementById('chanBody');
+      b.innerHTML = '';
+      (cp.zones || []).forEach((z, zi) => {
+        (z.channels || []).forEach((c, ci) => {
+          const tr = document.createElement('tr');
+          const mode = `${c.voice_type || ''} ${c.rx_nac || ''} ${c.rx_pl_tone ? 'PL ' + c.rx_pl_tone : ''} ${c.rx_only ? '[RX-ONLY]' : ''}`;
+          tr.innerHTML = `<td>${z.name || z.zone_number}</td>
+            <td><input id="n_${zi}_${ci}" value="${c.name || ''}" style="width:130px"/></td>
+            <td><input id="rx_${zi}_${ci}" value="${c.rx_frequency ?? ''}" style="width:95px"/></td>
+            <td><input id="tx_${zi}_${ci}" value="${c.tx_frequency ?? ''}" style="width:95px"/></td>
+            <td>${mode}</td>
+            <td><button onclick="saveChan(${zi},${ci})">Save</button></td>`;
+          b.appendChild(tr);
+        });
+      });
+    }
+    async function saveChan(zi, ci) {
+      const body = {
+        file: activeFile,
+        zone_index: zi,
+        channel_index: ci,
+        name: document.getElementById(`n_${zi}_${ci}`).value,
+        rx_frequency: parseFloat(document.getElementById(`rx_${zi}_${ci}`).value),
+        tx_frequency: parseFloat(document.getElementById(`tx_${zi}_${ci}`).value)
+      };
+      const r = await fetch('/api/save-channel', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      document.getElementById('editStatus').textContent = await r.text();
+    }
+    initBackups();
     calcFc();
   </script>
 </body>
 </html>"#;
             render_http_response("200 OK", "text/html; charset=utf-8", html_content)
+        }
+        "/api/backups" => {
+            let mut files = Vec::new();
+            if let Some(dir) = find_backups_dir() {
+                if let Ok(entries) = std::fs::read_dir(dir) {
+                    for e in entries.flatten() {
+                        let name = e.file_name().to_string_lossy().to_string();
+                        if name.ends_with(".json") {
+                            files.push(name);
+                        }
+                    }
+                }
+            }
+            files.sort();
+            render_http_response("200 OK", "application/json", &json!(files).to_string())
+        }
+        _ if uri.starts_with("/api/codeplug") => {
+            let file = uri
+                .splitn(2, '?')
+                .nth(1)
+                .and_then(|q| q.split('&').find_map(|p| p.strip_prefix("file=")))
+                .map(url_decode)
+                .unwrap_or_default();
+            match safe_backup_path(&file).and_then(|p| std::fs::read_to_string(p).ok()) {
+                Some(raw) => render_http_response("200 OK", "application/json", &raw),
+                None => render_http_response("404 Not Found", "application/json", r#"{"error":"Codeplug not found"}"#),
+            }
         }
         "/api/sample-channels" => {
             let sample = json!([
@@ -209,9 +407,12 @@ pub async fn run_web_server(port: u16) -> anyhow::Result<()> {
 
     loop {
         let (mut socket, _) = listener.accept().await?;
-        let mut buffer = [0; 1024];
+        let mut buffer = [0; 8192];
 
         let n = socket.read(&mut buffer).await?;
+        if n == 0 {
+            continue;
+        }
         let request = String::from_utf8_lossy(&buffer[..n]);
         let response = handle_http_request(&request);
 
@@ -245,6 +446,17 @@ mod tests {
         let response = handle_http_request(request);
         assert!(response.starts_with(b"HTTP/1.1 200 OK"));
         assert!(String::from_utf8_lossy(&response).contains("\"flashcode\":\"000008-002410-2\""));
+    }
+
+    #[test]
+    fn test_handle_http_request_backups_and_traversal() {
+        let req_list = "GET /api/backups HTTP/1.1\r\nHost: localhost\r\n\r\n";
+        let resp_list = handle_http_request(req_list);
+        assert!(resp_list.starts_with(b"HTTP/1.1 200 OK"));
+
+        let req_trav = "GET /api/codeplug?file=../../Cargo.toml HTTP/1.1\r\nHost: localhost\r\n\r\n";
+        let resp_trav = handle_http_request(req_trav);
+        assert!(resp_trav.starts_with(b"HTTP/1.1 404 Not Found"));
     }
 
     #[test]

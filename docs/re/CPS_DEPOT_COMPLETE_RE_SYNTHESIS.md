@@ -1,7 +1,7 @@
 # ASTRO 25 CPS & Depot — Complete RE Synthesis for OpenAstro Builders
 
 > **Audience:** Any AI agent or developer building `open-astro-cps` (Python or Rust).
-> **Scope:** Complete architectural & EEPROM-persistence synthesis from Ghidra 12.2 headless decompilation + `qwen2.5-coder:14b` function-by-function analysis (**504 functions** across Batches 1–5) of Motorola ASTRO 25 Portable CPS & Portable Depot (`R20.01.00`).
+> **Scope:** Complete architectural & EEPROM-persistence synthesis from Ghidra 12.2 headless decompilation + `qwen2.5-coder:14b` function-by-function analysis (**544 functions** across Batches 1–6) of Motorola ASTRO 25 Portable CPS & Portable Depot (`R20.01.00`).
 
 ---
 
@@ -83,3 +83,4 @@ Future agents should **not** replicate Motorola's 7-layer COM/`SAFEARRAY`/Window
 - Batch 3 (`NextGen10` Trace3 + `ConnWinSock10` + `NewProto10` + `PortManager10`, 56 funcs): [HOMELAB_AI_BATCH3_TRACE_AND_UNOPENED.md](HOMELAB_AI_BATCH3_TRACE_AND_UNOPENED.md)
 - Batch 4 (`PatComm10` + `RadioSerial10` + `otaprwcdtimer`, 53 funcs): [HOMELAB_AI_BATCH4_SERIAL_AND_OTAP.md](HOMELAB_AI_BATCH4_SERIAL_AND_OTAP.md)
 - Batch 5 (`EncatenComponent`, Depot `PBT2.dll`, `RemoteProtocols01`, `UdcDrIsh10c`, `udcDrXAdk10c`, 349 funcs): [HOMELAB_AI_BATCH5_CABS_AND_DEPOT.md](HOMELAB_AI_BATCH5_CABS_AND_DEPOT.md)
+- Batch 6 (`SECURITYLIB.dll` + `authAES.dll`, 40 funcs): [HOMELAB_AI_BATCH6_SECURITY_AND_AUTHAES.md](HOMELAB_AI_BATCH6_SECURITY_AND_AUTHAES.md)
