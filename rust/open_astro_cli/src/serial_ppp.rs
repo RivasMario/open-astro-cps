@@ -6,6 +6,112 @@ use crate::hdlc::{hdlc_decode, hdlc_encode, FLAG};
 use crate::ppp_ipcp::{build_ipcp_conf_req, decode_ppp, encode_ppp, PppPacket, PROTO_IPV4, PROTO_LCP};
 
 pub const DEFAULT_BAUD: u32 = 115_200;
+pub const LOCAL_IP: [u8; 4] = [192, 168, 128, 2];
+pub const RADIO_IP: [u8; 4] = [192, 168, 128, 1];
+pub const DEFAULT_MSS: usize = 512;
+pub const DEFAULT_WINDOW: u16 = 2048;
+
+/// RFC 1662 PPP FCS-16 (poly 0x8408, init 0xFFFF, final XOR 0xFFFF).
+pub fn fcs16(data: &[u8]) -> u16 {
+    let mut crc: u16 = 0xFFFF;
+    for &b in data {
+        crc ^= b as u16;
+        for _ in 0..8 {
+            crc = if crc & 1 != 0 { (crc >> 1) ^ 0x8408 } else { crc >> 1 };
+        }
+    }
+    crc ^ 0xFFFF
+}
+
+/// Frame a PPP packet with RFC 1662 FCS-16 (little-endian) + async HDLC stuffing.
+pub fn frame_ppp_fcs(protocol: u16, payload: &[u8]) -> Vec<u8> {
+    let mut ppp = encode_ppp(protocol, payload);
+    let fcs = fcs16(&ppp);
+    ppp.push((fcs & 0xFF) as u8);
+    ppp.push((fcs >> 8) as u8);
+    hdlc_encode(&ppp)
+}
+
+/// Decode an async HDLC frame, verify and strip RFC 1662 FCS-16, and parse PPP.
+pub fn unframe_ppp_fcs(frame: &[u8]) -> Result<PppPacket> {
+    let raw = hdlc_decode(frame)?;
+    if raw.len() < 6 {
+        return Err(anyhow!("PPP+FCS frame too short ({} bytes)", raw.len()));
+    }
+    let body = &raw[..raw.len() - 2];
+    let got_fcs = u16::from_le_bytes([raw[raw.len() - 2], raw[raw.len() - 1]]);
+    let want_fcs = fcs16(body);
+    if got_fcs != want_fcs {
+        return Err(anyhow!("PPP FCS mismatch: got 0x{:04X}, want 0x{:04X}", got_fcs, want_fcs));
+    }
+    decode_ppp(body)
+}
+
+fn inet_checksum(data: &[u8]) -> u16 {
+    let mut sum: u32 = 0;
+    let mut i = 0;
+    while i + 1 < data.len() {
+        sum += u16::from_be_bytes([data[i], data[i + 1]]) as u32;
+        i += 2;
+    }
+    if i < data.len() {
+        sum += (data[i] as u32) << 8;
+    }
+    while (sum >> 16) != 0 {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+    !(sum as u16)
+}
+
+/// Build a minimal IPv4 + TCP segment (20B IP + 20B TCP + payload) for userspace PPP.
+pub fn build_ipv4_tcp_segment(
+    src_ip: [u8; 4],
+    dst_ip: [u8; 4],
+    src_port: u16,
+    dst_port: u16,
+    seq: u32,
+    ack: u32,
+    flags: u8,
+    window: u16,
+    payload: &[u8],
+) -> Vec<u8> {
+    let tcp_len = 20 + payload.len();
+    let total_len = (20 + tcp_len) as u16;
+    let mut pkt = vec![0u8; total_len as usize];
+
+    // IPv4 header
+    pkt[0] = 0x45;
+    pkt[2..4].copy_from_slice(&total_len.to_be_bytes());
+    pkt[8] = 64; // TTL
+    pkt[9] = 6;  // TCP
+    pkt[12..16].copy_from_slice(&src_ip);
+    pkt[16..20].copy_from_slice(&dst_ip);
+    let ip_csum = inet_checksum(&pkt[0..20]);
+    pkt[10..12].copy_from_slice(&ip_csum.to_be_bytes());
+
+    // TCP header
+    let tcp = &mut pkt[20..];
+    tcp[0..2].copy_from_slice(&src_port.to_be_bytes());
+    tcp[2..4].copy_from_slice(&dst_port.to_be_bytes());
+    tcp[4..8].copy_from_slice(&seq.to_be_bytes());
+    tcp[8..12].copy_from_slice(&ack.to_be_bytes());
+    tcp[12] = 0x50; // data offset = 5 (20 bytes)
+    tcp[13] = flags;
+    tcp[14..16].copy_from_slice(&window.to_be_bytes());
+    tcp[20..].copy_from_slice(payload);
+
+    // TCP pseudo-header checksum
+    let mut pseudo = Vec::with_capacity(12 + tcp_len);
+    pseudo.extend_from_slice(&src_ip);
+    pseudo.extend_from_slice(&dst_ip);
+    pseudo.push(0);
+    pseudo.push(6);
+    pseudo.extend_from_slice(&(tcp_len as u16).to_be_bytes());
+    pseudo.extend_from_slice(tcp);
+    let tcp_csum = inet_checksum(&pseudo);
+    pkt[20 + 16..20 + 18].copy_from_slice(&tcp_csum.to_be_bytes());
+    pkt
+}
 
 /// List all serial ports visible to the OS (COMx on Windows, /dev/ttyACM* on Linux).
 pub fn list_serial_ports() -> Result<Vec<String>> {
@@ -23,14 +129,12 @@ pub fn open_astro_serial(port_name: &str, baud: u32, timeout_ms: u64) -> Result<
 
 /// Build an LCP Configure-Request (id=1, async-map=0).
 pub fn build_lcp_conf_req(id: u8) -> Vec<u8> {
-    // Code=1 (Conf-Req), ID, Len=10, Opt 2 (ACCM): type=2, len=6, map=0x00000000
     encode_ppp(PROTO_LCP, &[0x01, id, 0x00, 0x0A, 0x02, 0x06, 0x00, 0x00, 0x00, 0x00])
 }
 
-/// Wrap a raw IPv4 packet inside PPP + async HDLC.
+/// Wrap a raw IPv4 packet inside PPP + FCS-16 + async HDLC.
 pub fn frame_ipv4_hdlc(ipv4_pkt: &[u8]) -> Vec<u8> {
-    let ppp = encode_ppp(PROTO_IPV4, ipv4_pkt);
-    hdlc_encode(&ppp)
+    frame_ppp_fcs(PROTO_IPV4, ipv4_pkt)
 }
 
 /// Perform the Motorola USNET `"CLIENT"` -> `"CLIENTSERVER"` chat handshake on a serial port,
@@ -47,9 +151,10 @@ pub fn probe_ppp_serial(port_name: &str, baud: u32) -> Result<Vec<PppPacket>> {
         return Err(anyhow!("Expected CLIENTSERVER banner, got: {:?}", banner_str));
     }
 
-    let lcp = hdlc_encode(&build_lcp_conf_req(1));
+    let lcp = frame_ppp_fcs(PROTO_LCP, &build_lcp_conf_req(1)[4..]);
     port.write_all(&lcp)?;
-    let ipcp = hdlc_encode(&build_ipcp_conf_req(1, [192, 168, 128, 2]));
+    let ipcp_raw = build_ipcp_conf_req(1, LOCAL_IP);
+    let ipcp = frame_ppp_fcs(crate::ppp_ipcp::PROTO_IPCP, &ipcp_raw[4..]);
     port.write_all(&ipcp)?;
     port.flush()?;
 
@@ -61,10 +166,8 @@ pub fn probe_ppp_serial(port_name: &str, baud: u32) -> Result<Vec<PppPacket>> {
         if b == FLAG {
             if let Some(s) = start {
                 if idx > s + 1 {
-                    if let Ok(decoded) = hdlc_decode(&raw[s..=idx]) {
-                        if let Ok(pkt) = decode_ppp(&decoded) {
-                            packets.push(pkt);
-                        }
+                    if let Ok(pkt) = unframe_ppp_fcs(&raw[s..=idx]) {
+                        packets.push(pkt);
                     }
                 }
             }
@@ -79,16 +182,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_lcp_and_ipv4_framing() {
-        let lcp = build_lcp_conf_req(1);
-        let pkt = decode_ppp(&lcp).unwrap();
-        assert_eq!(pkt.protocol, PROTO_LCP);
-        assert_eq!(pkt.payload[0], 0x01);
+    fn test_fcs16_and_ipv4_tcp_framing() {
+        let seg = build_ipv4_tcp_segment(LOCAL_IP, RADIO_IP, 8001, 8002, 1, 0, 0x02, DEFAULT_WINDOW, b"");
+        assert_eq!(seg.len(), 40);
+        assert_eq!(inet_checksum(&seg[0..20]), 0);
 
-        let hdlc = frame_ipv4_hdlc(&[0x45, 0x00, 0x00, 0x14]);
-        let unframed = hdlc_decode(&hdlc).unwrap();
-        let ip_pkt = decode_ppp(&unframed).unwrap();
-        assert_eq!(ip_pkt.protocol, PROTO_IPV4);
-        assert_eq!(ip_pkt.payload, vec![0x45, 0x00, 0x00, 0x14]);
+        let hdlc = frame_ipv4_hdlc(&seg);
+        let pkt = unframe_ppp_fcs(&hdlc).unwrap();
+        assert_eq!(pkt.protocol, PROTO_IPV4);
+        assert_eq!(pkt.payload, seg);
+    }
+
+    #[test]
+    fn test_fcs_corruption_rejected() {
+        let mut hdlc = frame_ipv4_hdlc(b"\x45\x00\x00\x14");
+        let mid = hdlc.len() / 2;
+        hdlc[mid] ^= 0xFF;
+        assert!(unframe_ppp_fcs(&hdlc).is_err());
     }
 }

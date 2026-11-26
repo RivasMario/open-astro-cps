@@ -12,6 +12,12 @@ SUBSYSTEM=="tty", ATTRS{idVendor}=="0cad", ATTRS{idProduct}=="1001", MODE="0660"
 # Any other Motorola CGISS radio that exposes a tty.
 SUBSYSTEM=="tty", ATTRS{idVendor}=="0cad", MODE="0660", TAG+="uaccess", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1"
 
+# --- FlashZap / Bootloader / TI OMAP IPL (from fudally.inf) ---
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0cad", ATTRS{idProduct}=="1000", MODE="0660", TAG+="uaccess", GROUP="dialout"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0cad", ATTRS{idProduct}=="10f0", MODE="0660", TAG+="uaccess", GROUP="dialout"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0451", ATTRS{idProduct}=="3f00", MODE="0660", TAG+="uaccess", GROUP="dialout"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0451", ATTRS{idProduct}=="3f02", MODE="0660", TAG+="uaccess", GROUP="dialout"
+
 # --- USB-to-UART "ribless" cables (XTS 5000 Hirose, XTL mobiles, RIB) ---
 # FTDI FT232R / FT232BM
 SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE="0660", TAG+="uaccess", GROUP="dialout"
