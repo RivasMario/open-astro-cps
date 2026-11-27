@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   build:
@@ -42,6 +44,17 @@ jobs:
         run: |
           mkdir -p dist
           cp "rust/open_astro_cli/target/${{ matrix.target }}/release/${{ matrix.bin }}" "dist/${{ matrix.asset }}"
+      - name: Optional Authenticode Sign (Windows)
+        if: matrix.os == 'windows-latest' && env.SIGNING_CERT_PFX_B64 != ''
+        shell: pwsh
+        env:
+          SIGNING_CERT_PFX_B64: ${{ secrets.SIGNING_CERT_PFX_B64 }}
+          SIGNING_CERT_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: |
+          [IO.File]::WriteAllBytes("cert.pfx", [Convert]::FromBase64String($env:SIGNING_CERT_PFX_B64))
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
+          & $signtool sign /f cert.pfx /p $env:SIGNING_CERT_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 "dist/${{ matrix.asset }}"
+          Remove-Item cert.pfx -Force
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset }}
@@ -57,8 +70,14 @@ jobs:
         with:
           path: dist
           merge-multiple: true
-      - name: Copy udev rules
-        run: cp scripts/99-openastro.rules dist/99-openastro.rules
+      - name: Copy udev rules and generate SHA256SUMS.txt
+        run: |
+          cp scripts/99-openastro.rules dist/99-openastro.rules
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: "dist/open_astro_cli-*"
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/*
