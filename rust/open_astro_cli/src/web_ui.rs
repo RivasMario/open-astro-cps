@@ -178,6 +178,10 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
     .c81 { background:#3a2b12; border-color:#9e7423; }
     .c82 { background:#3a1619; border-color:#9e3138; }
     .statusbar { padding:3px 8px; background:var(--panel); border-top:1px solid var(--hi); display:flex; justify-content:space-between; font-size:11px; color:var(--muted); }
+    .fam-bar { padding:6px 10px; margin-bottom:10px; border:1px solid var(--hi); display:flex; justify-content:space-between; align-items:center; font-weight:700; }
+    .fam-port { background:#10253a; border-left:4px solid #388bfd; color:#a5d6ff; }
+    .fam-mob { background:#2d210e; border-left:4px solid #d29922; color:#f2cc60; }
+    .fam-err { background:#3a1619; border-left:4px solid #f85149; color:#ffa198; }
     .hidden { display:none; }
   </style>
 </head>
@@ -212,6 +216,10 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
       <div class="tree-item" onclick="showPane('custom', this)">🚀 Custom (NAS / SDR / Relay)</div>
     </aside>
     <section>
+      <div id="famBanner" class="fam-bar fam-port">
+        <span id="famTitle">📻 DETECTED FAMILY: PORTABLE (XTS / PRC-153 · Q/H Options · USB 0cad:1001/1002)</span>
+        <span id="famGuard">🛡️ Cross-Flash Guard: PORTABLE ONLY (Mobile M*/XTL blocked)</span>
+      </div>
       <div id="pane-info" class="pane">
         <div class="card">
           <h2>Loaded Radio Identity</h2>
@@ -323,10 +331,21 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
       if (!activeFile) return;
       const r = await fetch('/api/codeplug?file=' + encodeURIComponent(activeFile));
       const cp = await r.json();
+      const mdl = (cp.radio_model || cp.model || '').toUpperCase();
+      const isMob = mdl.includes('XTL') || mdl.includes('PM ') || mdl.startsWith('M');
+      const banner = document.getElementById('famBanner');
+      banner.className = 'fam-bar ' + (isMob ? 'fam-mob' : 'fam-port');
+      document.getElementById('famTitle').textContent = isMob
+        ? `🚗 DETECTED FAMILY: MOBILE (${cp.radio_model || 'XTL / PM'} · G* Options · USB 0cad:1003/1010-1015)`
+        : `📻 DETECTED FAMILY: PORTABLE (${cp.radio_model || 'XTS / PRC-153'} · Q/H Options · USB 0cad:1001/1002)`;
+      document.getElementById('famGuard').textContent = isMob
+        ? '🛡️ Cross-Flash Guard: MOBILE ONLY (Portable H*/XTS writes blocked)'
+        : '🛡️ Cross-Flash Guard: PORTABLE ONLY (Mobile M*/XTL writes blocked)';
       document.getElementById('radioMeta').textContent = JSON.stringify({
         file: activeFile,
-        radio_model: cp.radio_model,
-        serial_number: cp.serial_number,
+        detected_family: isMob ? 'MOBILE (XTL/PM - G* Options)' : 'PORTABLE (XTS/PRC-153 - Q/H Options)',
+        radio_model: cp.radio_model || cp.model,
+        serial_number: cp.serial_number || cp.serial,
         bandsplit: cp.bandsplit,
         flashcode: cp.flashcode,
         zone_count: (cp.zones || []).length
