@@ -73,12 +73,14 @@ enum Commands {
         #[arg(long, default_value_t = 8766)]
         port: u16,
     },
-    /// Run bidirectional TCP relay for Tailscale remote workbench forwarding.
+    /// Run bidirectional TCP relay (or serial-PPP probe bridge) for Tailscale remote workbench forwarding.
     Relay {
         #[arg(long, default_value = "127.0.0.1:8002")]
         listen: String,
         #[arg(long, default_value = "192.168.128.1:8002")]
         target: String,
+        #[arg(long)]
+        serial: Option<String>,
     },
     /// Compute Luhn mod-10 FLASHcode from 12 hex nibbles.
     Flashcode {
@@ -324,7 +326,13 @@ async fn main() -> Result<()> {
         Commands::Web { port } => {
             web_ui::run_web_server(port).await?;
         }
-        Commands::Relay { listen, target } => {
+        Commands::Relay { listen, target, serial } => {
+            if let Some(port_name) = serial {
+                let pkts = serial_ppp::probe_ppp_serial(&port_name, serial_ppp::DEFAULT_BAUD)?;
+                let mut sess = serial_ppp::PppTcpSession::new(8001, 8002, 1);
+                let _syn = sess.build_syn_hdlc();
+                eprintln!("Serial PPP link probed on {} ({} LCP/IPCP frames)", port_name, pkts.len());
+            }
             let listener = relay::bind_relay(&listen).await?;
             eprintln!("Relay listening on {} -> {}", listen, target);
             loop {

@@ -78,6 +78,80 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
     let method = parts[0];
     let uri = parts[1];
 
+    if method == "POST" && uri == "/api/add-nas-channel" {
+        let Ok(payload) = serde_json::from_str::<Value>(body.trim()) else {
+            return render_http_response("400 Bad Request", "application/json", r#"{"error":"Invalid JSON"}"#);
+        };
+        let Some(file) = payload.get("file").and_then(|v| v.as_str()) else {
+            return render_http_response("400 Bad Request", "application/json", r#"{"error":"Missing file"}"#);
+        };
+        let Some(path) = safe_backup_path(file) else {
+            return render_http_response("404 Not Found", "application/json", r#"{"error":"Backup file not found"}"#);
+        };
+        let Ok(raw) = std::fs::read_to_string(&path) else {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Read failed"}"#);
+        };
+        let Ok(mut doc) = serde_json::from_str::<Value>(&raw) else {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Invalid JSON"}"#);
+        };
+        let name = payload.get("name").and_then(|v| v.as_str()).unwrap_or("NAS MONITOR");
+        let rx = payload.get("rx_frequency").and_then(|v| v.as_f64()).unwrap_or(851.8875);
+        let Some(chans) = doc.get_mut("zones").and_then(|z| z.get_mut(0)).and_then(|z| z.get_mut("channels")).and_then(|c| c.as_array_mut()) else {
+            return render_http_response("404 Not Found", "application/json", r#"{"error":"No zones[0].channels found"}"#);
+        };
+        let next_num = chans.len() + 1;
+        chans.push(json!({
+            "channel_number": next_num,
+            "name": name,
+            "rx_frequency": rx,
+            "tx_frequency": 0.0,
+            "voice_type": "P25",
+            "rx_nac": "$293",
+            "rx_only": true
+        }));
+        let Ok(pretty) = serde_json::to_string_pretty(&doc) else {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Serialize failed"}"#);
+        };
+        if std::fs::write(&path, pretty).is_err() {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Write failed"}"#);
+        }
+        return render_http_response("200 OK", "application/json", &json!({"status":"added","name":name,"rx_frequency":rx,"tx_frequency":0.0,"rx_only":true}).to_string());
+    }
+
+    if method == "POST" && uri == "/api/save-adp-key" {
+        let Ok(payload) = serde_json::from_str::<Value>(body.trim()) else {
+            return render_http_response("400 Bad Request", "application/json", r#"{"error":"Invalid JSON"}"#);
+        };
+        let Some(file) = payload.get("file").and_then(|v| v.as_str()) else {
+            return render_http_response("400 Bad Request", "application/json", r#"{"error":"Missing file"}"#);
+        };
+        let key_hex = payload.get("key_hex").and_then(|v| v.as_str()).unwrap_or("");
+        if let Err(e) = crate::channel_patch::parse_adp_key(key_hex) {
+            return render_http_response("400 Bad Request", "application/json", &json!({"error": e.to_string()}).to_string());
+        }
+        let Some(path) = safe_backup_path(file) else {
+            return render_http_response("404 Not Found", "application/json", r#"{"error":"Backup file not found"}"#);
+        };
+        let Ok(raw) = std::fs::read_to_string(&path) else {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Read failed"}"#);
+        };
+        let Ok(mut doc) = serde_json::from_str::<Value>(&raw) else {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Invalid JSON"}"#);
+        };
+        let key_name = payload.get("key_name").and_then(|v| v.as_str()).unwrap_or("ADP_TEST_1");
+        let keys = doc.as_object_mut().and_then(|o| {
+            if !o.contains_key("encryption_keys") { o.insert("encryption_keys".into(), json!([])); }
+            o.get_mut("encryption_keys")
+        }).and_then(|k| k.as_array_mut());
+        if let Some(arr) = keys {
+            arr.push(json!({"key_id": arr.len() + 1, "name": key_name, "algorithm": "ADP (40-bit RC4)", "key_hex": key_hex.to_uppercase()}));
+        }
+        if let Ok(pretty) = serde_json::to_string_pretty(&doc) {
+            let _ = std::fs::write(&path, pretty);
+        }
+        return render_http_response("200 OK", "application/json", &json!({"status":"saved","key_name":key_name}).to_string());
+    }
+
     if method == "POST" && uri == "/api/save-channel" {
         let Ok(payload) = serde_json::from_str::<Value>(body.trim()) else {
             return render_http_response("400 Bad Request", "application/json", r#"{"error":"Invalid JSON body"}"#);
@@ -288,6 +362,11 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
       <div id="pane-adp" class="pane hidden">
         <div class="card">
           <h2>Secure / ADP 40-bit RC4 Keys (0x80:0x005D)</h2>
+          <div style="margin-bottom:8px;display:flex;gap:6px;align-items:center;">
+            <input id="adpName" value="ADP_TEST_1" style="width:120px" />
+            <input id="adpHex" value="A1B2C3D4E5" style="width:120px;font-family:Consolas,monospace;" />
+            <button onclick="saveAdp()">Add 40-bit ADP Key</button>
+          </div>
           <pre id="adpOut">Load a codeplug JSON to inspect encryption key slots...</pre>
         </div>
       </div>
@@ -314,10 +393,19 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
 
       <div id="pane-custom" class="pane hidden">
         <div class="card">
-          <h2>Custom OpenAstro Features (Not in Original CPS)</h2>
+          <h2>One-Click NAS Channel Generator (RX-Only Locked)</h2>
+          <div style="margin-bottom:8px;display:flex;gap:6px;align-items:center;">
+            <input id="nasName" value="PSERN NAS" style="width:140px" />
+            <input id="nasRx" value="851.8875" style="width:100px" />
+            <button onclick="addNas()">Add NAS Channel to Loaded Codeplug</button>
+          </div>
+          <pre id="nasStatus">Enforces tx_frequency=0.0 and rx_only=true (never affiliates).</pre>
+        </div>
+        <div class="card">
+          <h2>Custom OpenAstro CLI Tools (NAS / SDR / Relay)</h2>
           <pre>open-astro make-nas --tgid 1188 --tg-name "SEATTLE DISP" -o seattle_nas.json
 open-astro export-sdr backups/Radio4_RedmondPD_721CLZ0655_codeplug.json -o backups/sdr_exports
-open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pre>
+open_astro_cli.exe relay --serial COM7 --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pre>
         </div>
       </div>
     </section>
@@ -450,6 +538,24 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
       };
       const r = await fetch('/api/save-channel', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
       document.getElementById('editStatus').textContent = await r.text();
+    }
+    async function addNas() {
+      const r = await fetch('/api/add-nas-channel', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        file: activeFile,
+        name: document.getElementById('nasName').value,
+        rx_frequency: parseFloat(document.getElementById('nasRx').value)
+      })});
+      document.getElementById('nasStatus').textContent = await r.text();
+      loadCodeplug();
+    }
+    async function saveAdp() {
+      const r = await fetch('/api/save-adp-key', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        file: activeFile,
+        key_name: document.getElementById('adpName').value,
+        key_hex: document.getElementById('adpHex').value
+      })});
+      document.getElementById('adpOut').textContent = await r.text();
+      loadCodeplug();
     }
     initBackups();
     fetch('/api/mobile-options').then(r=>r.text()).then(t=>{

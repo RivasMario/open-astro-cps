@@ -113,6 +113,87 @@ pub fn build_ipv4_tcp_segment(
     pkt
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedTcpSegment {
+    pub src_port: u16,
+    pub dst_port: u16,
+    pub seq: u32,
+    pub ack: u32,
+    pub flags: u8,
+    pub window: u16,
+    pub payload: Vec<u8>,
+}
+
+/// Parse an IPv4 + TCP segment received over PPP (proto 0x0021).
+pub fn parse_ipv4_tcp_segment(pkt: &[u8]) -> Result<ParsedTcpSegment> {
+    if pkt.len() < 40 || (pkt[0] >> 4) != 4 || pkt[9] != 6 {
+        return Err(anyhow!("Not an IPv4/TCP packet"));
+    }
+    let ihl = ((pkt[0] & 0x0F) as usize) * 4;
+    if pkt.len() < ihl + 20 {
+        return Err(anyhow!("Truncated IPv4/TCP header"));
+    }
+    let tcp = &pkt[ihl..];
+    let data_off = ((tcp[12] >> 4) as usize) * 4;
+    if tcp.len() < data_off {
+        return Err(anyhow!("Truncated TCP options"));
+    }
+    Ok(ParsedTcpSegment {
+        src_port: u16::from_be_bytes([tcp[0], tcp[1]]),
+        dst_port: u16::from_be_bytes([tcp[2], tcp[3]]),
+        seq: u32::from_be_bytes([tcp[4], tcp[5], tcp[6], tcp[7]]),
+        ack: u32::from_be_bytes([tcp[8], tcp[9], tcp[10], tcp[11]]),
+        flags: tcp[13],
+        window: u16::from_be_bytes([tcp[14], tcp[15]]),
+        payload: tcp[data_off..].to_vec(),
+    })
+}
+
+/// Stateful userspace TCP-over-PPP session (host 192.168.128.2:8001 <-> radio 192.168.128.1:8002).
+pub struct PppTcpSession {
+    pub local_port: u16,
+    pub remote_port: u16,
+    pub seq: u32,
+    pub ack: u32,
+    pub peer_window: u16,
+}
+
+impl PppTcpSession {
+    pub fn new(local_port: u16, remote_port: u16, initial_seq: u32) -> Self {
+        Self {
+            local_port,
+            remote_port,
+            seq: initial_seq,
+            ack: 0,
+            peer_window: DEFAULT_WINDOW,
+        }
+    }
+
+    /// Build initial TCP SYN framed in PPP+FCS+HDLC.
+    pub fn build_syn_hdlc(&mut self) -> Vec<u8> {
+        let seg = build_ipv4_tcp_segment(
+            LOCAL_IP, RADIO_IP, self.local_port, self.remote_port,
+            self.seq, 0, 0x02, DEFAULT_WINDOW, &[],
+        );
+        self.seq = self.seq.wrapping_add(1);
+        frame_ipv4_hdlc(&seg)
+    }
+
+    /// Chunk an outbound RCMP payload into MSS-bounded (<= 512B) PSH+ACK HDLC frames.
+    pub fn encode_data_frames(&mut self, data: &[u8]) -> Vec<Vec<u8>> {
+        let mut frames = Vec::new();
+        for chunk in data.chunks(DEFAULT_MSS) {
+            let seg = build_ipv4_tcp_segment(
+                LOCAL_IP, RADIO_IP, self.local_port, self.remote_port,
+                self.seq, self.ack, 0x18, DEFAULT_WINDOW, chunk,
+            );
+            self.seq = self.seq.wrapping_add(chunk.len() as u32);
+            frames.push(frame_ipv4_hdlc(&seg));
+        }
+        frames
+    }
+}
+
 /// List all serial ports visible to the OS (COMx on Windows, /dev/ttyACM* on Linux).
 pub fn list_serial_ports() -> Result<Vec<String>> {
     let ports = serialport::available_ports()?;
@@ -199,5 +280,22 @@ mod tests {
         let mid = hdlc.len() / 2;
         hdlc[mid] ^= 0xFF;
         assert!(unframe_ppp_fcs(&hdlc).is_err());
+    }
+
+    #[test]
+    fn test_ppp_tcp_session_syn_and_chunking() {
+        let mut sess = PppTcpSession::new(8001, 8002, 1000);
+        let syn_hdlc = sess.build_syn_hdlc();
+        let ppp = unframe_ppp_fcs(&syn_hdlc).unwrap();
+        let parsed = parse_ipv4_tcp_segment(&ppp.payload).unwrap();
+        assert_eq!(parsed.src_port, 8001);
+        assert_eq!(parsed.dst_port, 8002);
+        assert_eq!(parsed.flags, 0x02);
+        assert_eq!(sess.seq, 1001);
+
+        let big_payload = vec![0xABu8; 1100];
+        let frames = sess.encode_data_frames(&big_payload);
+        assert_eq!(frames.len(), 3); // 512 + 512 + 76
+        assert_eq!(sess.seq, 1001 + 1100);
     }
 }
