@@ -47,7 +47,7 @@ struct Cli {
     port: u16,
 
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
@@ -301,7 +301,21 @@ async fn diff_files(a: &str, b: &str) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
-    match cli.command {
+    let cmd = match cli.command {
+        Some(c) => c,
+        None => {
+            #[cfg(target_os = "windows")]
+            let _ = std::process::Command::new("cmd")
+                .args(["/C", "start", "", "http://127.0.0.1:8766"])
+                .spawn();
+            #[cfg(target_os = "linux")]
+            let _ = std::process::Command::new("xdg-open")
+                .arg("http://127.0.0.1:8766")
+                .spawn();
+            Commands::Web { port: 8766 }
+        }
+    };
+    match cmd {
         Commands::Flash {
             expect_serial,
             unlock_81,
