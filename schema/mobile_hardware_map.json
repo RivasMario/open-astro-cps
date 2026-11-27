@@ -1,0 +1,23 @@
+{
+  "_about": "Derived ASTRO 25 Mobile (XTL 1500 / 2500 / 5000, PM 1500) USB PID, control-head, and accessory reference map from MotorolaFL08USB2000.INF and PatMobDepot.exe R15.00.00.",
+  "usb_pids": {
+    "0cad:1003": "XTL Series (Mobile CDC-ACM)",
+    "0cad:1010": "XTL M5 Control Head (MantaRay)",
+    "0cad:1011": "XTL O5 Control Head (Odyssey)",
+    "0cad:1014": "XTL MX Control Head (Manta-X)",
+    "0cad:1015": "PM 1500 Control Head"
+  },
+  "control_heads": [
+    {"id": "M5", "name": "MantaRay / XTL 2500/5000 Control Head", "ish_notes": "Maps programmable front-panel buttons via 0x0020 control matrix"},
+    {"id": "O5", "name": "Odyssey / XTL 5000 Color Control Head", "ish_notes": "Maps softkeys/knobs via 0x0020 control matrix"},
+    {"id": "MX", "name": "Manta-X Control Head", "ish_notes": "Extended mobile control head"},
+    {"id": "W3/W4/W5/W7/W9", "name": "Legacy ASTRO Spectra / XTL Remote Heads", "ish_notes": "Handheld / rotary / keypad mobile heads"}
+  ],
+  "mobile_peripherals": [
+    {"subsystem": "Siren / PA", "notes": "Mobile siren tones, horn ring, and external PA speaker routing"},
+    {"subsystem": "DEK (Direct Entry Keypad)", "notes": "External status/message/wildcard button module"},
+    {"subsystem": "Ignition Sense", "notes": "Soft power-off / Tx inhibit / ignition-only power-up"}
+  ],
+  "flashcode_prefix": "G*",
+  "options_file": "schema/mobile_flashcode_options.json"
+}
