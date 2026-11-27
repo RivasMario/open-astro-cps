@@ -53,4 +53,9 @@ One single static Rust binary (`rust/open_astro_cli`) for **Windows** (`COMx`, x
   - **One-Click NAS Generator (`make-nas`):** Passive trunked monitoring channels with enforced `tx_frequency = 0.0`, `rx_only = True`, `tx_inhibit = True`.
   - **One-Click SDR Export (`export-sdr`):** Export zones/NACs/talkgroups directly to DSD-FME & SDRTrunk.
   - **CSV / JSON Fleet Sync & Side-by-Side Diff:** Clone/sync channels across mixed-generation radios (`XTS 2500` / `XTS 5000` / `PRC-153`) with Git-diffable JSON.
-  - **Tailscale Network Relay & Pre-Flight Simulator:** Test writes against `MockRadioServer` or program remote radios over Tailscale, with `0x82` permanently blocked.
+  ### Phase 6 — Mobile ASTRO 25 Support (`XTL 1500` / `XTL 2500` / `XTL 5000` / `PM 1500`)
+- **Shared Core:** `fhAdk10c.dll`, `UdcDrIsh10c.dll`, `udcIsh10c.dll`, `0cad` USB CDC-ACM (`0cad:1003`, `1010`–`1015`), and RCMP write flow are identical to Portable.
+- **Mobile Additions ([MOBILE_DEPOT_RE_PLAN.md](re/MOBILE_DEPOT_RE_PLAN.md)):**
+  - Parse `patmhopt_a.mdf` / `patmhopt_b.mdf` (`G*` FLASHcode options & XTL/PM model matrix) into `schema/`.
+  - Decompile Mobile-specific R15 DLLs (`adkGen10c.dll`, `udcXAdk10c.dll`, `Rdb50c.dll`, `Rud50c.dll`, `cgIsh10c.dll` R15 diff) via Ghidra + `qwen2.5-coder:14b`.
+  - Add XTL/PM `G*` FLASHcode option decoding and Mobile control-head / trunking ISH block support to Python & Rust (`open_astro_cli`).

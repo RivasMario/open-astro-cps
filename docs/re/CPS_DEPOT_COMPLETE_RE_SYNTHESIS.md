@@ -84,3 +84,5 @@ Future agents should **not** replicate Motorola's 7-layer COM/`SAFEARRAY`/Window
 - Batch 4 (`PatComm10` + `RadioSerial10` + `otaprwcdtimer`, 53 funcs): [HOMELAB_AI_BATCH4_SERIAL_AND_OTAP.md](HOMELAB_AI_BATCH4_SERIAL_AND_OTAP.md)
 - Batch 5 (`EncatenComponent`, Depot `PBT2.dll`, `RemoteProtocols01`, `UdcDrIsh10c`, `udcDrXAdk10c`, 349 funcs): [HOMELAB_AI_BATCH5_CABS_AND_DEPOT.md](HOMELAB_AI_BATCH5_CABS_AND_DEPOT.md)
 - Batch 6 (`SECURITYLIB.dll` + `authAES.dll`, 40 funcs): [HOMELAB_AI_BATCH6_SECURITY_AND_AUTHAES.md](HOMELAB_AI_BATCH6_SECURITY_AND_AUTHAES.md)
+- Batch 7a (`fudally.sys`, `Security.exe`, `PortMgrWrapper`, `PSTWrapper`, `RemoteRadioProg`, 89 funcs): [HOMELAB_AI_BATCH7_DRIVERS_AND_WRAPPERS.md](HOMELAB_AI_BATCH7_DRIVERS_AND_WRAPPERS.md)
+- Mobile Depot (`ASTRO_25_MOBILE_DEPOT_R15.00.00.zip`, `XTL`/`PM` `G*` options & R15 DLLs): [MOBILE_DEPOT_RE_PLAN.md](MOBILE_DEPOT_RE_PLAN.md)
