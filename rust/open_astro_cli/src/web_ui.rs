@@ -194,6 +194,7 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
       <div class="tree-item" onclick="showPane('adp', this)">📁 Secure / ADP Keys</div>
       <div class="tree-grp">Hardware &amp; Custom Tools</div>
       <div class="tree-item" onclick="showPane('stash', this)">🧱 Flash / EEPROM Map</div>
+      <div class="tree-item" onclick="showPane('mobile', this)">🚗 Mobile XTL / PM (G-Opts)</div>
       <div class="tree-item" onclick="showPane('custom', this)">🚀 Custom (NAS / SDR / Relay)</div>
     </aside>
     <section>
@@ -242,6 +243,13 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
             <div class="slot c81" style="grid-column:span 2;"><strong>0x85 System</strong><br/>2 types · RW-Locked<br/><small>0x12BE, 0x12BF</small></div>
             <div class="slot c82" style="grid-column:span 2;"><strong>0x82 RF Soft-Pots (512 KB)</strong><br/>ReadOnly · BLOCKED<br/><small>Never written by OpenAstro</small></div>
           </div>
+        </div>
+      </div>
+
+      <div id="pane-mobile" class="pane hidden">
+        <div class="card">
+          <h2>Mobile ASTRO 25 (XTL 1500 / 2500 / 5000 / PM 1500) — G-Options</h2>
+          <pre id="mobOpts">Loading mobile schema...</pre>
         </div>
       </div>
 
@@ -329,6 +337,9 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
       document.getElementById('editStatus').textContent = await r.text();
     }
     initBackups();
+    fetch('/api/mobile-options').then(r=>r.text()).then(t=>{
+      document.getElementById('mobOpts').textContent = t;
+    });
     calcFc();
   </script>
 </body>
@@ -370,6 +381,10 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
                 {"zone":"PS MONITOR","name":"PSERN CTRL 1","rx":"851.88750","tx":"0.00000","mode":"P25 [RX-ONLY LOCK]"}
             ]).to_string();
             render_http_response("200 OK", "application/json", &sample)
+        }
+        "/api/mobile-options" => {
+            const MOBILE_OPTS: &str = include_str!("../../../schema/mobile_flashcode_options.json");
+            render_http_response("200 OK", "application/json", MOBILE_OPTS)
         }
         "/api/health" => {
             let json_content = json!({
