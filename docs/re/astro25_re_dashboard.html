@@ -344,8 +344,47 @@ flowchart TD
           <tr><td><strong>Batch 3</strong></td><td><code>NextGen10</code> Trace3, <code>ConnWinSock10</code>, <code>NewProto10</code>, <code>PortManager10</code></td><td>56 / 56</td><td><span class="badge ok">Done</span></td><td>Socket transport, protocol framing, COM/USB device enumeration</td></tr>
           <tr><td><strong>Batch 4</strong></td><td><code>PatComm10</code>, <code>RadioSerial10</code>, <code>otaprwcdtimer</code></td><td>53 / 53</td><td><span class="badge ok">Done</span></td><td>Win32 serial COM wrapper &amp; OTAP registry timer flags</td></tr>
           <tr><td><strong>Batch 5</strong></td><td><code>EncatenComponent</code>, <code>PBT2.dll</code> (Depot), <code>RemoteProtocols01</code>, <code>UdcDrIsh10c</code>, <code>udcDrXAdk10c</code></td><td>349 / 349</td><td><span class="badge ok">Done</span></td><td>Codeplug image assembly, Depot-only <code>PBT2.dll</code>, legacy SB9600, UDC write bridge</td></tr>
+          <tr><td><strong>Batch 6</strong></td><td><code>SECURITYLIB.dll</code>, <code>authAES.dll</code></td><td>40 / 40</td><td><span class="badge ok">Done</span></td><td>Windows ADK Registry/XML UI gating &amp; AES key-store test harness (no EEPROM logic)</td></tr>
+          <tr><td><strong>Batch 7a</strong></td><td><code>fudally.sys</code>, <code>Security.exe</code>, <code>PortMgrWrapper</code>, <code>PSTWrapper</code>, <code>RemoteRadioProg</code></td><td>89 / 89</td><td><span class="badge ok">Done</span></td><td>FlashZap/TI OMAP WDM driver, COM/PST wrappers</td></tr>
+          <tr><td><strong>Batch 8a–8c</strong></td><td>Mobile R15: <code>adkGen10c</code>, <code>udcXAdk10c</code>, <code>SECURITYLIB</code>, <code>Rdb50c</code>, <code>cgIsh10c</code></td><td>115 / 115</td><td><span class="badge ok">Done</span></td><td>Mobile RDK database, ISH bit-offset/CRC, file-open bridge</td></tr>
+          <tr><td><strong>Batch 9</strong></td><td>Mobile R15 Optional: <code>Prn50c</code>, <code>RSS_Launcher</code>, <code>SysKeyAdmin</code>, <code>pip50c</code>, <code>ruiX50c</code>, <code>scpw32</code></td><td>47 / 47</td><td><span class="badge ok">Done</span></td><td>Printing, System Key Admin, import/export, copy-protection</td></tr>
         </tbody>
       </table>
+    </div>
+
+    <h2>Codeplug Sizes &amp; Done vs. Remaining Roadmap</h2>
+    <div class="stash-layout">
+      <div class="card">
+        <div class="rig-title" style="margin-bottom:10px;">Measured Codeplug &amp; Tuning File Sizes (<code>backups/</code>)</div>
+        <table>
+          <thead><tr><th>File / Radio</th><th>Size</th><th>% of <code>0x80</code> (384 KB)</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>407CHT0214.cpg</code> (XTS 2500)</td><td>30,720 B (30.0 KB)</td><td>7.8%</td><td>Compact conventional</td></tr>
+            <tr><td><code>205CFR2930.cpg</code> (XTS 2500)</td><td>36,864 B (36.0 KB)</td><td>9.4%</td><td>146 ISH objects</td></tr>
+            <tr><td><code>721CLZ0655.cpg</code> (XTS 5000)</td><td>117,760 B (115.0 KB)</td><td>29.9%</td><td>461 ISH objects</td></tr>
+            <tr><td><code>Radio1_205CMB2249_codeplug.cpg</code></td><td>121,344 B (118.5 KB)</td><td>30.9%</td><td>Full fleet backup</td></tr>
+            <tr><td><code>Radio4_..._codeplug.json</code></td><td>125,799 B (122.9 KB)</td><td>—</td><td>Human-readable JSON</td></tr>
+            <tr><td><code>*.tun</code> (<code>0x82</code> RF Tuning)</td><td>4,686 B (4.6 KB)</td><td>Read-Only</td><td>Soft-pot alignment backup</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="rig-title" style="margin-bottom:10px;">What Has Been Done vs. Still To Be Done</div>
+        <div style="font-size:12px; margin-bottom:6px;"><strong>Static RE (Portable + Mobile + Drivers):</strong> 795 / 795 funcs (100%)</div>
+        <div class="fill-bar"><div class="fill-inner" style="width:100%; background:#3fb950;"></div></div>
+        <div style="font-size:12px; margin-bottom:6px;"><strong>Cross-Platform Tests (Win + Fedora <code>vm100-lan</code>):</strong> 285 Python + 33 Rust (100%)</div>
+        <div class="fill-bar"><div class="fill-inner" style="width:100%; background:#3fb950;"></div></div>
+        <div style="font-size:12px; margin-bottom:6px;"><strong>Rust CLI &amp; OG Win32 Dark-Mode Web UI:</strong> Safety gates, <code>serial_ppp</code>, expandable tree, Family Guard (90%)</div>
+        <div class="fill-bar"><div class="fill-inner" style="width:90%; background:#58a6ff;"></div></div>
+        <div style="font-size:12px; margin-bottom:6px;"><strong>Hardware Verification (Home Rig):</strong> <code>LXC 120</code> <code>0x0107</code> capture + Fedora <code>/dev/ttyACM0</code> live test (Pending)</div>
+        <div class="fill-bar"><div class="fill-inner" style="width:20%; background:#d29922;"></div></div>
+        <div style="font-size:12px; color:var(--muted); margin-top:8px;">
+          <strong>Remaining To Do:</strong><br/>
+          1. Capture <code>0x0107</code> in <code>LXC 120</code> against <code>mock_radio_capture.py</code> (confirm <code>WIRE_PROFILE_CONFIRMED = True</code>).<br/>
+          2. Run <code>open_astro_cli ppp-probe --serial /dev/ttyACM0</code> on Fedora with physical radio.<br/>
+          3. Add Mobile <code>M5</code>/<code>O5</code> control-head &amp; <code>Siren</code>/<code>DEK</code> layouts to <code>schema/field_layouts.json</code>.
+        </div>
+      </div>
     </div>
 
     <h2>Homelab AI vs Cloud (504 Functions: ~268K In / ~157K Out Tokens)</h2>
