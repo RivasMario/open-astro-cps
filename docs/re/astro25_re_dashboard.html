@@ -288,7 +288,7 @@
     <div class="card">
       <div class="mermaid">
 flowchart LR
-    S1["1. Portable + Driver RE&lt;br/&gt;633/633 funcs ✅"] --> S2["2. Mobile Depot R15 RE&lt;br/&gt;M1 + M2 + M3 (107 funcs) ✅"]
+    S1["1. Portable + Driver RE&lt;br/&gt;633/633 funcs ✅"] --> S2["2. Mobile Depot R15 RE&lt;br/&gt;M1–M3 (162 funcs) ✅"]
     S2 --> S3["3. Rust Core + Web UI&lt;br/&gt;32/32 tests Win + Fedora ✅"]
     S3 --> S4["4. 0x0107 Capture (LXC 120)&lt;br/&gt;Confirm WIRE_PROFILE ❌"]
     S4 --> S5["5. Unified Release&lt;br/&gt;XTS + XTL + Serial/PPP 🎯"]
@@ -297,7 +297,7 @@ flowchart LR
         <thead><tr><th>Component</th><th>Current State</th><th>Status</th><th>Next Action</th></tr></thead>
         <tbody>
           <tr><td><strong>Portable CPS/Depot &amp; Drivers RE</strong></td><td>633 functions analyzed (Batches 1–7a: <code>NextGen10</code>, <code>ByteData10</code>, <code>SECURITYLIB</code>, <code>authAES</code>, <code>fudally.sys</code>, etc.)</td><td><span class="badge ok">100% Done</span></td><td>Reference in <code>CPS_DEPOT_COMPLETE_RE_SYNTHESIS.md</code></td></tr>
-          <tr><td><strong>Mobile Depot R15 RE (<code>XTL</code>/<code>PM</code>)</strong></td><td>M1 (<code>73</code> <code>G*</code> options) + M2 Batch 8a (62 funcs) + M3 Batch 8b (45 <code>Rdb50c</code> funcs) done — <code>740</code> total RE funcs</td><td><span class="badge ok">Done</span></td><td>Wire Mobile <code>G*</code> options &amp; XTL layouts in Phase M4</td></tr>
+          <tr><td><strong>Mobile Depot R15 RE (<code>XTL</code>/<code>PM</code>)</strong></td><td>M1 (<code>73</code> <code>G*</code> options) + M2/M3 Batches 8a–9 (162 funcs) done — <code>795</code> total RE funcs</td><td><span class="badge ok">Done</span></td><td>All static Mobile &amp; Portable Depot RE complete</td></tr>
           <tr><td><strong>Python Codeplug &amp; RCMP</strong></td><td>285 passed, 1 skipped on Windows &amp; Fedora <code>vm100-lan</code></td><td><span class="badge ok">Verified</span></td><td>Keep as offline schema/test oracle</td></tr>
           <tr><td><strong>Rust CLI &amp; Embedded Web UI</strong></td><td>32/32 tests on Win + Fedora <code>x86_64</code>; <code>rcmp_crc</code>, <code>partition_policy</code>, <code>serial_gate</code>, <code>serial_ppp</code> (FCS-16), live JSON editor (<code>:8766</code>)</td><td><span class="badge ok">Verified</span></td><td>Test live <code>ppp-probe --serial /dev/ttyACM0</code> on home radio</td></tr>
           <tr><td><strong>Fedora USB / udev Rules</strong></td><td><code>99-openastro.rules</code> updated with <code>ID_MM_DEVICE_IGNORE</code> + FlashZap/OMAP IPL</td><td><span class="badge ok">Ready</span></td><td>Install on home Fedora box &amp; test hardware read</td></tr>
