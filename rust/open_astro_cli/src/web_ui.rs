@@ -188,7 +188,7 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
 <body>
   <div class="titlebar">
     <span>OpenAstro CPS R20 — ASTRO 25 Portable &amp; Mobile</span>
-    <span>[0x82 ReadOnly Guard]</span>
+    <span title="Blocks writes to factory RF tuning memory (Partition 0x82)">[RF Tuning Write-Protect: ON]</span>
   </div>
   <div class="menubar">
     <span>File</span><span>Edit</span><span>View</span><span>Device</span><span>Tools</span><span>Help</span>
@@ -199,7 +199,7 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
       <span>Archive:</span>
       <select id="cpSelect" style="min-width:260px;"></select>
       <button onclick="loadCodeplug()">Open / Load</button>
-      <span class="pill">Partition 0x82 Firewall: ACTIVE</span>
+      <span class="pill" title="Factory RF tuning / soft-pots (Partition 0x82) are hard-locked Read-Only in code so flashing a codeplug can never wipe your radio's frequency or TX power calibration.">RF Tuning Write-Protect: 0x82 Read-Only</span>
     </div>
   </header>
   <div class="main">
@@ -267,12 +267,13 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
 
       <div id="pane-stash" class="pane hidden">
         <div class="card">
-          <h2>Radio Flash &amp; EEPROM Partitions (Tarkov Map)</h2>
+          <h2>Radio Memory Map &amp; What OpenAstro Protects</h2>
+          <p style="margin:0 0 10px;color:var(--muted);">Motorola stores channels, identity, and factory RF calibration in separate memory partitions. OpenAstro enforces hard write-protections so normal programming cannot damage your radio:</p>
           <div class="stash">
-            <div class="slot c80" style="grid-column:span 2;"><strong>0x80 Codeplug (384 KB)</strong><br/>164 ISH types · RW<br/><small>Channels, Zones, ADP 0x005D</small></div>
-            <div class="slot c81" style="grid-column:span 2;"><strong>0x81 EEPROM (16 KB)</strong><br/>3 types · RW-Locked (0x0107)<br/><small>0x1004 Serial, 0x1005/06 FLASHcode</small></div>
-            <div class="slot c81" style="grid-column:span 2;"><strong>0x85 System</strong><br/>2 types · RW-Locked<br/><small>0x12BE, 0x12BF</small></div>
-            <div class="slot c82" style="grid-column:span 2;"><strong>0x82 RF Soft-Pots (512 KB)</strong><br/>ReadOnly · BLOCKED<br/><small>Never written by OpenAstro</small></div>
+            <div class="slot c80" style="grid-column:span 2;"><strong>Codeplug (0x80 · 384 KB)</strong><br/>Read / Write (Normal Programming)<br/><small>Channels, zones, scan lists, personalities, ADP keys. Safe to edit and flash.</small></div>
+            <div class="slot c81" style="grid-column:span 2;"><strong>Identity / EEPROM (0x81 · 16 KB)</strong><br/>Write-Protected (Needs 0x0107 Unlock)<br/><small>Serial number &amp; FLASHcode feature bits. Blocked unless explicitly unlocked.</small></div>
+            <div class="slot c81" style="grid-column:span 2;"><strong>System Area (0x85)</strong><br/>Write-Protected<br/><small>Internal system blocks; untouched during normal codeplug writes.</small></div>
+            <div class="slot c82" style="grid-column:span 2;"><strong>Factory RF Tuning (0x82 · 512 KB)</strong><br/>HARD-LOCKED READ-ONLY<br/><small>Oscillator warp, TX power, squelch soft-pots. OpenAstro blocks all writes here so you never lose RF alignment.</small></div>
           </div>
         </div>
       </div>
@@ -296,7 +297,7 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
   </div>
   <div class="statusbar">
     <span>Ready · ASTRO 25 Portable (XTS/PRC-153) &amp; Mobile (XTL/PM)</span>
-    <span>192.168.128.1:8002 · Partition 0x82 Blocked</span>
+    <span>192.168.128.1:8002 · RF Tuning (0x82) Write-Protected</span>
   </div>
   <script>
     let activeFile = '';
@@ -504,7 +505,7 @@ mod tests {
         let request = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
         let response = handle_http_request(request);
         assert!(response.starts_with(b"HTTP/1.1 200 OK"));
-        assert!(String::from_utf8_lossy(&response).contains("Partition 0x82 Firewall: ACTIVE"));
+        assert!(String::from_utf8_lossy(&response).contains("RF Tuning Write-Protect: 0x82 Read-Only"));
     }
 
     #[test]
