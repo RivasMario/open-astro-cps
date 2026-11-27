@@ -223,15 +223,24 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
       </div>
 
       <div id="pane-pers" class="pane hidden">
-        <div class="card"><h2>Conventional &amp; Trunking Personalities (0x0FFB / 0x0FD0 / 0x0FF8)</h2><p style="color:var(--muted);">Phase 5 target: per-personality TX power, TOT, squelch, and talkgroup lists.</p></div>
+        <div class="card">
+          <h2>Trunking Talkgroups &amp; Sites (0x0FFB / 0x0FD0 / 0x0FF8)</h2>
+          <pre id="persOut">Load a codeplug JSON to inspect talkgroups, sites, and trunking systems...</pre>
+        </div>
       </div>
 
       <div id="pane-buttons" class="pane hidden">
-        <div class="card"><h2>Buttons, Switches &amp; Scan Lists (0x0020 / 0x003C / 0x0FF1)</h2><p style="color:var(--muted);">CLI active: <code>open-astro buttons backups/205CFR2930.cpg</code></p></div>
+        <div class="card">
+          <h2>Buttons, Switches &amp; Scan Lists (0x0020 / 0x003C / 0x0FF1)</h2>
+          <pre id="scanOut">Load a codeplug JSON to inspect scan lists...</pre>
+        </div>
       </div>
 
       <div id="pane-adp" class="pane hidden">
-        <div class="card"><h2>Secure / ADP 40-bit RC4 Keys (0x80:0x005D)</h2><p style="color:var(--muted);">Verified persistent on simulated XTS 2500 &amp; XTS 5000 (`0x0034`, `0x0037`, `0x0038`, `0x005D`).</p></div>
+        <div class="card">
+          <h2>Secure / ADP 40-bit RC4 Keys (0x80:0x005D)</h2>
+          <pre id="adpOut">Load a codeplug JSON to inspect encryption key slots...</pre>
+        </div>
       </div>
 
       <div id="pane-stash" class="pane hidden">
@@ -318,11 +327,18 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
             <td><input id="n_${zi}_${ci}" value="${c.name || ''}" style="width:130px"/></td>
             <td><input id="rx_${zi}_${ci}" value="${c.rx_frequency ?? ''}" style="width:95px"/></td>
             <td><input id="tx_${zi}_${ci}" value="${c.tx_frequency ?? ''}" style="width:95px"/></td>
-            <td>${mode}</td>
+            <td>${mode} <label style="margin-left:6px;"><input type="checkbox" id="rxo_${zi}_${ci}" ${c.rx_only ? 'checked' : ''}/> RX-Only</label></td>
             <td><button onclick="saveChan(${zi},${ci})">Save</button></td>`;
           b.appendChild(tr);
         });
       });
+      document.getElementById('persOut').textContent = JSON.stringify({
+        talkgroups: cp.talkgroups || [],
+        sites: cp.sites || [],
+        systems: cp.systems || []
+      }, null, 2);
+      document.getElementById('scanOut').textContent = JSON.stringify(cp.scan_lists || [], null, 2);
+      document.getElementById('adpOut').textContent = JSON.stringify(cp.encryption_keys || [], null, 2);
     }
     async function saveChan(zi, ci) {
       const body = {
@@ -331,7 +347,8 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
         channel_index: ci,
         name: document.getElementById(`n_${zi}_${ci}`).value,
         rx_frequency: parseFloat(document.getElementById(`rx_${zi}_${ci}`).value),
-        tx_frequency: parseFloat(document.getElementById(`tx_${zi}_${ci}`).value)
+        tx_frequency: parseFloat(document.getElementById(`tx_${zi}_${ci}`).value),
+        rx_only: document.getElementById(`rxo_${zi}_${ci}`).checked
       };
       const r = await fetch('/api/save-channel', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
       document.getElementById('editStatus').textContent = await r.text();
