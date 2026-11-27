@@ -159,9 +159,13 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
     .main { display:flex; flex:1; overflow:hidden; }
     aside { width:245px; background:var(--tree); border-right:2px groove var(--hi); padding:6px; overflow-y:auto; }
     .tree-grp { font-size:11px; font-weight:700; color:var(--muted); margin:8px 0 3px; padding:2px 4px; border-bottom:1px solid #2a2e38; }
-    .tree-item { padding:4px 8px; cursor:pointer; font-size:12px; margin-bottom:1px; border:1px solid transparent; }
+    .tree-item { padding:4px 8px; cursor:pointer; font-size:12px; margin-bottom:1px; border:1px solid transparent; display:flex; align-items:center; gap:5px; user-select:none; }
     .tree-item:hover { background:#242934; border-color:#343b49; }
     .tree-item.active { background:var(--sel); color:#fff; border:1px dotted #8ec3f6; }
+    .tree-sub { margin-left:16px; border-left:1px dotted #4a5262; padding-left:6px; margin-bottom:3px; }
+    .tree-leaf { padding:3px 6px; font-size:11px; color:var(--muted); cursor:pointer; }
+    .tree-leaf:hover { background:#242934; color:var(--text); }
+    .tbtn { font-family:Consolas,monospace; font-size:11px; color:#9aa3b2; }
     section { flex:1; padding:10px; overflow-y:auto; background:var(--bg); }
     .card { background:var(--panel); border-top:1px solid var(--hi); border-left:1px solid var(--hi); border-right:1px solid var(--lo); border-bottom:1px solid var(--lo); padding:10px; margin-bottom:10px; }
     h2 { margin:0 0 8px; font-size:12px; color:#c8d6eb; background:#282d37; padding:4px 8px; border-left:3px solid #3a7bd5; text-transform:none; }
@@ -205,15 +209,38 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
   <div class="main">
     <aside>
       <div class="tree-grp">Radio Configuration</div>
-      <div class="tree-item active" onclick="showPane('info', this)">[+] Radio Info &amp; FLASHcode</div>
-      <div class="tree-item" onclick="showPane('zones', this)">[+] Zones &amp; Channels</div>
-      <div class="tree-item" onclick="showPane('pers', this)">[+] Conv &amp; Trunk Personalities</div>
-      <div class="tree-item" onclick="showPane('buttons', this)">[+] Buttons &amp; Scan Lists</div>
-      <div class="tree-item" onclick="showPane('adp', this)">[+] Secure / ADP Keys</div>
+      <div class="tree-item active" onclick="toggleNode('sub-info','info',this)"><span class="tbtn" id="btn-sub-info">[-]</span> Radio Info &amp; FLASHcode</div>
+      <div class="tree-sub" id="sub-info">
+        <div class="tree-leaf" onclick="showPane('info')">Radio Identity (Model / Serial)</div>
+        <div class="tree-leaf" onclick="showPane('info')">FLASHcode Feature Decoder</div>
+      </div>
+
+      <div class="tree-item" onclick="toggleNode('sub-zones','zones',this)"><span class="tbtn" id="btn-sub-zones">[+]</span> Zones &amp; Channels</div>
+      <div class="tree-sub hidden" id="sub-zones">
+        <div class="tree-leaf" onclick="filterZone(null)">All Zones &amp; Channels</div>
+      </div>
+
+      <div class="tree-item" onclick="toggleNode('sub-pers','pers',this)"><span class="tbtn" id="btn-sub-pers">[+]</span> Conv &amp; Trunk Personalities</div>
+      <div class="tree-sub hidden" id="sub-pers">
+        <div class="tree-leaf" onclick="showPane('pers')">Talkgroups (0x0FD0)</div>
+        <div class="tree-leaf" onclick="showPane('pers')">Trunking Sites / Systems</div>
+      </div>
+
+      <div class="tree-item" onclick="toggleNode('sub-buttons','buttons',this)"><span class="tbtn" id="btn-sub-buttons">[+]</span> Buttons &amp; Scan Lists</div>
+      <div class="tree-sub hidden" id="sub-buttons">
+        <div class="tree-leaf" onclick="showPane('buttons')">Scan Lists (0x0FF1)</div>
+        <div class="tree-leaf" onclick="showPane('buttons')">Controls &amp; Switches (0x0020)</div>
+      </div>
+
+      <div class="tree-item" onclick="toggleNode('sub-adp','adp',this)"><span class="tbtn" id="btn-sub-adp">[+]</span> Secure / ADP Keys</div>
+      <div class="tree-sub hidden" id="sub-adp">
+        <div class="tree-leaf" onclick="showPane('adp')">40-bit RC4 ADP Slots (0x005D)</div>
+      </div>
+
       <div class="tree-grp">Hardware &amp; Custom Tools</div>
-      <div class="tree-item" onclick="showPane('stash', this)">[MEM] Flash / EEPROM Map</div>
-      <div class="tree-item" onclick="showPane('mobile', this)">[XTL] Mobile XTL / PM (G-Opts)</div>
-      <div class="tree-item" onclick="showPane('custom', this)">[EXT] Custom (NAS / SDR / Relay)</div>
+      <div class="tree-item" onclick="showPane('stash', this)"><span class="tbtn">[MEM]</span> Flash / EEPROM Map</div>
+      <div class="tree-item" onclick="showPane('mobile', this)"><span class="tbtn">[XTL]</span> Mobile XTL / PM (G-Opts)</div>
+      <div class="tree-item" onclick="showPane('custom', this)"><span class="tbtn">[EXT]</span> Custom (NAS / SDR / Relay)</div>
     </aside>
     <section>
       <div id="famBanner" class="fam-bar fam-port">
@@ -301,11 +328,47 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
   </div>
   <script>
     let activeFile = '';
+    let activeCp = null;
     function showPane(name, el) {
       document.querySelectorAll('.pane').forEach(p => p.classList.add('hidden'));
       document.getElementById('pane-' + name).classList.remove('hidden');
-      document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
-      if (el) el.classList.add('active');
+      if (el) {
+        document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+      }
+    }
+    function toggleNode(subId, paneName, el) {
+      showPane(paneName, el);
+      const sub = document.getElementById(subId);
+      const btn = document.getElementById('btn-' + subId);
+      if (sub) {
+        const opening = sub.classList.contains('hidden');
+        sub.classList.toggle('hidden');
+        if (btn) btn.textContent = opening ? '[-]' : '[+]';
+      }
+    }
+    function filterZone(zoneIdx) {
+      showPane('zones');
+      if (!activeCp) return;
+      renderChannels(activeCp, zoneIdx);
+    }
+    function renderChannels(cp, onlyZoneIdx) {
+      const b = document.getElementById('chanBody');
+      b.innerHTML = '';
+      (cp.zones || []).forEach((z, zi) => {
+        if (onlyZoneIdx !== null && onlyZoneIdx !== undefined && zi !== onlyZoneIdx) return;
+        (z.channels || []).forEach((c, ci) => {
+          const tr = document.createElement('tr');
+          const mode = `${c.voice_type || ''} ${c.rx_nac || ''} ${c.rx_pl_tone ? 'PL ' + c.rx_pl_tone : ''} ${c.rx_only ? '[RX-ONLY]' : ''}`;
+          tr.innerHTML = `<td>${z.name || z.zone_number}</td>
+            <td><input id="n_${zi}_${ci}" value="${c.name || ''}" style="width:130px"/></td>
+            <td><input id="rx_${zi}_${ci}" value="${c.rx_frequency ?? ''}" style="width:95px"/></td>
+            <td><input id="tx_${zi}_${ci}" value="${c.tx_frequency ?? ''}" style="width:95px"/></td>
+            <td>${mode} <label style="margin-left:6px;"><input type="checkbox" id="rxo_${zi}_${ci}" ${c.rx_only ? 'checked' : ''}/> RX-Only</label></td>
+            <td><button onclick="saveChan(${zi},${ci})">Save</button></td>`;
+          b.appendChild(tr);
+        });
+      });
     }
     fetch('/api/health').then(r=>r.json()).then(d=>{
       document.getElementById('healthBadge').textContent = `Rust Engine (${d.status})`;
@@ -332,6 +395,7 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
       if (!activeFile) return;
       const r = await fetch('/api/codeplug?file=' + encodeURIComponent(activeFile));
       const cp = await r.json();
+      activeCp = cp;
       const mdl = (cp.radio_model || cp.model || '').toUpperCase().trim();
       const isPort = mdl.includes('XTS') || mdl.includes('PRC') || mdl.includes('MT 1500') || mdl.includes('PR 1500') || /^H\d{2}/.test(mdl);
       const isMob = !isPort && (mdl.includes('XTL') || mdl.includes('PM 1500') || /^M\d{2}/.test(mdl));
@@ -356,21 +420,16 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
         document.getElementById('fcStart').value = cp.flashcode.replaceAll('-', '').slice(0, 12);
         calcFc();
       }
-      const b = document.getElementById('chanBody');
-      b.innerHTML = '';
+      const zSub = document.getElementById('sub-zones');
+      zSub.innerHTML = '<div class="tree-leaf" onclick="filterZone(null)">All Zones (' + (cp.zones || []).length + ')</div>';
       (cp.zones || []).forEach((z, zi) => {
-        (z.channels || []).forEach((c, ci) => {
-          const tr = document.createElement('tr');
-          const mode = `${c.voice_type || ''} ${c.rx_nac || ''} ${c.rx_pl_tone ? 'PL ' + c.rx_pl_tone : ''} ${c.rx_only ? '[RX-ONLY]' : ''}`;
-          tr.innerHTML = `<td>${z.name || z.zone_number}</td>
-            <td><input id="n_${zi}_${ci}" value="${c.name || ''}" style="width:130px"/></td>
-            <td><input id="rx_${zi}_${ci}" value="${c.rx_frequency ?? ''}" style="width:95px"/></td>
-            <td><input id="tx_${zi}_${ci}" value="${c.tx_frequency ?? ''}" style="width:95px"/></td>
-            <td>${mode} <label style="margin-left:6px;"><input type="checkbox" id="rxo_${zi}_${ci}" ${c.rx_only ? 'checked' : ''}/> RX-Only</label></td>
-            <td><button onclick="saveChan(${zi},${ci})">Save</button></td>`;
-          b.appendChild(tr);
-        });
+        const d = document.createElement('div');
+        d.className = 'tree-leaf';
+        d.textContent = (z.name || ('Zone ' + (z.zone_number || zi + 1))) + ' (' + (z.channels || []).length + ')';
+        d.onclick = () => filterZone(zi);
+        zSub.appendChild(d);
       });
+      renderChannels(cp, null);
       document.getElementById('persOut').textContent = JSON.stringify({
         talkgroups: cp.talkgroups || [],
         sites: cp.sites || [],
