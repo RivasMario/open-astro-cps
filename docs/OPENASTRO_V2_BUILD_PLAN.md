@@ -54,8 +54,20 @@ One single static Rust binary (`rust/open_astro_cli`) for **Windows** (`COMx`, x
   - **One-Click SDR Export (`export-sdr`):** Export zones/NACs/talkgroups directly to DSD-FME & SDRTrunk.
   - **CSV / JSON Fleet Sync & Side-by-Side Diff:** Clone/sync channels across mixed-generation radios (`XTS 2500` / `XTS 5000` / `PRC-153`) with Git-diffable JSON.
   ### Phase 6 — Mobile ASTRO 25 Support (`XTL 1500` / `XTL 2500` / `XTL 5000` / `PM 1500`)
+- **RE Complete ([MOBILE_DEPOT_RE_PLAN.md](re/MOBILE_DEPOT_RE_PLAN.md)):** `162` Mobile-only functions analyzed across Batches 8a–9 (`795` total RE funcs); `73` Mobile `G*` options & `60` hardware strings extracted into [`schema/mobile_flashcode_options.json`](../schema/mobile_flashcode_options.json).
 - **Shared Core:** `fhAdk10c.dll`, `UdcDrIsh10c.dll`, `udcIsh10c.dll`, `0cad` USB CDC-ACM (`0cad:1003`, `1010`–`1015`), and RCMP write flow are identical to Portable.
-- **Mobile Additions ([MOBILE_DEPOT_RE_PLAN.md](re/MOBILE_DEPOT_RE_PLAN.md)):**
-  - Parse `patmhopt_a.mdf` / `patmhopt_b.mdf` (`G*` FLASHcode options & XTL/PM model matrix) into `schema/`.
-  - Decompile Mobile-specific R15 DLLs (`adkGen10c.dll`, `udcXAdk10c.dll`, `Rdb50c.dll`, `Rud50c.dll`, `cgIsh10c.dll` R15 diff) via Ghidra + `qwen2.5-coder:14b`.
-  - Add XTL/PM `G*` FLASHcode option decoding and Mobile control-head / trunking ISH block support to Python & Rust (`open_astro_cli`).
+- **Mobile Integration Targets:**
+  - Auto-detect Portable (`H*`/`XTS`/`PRC-153` $\rightarrow$ `Q*`/`H*` options) vs Mobile (`M*`/`XTL`/`PM` $\rightarrow$ `G*` options) from `0x0012` model read or `.cpg`/JSON `radio_model`.
+  - Add Mobile-specific ISH layouts (control heads `M5`/`O5`/`MX`, `Siren`, `DEK`, ignition sense) to `schema/field_layouts.json` & conditional panes in `web_ui.rs`.
+
+### Phase 7 — Full Original-CPS Parity & Cross-Platform Verification Matrix
+| Capability | Original CPS/Depot | OpenAstro Implementation | Status |
+|---|---|---|---|
+| **`.cpg` Container (RC4 `"A8Z6J9QP5"`)** | `fhAdk10c.dll` | `cpg_parser.py` / `cpg_writer.py` / `cpg_codec.rs` | ✅ Parity |
+| **ISH Schema & Checksums (169 types)** | `cgIsh10c.dll` | `schema/*.json` + `rcmp_crc.rs` | ✅ Core Done (Mobile CH layouts next) |
+| **RCMP Session & `0x80` Persistence** | `NextGen10.dll` | `rcmp.py` + `main.rs` (`tx`, `read`, `flash`) | ✅ Parity |
+| **Partition `0x82` Guard & Serial Gate** | `PatPort` / `NextGen10` | `partition_policy.rs` + `serial_gate.rs` | ✅ Safer than Original |
+| **`0x81` EEPROM Unlock (`0x0107` LFSR)** | `NextGen10.dll` | `unlock_session.py` + `unlock_lfsr` | 🟡 Needs 1 `LXC 120` live capture |
+| **USB / Serial / PPP Transport** | Win32 RAS + `RadioCustStack10` | `ppp_link.py` + `serial_ppp.rs` + `99-openastro.rules` | ✅ Win + Fedora (needs live `/dev/ttyACM0` test) |
+| **FLASHcode (`Q`/`H` + `G*`)** | `patphopt*.mdf` / `patmhopt*.mdf` | `flashcode.py` + `flashcode.rs` + `mobile_flashcode_options.json` | ✅ Luhn + Mobile `G*` schema |
+| **CPS Tree UI (OG Win32 Dark Mode)** | `PatPort.exe` / `PatMobDepot.exe` | `web_ui.rs` (`http://127.0.0.1:8766/`) | ✅ Live JSON + inline edit + Mobile tab |

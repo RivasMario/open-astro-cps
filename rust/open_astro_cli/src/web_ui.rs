@@ -515,6 +515,17 @@ mod tests {
     }
 
     #[test]
+    fn test_handle_http_request_mobile_options() {
+        let request = "GET /api/mobile-options HTTP/1.1\r\nHost: localhost\r\n\r\n";
+        let response = handle_http_request(request);
+        assert!(response.starts_with(b"HTTP/1.1 200 OK"));
+        let body = String::from_utf8_lossy(&response);
+        assert!(body.contains("\"g_option_count\": 73"));
+        assert!(body.contains("PatMobDepot.exe"));
+        assert!(body.contains("G51"));
+    }
+
+    #[test]
     fn test_handle_http_request_missing() {
         let request = "GET /missing HTTP/1.1\r\nHost: localhost\r\n\r\n";
         let response = handle_http_request(request);
