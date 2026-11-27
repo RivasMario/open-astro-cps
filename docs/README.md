@@ -14,6 +14,7 @@ invented protocol docs, so check the label before relying on anything.
 | [CPS_ISH_SCHEMA.md](CPS_ISH_SCHEMA.md) | CPS codeplug schema from the binaries: partitions/access rights, 169-block type→item map, `.cpg` directory, write-path architecture, partial field layouts |
 | [CPG_FILE_FORMAT.md](CPG_FILE_FORMAT.md) | `.cpg` container, RC4, per-object CRC |
 | [PROVENANCE_AUDIT.md](PROVENANCE_AUDIT.md) | Claim-by-claim verified / contradicted / unverified table |
+| [re/CPS_DEPOT_COMPLETE_RE_SYNTHESIS.md](re/CPS_DEPOT_COMPLETE_RE_SYNTHESIS.md) | Complete CPS & Depot RE synthesis (504 functions, architecture, EEPROM persistence, clean-room blueprint) |
 
 ## Verified reference
 

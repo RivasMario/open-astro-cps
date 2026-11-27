@@ -8,9 +8,15 @@
 # --- Native USB radios (the radio IS the USB device; no cable chip involved) ---
 # Motorola CGISS 0x0CAD. The XTS 1500 / XTS 2500 / MT 1500 enumerates as USB
 # CDC-ACM (class 2/2/1) and appears as /dev/ttyACM0 via the cdc_acm driver.
-SUBSYSTEM=="tty", ATTRS{idVendor}=="0cad", ATTRS{idProduct}=="1001", MODE="0660", TAG+="uaccess", GROUP="dialout", SYMLINK+="motorola-xts2500"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0cad", ATTRS{idProduct}=="1001", MODE="0660", TAG+="uaccess", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1", SYMLINK+="motorola-xts2500"
 # Any other Motorola CGISS radio that exposes a tty.
-SUBSYSTEM=="tty", ATTRS{idVendor}=="0cad", MODE="0660", TAG+="uaccess", GROUP="dialout"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0cad", MODE="0660", TAG+="uaccess", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1"
+
+# --- FlashZap / Bootloader / TI OMAP IPL (from fudally.inf) ---
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0cad", ATTRS{idProduct}=="1000", MODE="0660", TAG+="uaccess", GROUP="dialout"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0cad", ATTRS{idProduct}=="10f0", MODE="0660", TAG+="uaccess", GROUP="dialout"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0451", ATTRS{idProduct}=="3f00", MODE="0660", TAG+="uaccess", GROUP="dialout"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0451", ATTRS{idProduct}=="3f02", MODE="0660", TAG+="uaccess", GROUP="dialout"
 
 # --- USB-to-UART "ribless" cables (XTS 5000 Hirose, XTL mobiles, RIB) ---
 # FTDI FT232R / FT232BM

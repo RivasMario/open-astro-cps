@@ -55,13 +55,22 @@ if [ -d "/cps" ]; then
     find /cps -iname "*.dll" | while read -r dll; do
         wine regsvr32 /s "$dll" 2>/dev/null || true
     done
+    # The CPS GUI is RemoteRadioProg.exe (a .NET app). PatPort.exe in Crack/ is
+    # only the parallel-port/dongle loader and exits immediately, so launch the
+    # real GUI. PatPort.exe is started first (if present) in case it patches the
+    # port layer before the GUI comes up.
     PATPORT="$(find /cps -iname "PatPort.exe" | head -n 1 || true)"
     if [ -n "$PATPORT" ]; then
-        echo "[+] Found PatPort.exe: $PATPORT"
+        echo "[+] Found PatPort.exe (port loader): $PATPORT"
+        ( cd "$(dirname "$PATPORT")" && wine "$PATPORT" >/dev/null 2>&1 & )
+    fi
+    CPSGUI="$(find /cps -iname "RemoteRadioProg.exe" | head -n 1 || true)"
+    if [ -n "$CPSGUI" ]; then
+        echo "[+] Found CPS GUI: $CPSGUI"
         echo "[+] Launching ASTRO 25 CPS inside noVNC (http://localhost:6080/vnc.html)..."
-        wine "$PATPORT" &
+        ( cd "$(dirname "$CPSGUI")" && wine "$CPSGUI" >/workspace/captures/cps_gui.log 2>&1 & )
     else
-        echo "[!] No PatPort.exe found under /cps; open xterm at http://localhost:6080/vnc.html"
+        echo "[!] No RemoteRadioProg.exe found under /cps; open xterm at http://localhost:6080/vnc.html"
         xterm &
     fi
 else

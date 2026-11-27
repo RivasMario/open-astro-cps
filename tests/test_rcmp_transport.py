@@ -4,7 +4,9 @@ handshake, read flow, and that no write capability is exposed."""
 import pytest
 
 from open_astro.protocol import rcmp
-from open_astro.protocol.rcmp_transport import RcmpReadClient, RcmpError
+from open_astro.protocol.rcmp_transport import (
+    RcmpReadClient, RcmpError, CODEPLUG_OBJECT_TAGS,
+)
 
 
 class FakeConn:
@@ -94,3 +96,46 @@ def test_context_manager_closes():
     with RcmpReadClient(conn):
         pass
     assert conn.closed
+
+
+# -- read_streams: zone names + transient-empty tolerance --------------------
+
+def _read_ack(obj_bytes: bytes) -> bytes:
+    """A READ_ACK record: 12-byte echoed header + object bytes + 2-byte CRC.
+    Empty object bytes => read_object() returns b'' (end-of-list signal)."""
+    header = bytes(12)
+    crc = b"\x00\x00"
+    return _ack(rcmp.OP_READ | rcmp.RESP_FLAG, header + obj_bytes + crc)
+
+
+def test_read_streams_reads_zone_name_tag_first():
+    # 0x000D (zone-name ISH list) must be in the live read set, and read first
+    # so real zone names come back before a flaky radio can wedge mid-dump.
+    assert 0x000D in CODEPLUG_OBJECT_TAGS
+    assert CODEPLUG_OBJECT_TAGS[0] == 0x000D
+
+
+def test_read_streams_tolerates_transient_empty():
+    # inst 1 reads back empty once (dropped response) then returns data on the
+    # retry. Without retry_empty the dump would truncate at inst 1 and lose
+    # every later instance (the live 9-vs-13-zone bug). Script, in read order:
+    #   inst0 -> data, inst1 -> EMPTY, inst1 retry -> data,
+    #   inst2 -> EMPTY, inst2 retry -> EMPTY (true end)
+    script = (
+        _read_ack(b"AAAA")
+        + _read_ack(b"")
+        + _read_ack(b"BBBB")
+        + _read_ack(b"")
+        + _read_ack(b"")
+    )
+    c = RcmpReadClient(FakeConn(script, chunk=5))
+    streams = c.read_streams(tags=[0x0FFF], max_inst=4, retry_empty=1)
+    assert streams == [(0x0FFF, 0, b"AAAA"), (0x0FFF, 1, b"BBBB")]
+
+
+def test_read_streams_stops_at_true_end_without_retry():
+    # retry_empty=0 keeps the old behavior: first empty ends the tag.
+    script = _read_ack(b"AAAA") + _read_ack(b"")
+    c = RcmpReadClient(FakeConn(script, chunk=5))
+    streams = c.read_streams(tags=[0x0FFF], max_inst=4, retry_empty=0)
+    assert streams == [(0x0FFF, 0, b"AAAA")]

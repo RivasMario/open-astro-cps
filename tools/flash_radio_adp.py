@@ -23,6 +23,14 @@ import os
 import sys
 import time
 
+# Windows consoles default to cp1252; force UTF-8 so emoji/arrows in
+# output do not raise UnicodeEncodeError.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(REPO, "src"))
 sys.path.insert(0, os.path.join(REPO, "tools"))

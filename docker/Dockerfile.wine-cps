@@ -6,12 +6,23 @@
 
 FROM --platform=linux/386 i386/debian:bookworm-slim
 
+# Runtime: keep Wine Mono enabled (the CPS GUI, RemoteRadioProg.exe, is a .NET
+# app that imports mscoree.dll) but disable the Gecko (mshtml) prompt.
 ENV DEBIAN_FRONTEND=noninteractive \
     WINEARCH=win32 \
     WINEPREFIX=/wine \
     DISPLAY=:99 \
-    WINEDEBUG=-all
+    WINEDEBUG=-all \
+    WINEDLLOVERRIDES="mshtml="
 
+# winetricks lives in Debian's 'contrib' component; enable it (both the old
+# sources.list and the deb822 debian.sources layouts) before installing.
+RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+        sed -i 's/^Components: .*/Components: main contrib non-free non-free-firmware/' /etc/apt/sources.list.d/debian.sources; \
+    fi; \
+    if [ -f /etc/apt/sources.list ]; then \
+        sed -i 's/ main$/ main contrib non-free non-free-firmware/' /etc/apt/sources.list; \
+    fi
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     cabextract \
@@ -28,20 +39,40 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unshield \
     unzip \
     websockify \
+    wget \
     wine \
-     wine32 \
+    winbind \
     winetricks \
+    fonts-liberation \
+    fonts-dejavu \
+    fontconfig \
+    imagemagick \
     x11vnc \
+    x11-xserver-utils \
+    x11-utils \
+    xauth \
     xterm \
     xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --no-cache-dir --break-system-packages olefile pyserial
 
-# Pre-initialize a clean 32-bit Windows XP Wine prefix so startup is instant
-RUN xvfb-run -a wineboot --init && \
-    xvfb-run -a winecfg -v winxp || true && \
-    wineserver -w
+# Pre-initialize a clean 32-bit Windows XP Wine prefix (Mono/Gecko auto-install
+# suppressed during init so wineboot never blocks on a download prompt).
+RUN WINEDLLOVERRIDES="mscoree=;mshtml=" xvfb-run -a wineboot --init && \
+    WINEDLLOVERRIDES="mscoree=;mshtml=" xvfb-run -a winecfg -v winxp || true; \
+    wineserver -w || true
+
+# Install Wine Mono (gives mscoree.dll so the .NET CPS GUI loads) and the core
+# MS fonts the .NET GDI+ UI needs (without them CPS dies: FontFamilyNotFound).
+# NOTE: Wine Mono cannot execute mixed-mode (C++/CLI) assemblies, so the CPS
+# port enumerator PortMgrWrapper.dll still fails under Mono. See
+# docs/FEDORA_CAPTURE_HANDOFF.md for the real-.NET / real-Windows path.
+RUN wget -q https://dl.winehq.org/wine/wine-mono/8.0.0/wine-mono-8.0.0-x86.msi -O /tmp/mono.msi && \
+    WINEDLLOVERRIDES="mshtml=" wine msiexec /i /tmp/mono.msi /qn; \
+    wineserver -w || true; rm -f /tmp/mono.msi
+RUN WINEDLLOVERRIDES="mshtml=" xvfb-run -a winetricks -q corefonts tahoma || true; \
+    fc-cache -f || true; wineserver -w || true
 
 WORKDIR /workspace
 COPY docker/entrypoint-wine.sh /usr/local/bin/entrypoint-wine.sh

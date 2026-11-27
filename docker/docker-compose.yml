@@ -20,15 +20,33 @@ services:
     image: python:3.12-slim
     container_name: openastro-virtual-radio
     working_dir: /workspace
+    # Serial PPP bridge for the winxp profile: genuine portable CPS reads a radio
+    # only over a serial COM port (RAS/PPP "CLIENT" -> RCMP over TCP :8002), not
+    # raw IP. socat presents a local PTY (/tmp/radiotty) and listens on :7000;
+    # the WinXP guest's COM2 (a QEMU chardev socket, see cps-winxp ARGUMENTS)
+    # connects out to it. The radio side must listen because dockur DNATs all
+    # inbound container ports to the guest. virtual_radio --ppp-serial then
+    # answers the dial via SerialPppBridge. Harmless for the wine/standalone
+    # paths: the PTY just sits idle with no peer.
     command: >
-      sh -c "pip install --quiet olefile pyserial &&
+      sh -c "apt-get update -qq >/dev/null 2>&1;
+      apt-get install -y -qq socat >/dev/null 2>&1;
+      pip install --quiet olefile pyserial;
+      socat -d pty,raw,echo=0,link=/tmp/radiotty tcp-listen:7000,reuseaddr &
+      for i in $$(seq 1 120); do [ -e /tmp/radiotty ] && break; sleep 1; done;
       python tools/virtual_radio.py
       ${RADIO_CODEPLUG:-backups/721CLZ0655.cpg}
       --host 0.0.0.0
       --port 8002
       --serial ${RADIO_SERIAL:-721CLZ0655}
       --flashcode ${RADIO_FLASHCODE:-400008-002000-0}
+      --host-version ${RADIO_HOST_VER:-R15.00.00}
+      --dsp-version ${RADIO_DSP_VER:-R15.00.00}
+      --model ${RADIO_MODEL:-H18UCF9PW6AN}
+      --radio-name 'XTS 5000'
+      --uuid ${RADIO_UUID:-d105add323864e539b513a65076458d3}
       --challenge-security
+      --ppp-serial /tmp/radiotty
       --capture-jsonl captures/virtual_radio_trace.jsonl
       --capture-pcap captures/virtual_radio_trace.pcap
       --verbose"
@@ -70,6 +88,11 @@ services:
       RAM_SIZE: "2G"
       CPU_CORES: "2"
       DISK_SIZE: "16G"
+      # Add a second UART (guest COM2) as a QEMU chardev socket that connects OUT
+      # to the virtual-radio PTY bridge at 192.168.128.1:7000. Outbound avoids
+      # dockur's inbound QEMU_DNAT (which forwards container ports to the guest).
+      # reconnect-ms retries until the bridge is up. In CPS, Read Device -> COM2.
+      ARGUMENTS: "-chardev socket,id=ser1,host=192.168.128.1,port=7000,server=off,reconnect-ms=2000 -device isa-serial,chardev=ser1"
     devices:
       - /dev/kvm
       - /dev/net/tun
@@ -92,7 +115,11 @@ networks:
     driver: bridge
     ipam:
       config:
+        # Pin the bridge gateway off .1 so virtual-radio can own 192.168.128.1
+        # (the radio's canonical IP). Without this, Docker grabs .1 as the
+        # gateway and virtual-radio fails to start: "Address already in use".
         - subnet: 192.168.128.0/24
+          gateway: 192.168.128.254
 
 volumes:
   winxp_data:

@@ -20,3 +20,16 @@ jobs:
         run: python -m pip install -e ".[dev,cpg]"
       - name: Test
         run: python -m pytest -q
+
+  rust:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Test Rust CLI & Web UI
+        working-directory: rust/open_astro_cli
+        run: cargo test --quiet

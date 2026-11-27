@@ -1,12 +1,142 @@
 # Next-Agent Handoff & Mission Brief — OpenAstro CPS
 
-> **Single Entry Point for AI Agents (Antigravity `agy`, Claude Code `claude`, Gemini CLI `gemini`).**  
+> **Single Entry Point for AI Agents (Antigravity `agy`, Claude Code `claude`, Gemini CLI `gemini`, Hermes/Qwen).**  
 > Supersedes `AGENT_HANDOFF_AND_MISSION_BRIEF.md`.  
-> Last updated: **2026-10-28** | Branch: `master` | Test Suite: **261 passed, 1 skipped, 19 subtests** (Fedora laptop)
+> Last updated: **2026-11-24** | Branch: `fix/cps-cli-and-capture-validators`
+> Newest work is the **2026-11-24** Home AI Pipeline section below, followed by **2026-11-01** (Radio 4 flashed; Depot transport RE'd) and **2026-10-30** (winxp-rig).
 
 ---
 
-## 🔭 LATEST — 2026-10-28 Fedora session (Claude, Opus 4.8)
+## 🤖 LATEST — 2026-11-24 — Autonomous Home AI Pipeline (`$0` Local Forgejo + RTX 3080)
+
+`open-astro-cps` is now mirrored on Mario's self-hosted **Forgejo** (`http://100.81.194.15:30142/mario/open-astro-cps`) with a native CI runner (`forgejo-runner` v6.3.1 on Proxmox LXC 112) and an autonomous `$0` AI dev worker (`homelab/scripts/forgejo-ai-worker.py`, cron every 2h):
+
+- **Builder + Self-Repair:** Local **`qwen2.5-coder:14b`** on TrueNAS Ollama (`:30068`, RTX 3080 10 GB VRAM, locked to `num_ctx=8192` so it stays in VRAM at `31–44s`/pass; optional free-tier Gemini Flash-Lite verifier).
+- **Quality Gate:** Deterministic `AST` check (syntax, no duplicate/nested `test_*`, verifies all backticked `test_*` names in issue body) + `pytest --tb=short`. Failed issues auto-swap `ai-ready` → `ai-needs-human` and post the traceback comment so the queue never jams.
+- **Hard Safety Rule:** Automated runs are **offline-only** (code/tests/docs); partition `0x82` and live radio writes are strictly forbidden.
+- **Current Forgejo Board (2026-11-24):**
+  - **Open green PRs ready to merge:** **PR #4** (`ai/issue-1`, partition policy tests) and **PR #8** (`ai/issue-7`, CLI trunking tests).
+  - **Queued `ai-ready` offline test issues:** **#9** (`test_csv_roundtrip.py`, kicked off), **#10** (`test_unlock.py`), **#11** (`test_cps_schema.py`), **#12** (`test_rcmp.py`).
+  - **Tagged `ai-needs-human` (1 assertion shy each):** **#5** (`test_write_session.py`) and **#6** (`test_channel_patch.py`).
+- **What's left for Hardware (Mario at home) vs. Home AI (offline):**
+  - **Hardware-only:** (1) Copy raw Depot `0x81` pcap (`captures/depot_write_*.pcap`) and run `tools/usnet_unframe.py` (`dbab606`) to lift `0x0107` UnlockSecurity wire bytes; (2) run one `--serial-write` test on `205CFR2930` to retire Windows RAS dial-up; (3) capture CPS button/concentric-switch pcap + verify over-the-air ADP with RTL-SDR/DSD-FME.
+  - **Home AI offline queue:** Unit tests across `tests/`, wrapping `tools/write_codeplug_full.py` into `open-astro write --dry-run`, codeplug password clear (`0x0047`/`0x0002`), and zero-dongle trunking helpers (`0x0FD0`–`0x0FDF`).
+
+---
+
+## 🔭 LATEST — 2026-11-01 (Claude, Opus 4.8) — DEPOT FLASHES OVER A DIFFERENT USB PATH, NOT RCMP
+
+Full detail: [`docs/SESSION_LOG_20261101.md`](SESSION_LOG_20261101.md).
+
+**Depot programs over its OWN compressed PPP stack, on a different USB interface than CPS.**
+The 2026-10-24 Depot captures (`captures/depot_write_*`, `depot_adp_*`) have **no device 5** (the
+Windows-RAS RCMP/PPP pipe CPS + our tools use). Depot runs on **device 13** (OUT 195–391 KB, fixed
+1920-byte transfers) + **device 35** (IN status). Device-13 bytes don't decode with our tooling
+(`extract_out_records`→0; `parse_ppp_frames`→noise protos; entropy ~7.6; no plaintext) — but that
+is because it is **Depot's own stack, not a foreign protocol**: `ByteData10.dll` imports
+`RadioCustStack10.dll` (`CUSNETppp::PPPConnect`, `CUSNETdpi::Nread/Nwrite`) + WS2_32 + serial, with
+VJ compression. So device 13 is almost certainly the **same RCMP wrapped in Depot's custom
+async-HDLC PPP + VJ**, which our standard (device-5 RAS) parser can't unframe. The `0x0107` may be
+inside those frames.
+
+**RESOLVED (2026-11-01, later) — transport fully RE'd; it is NOT the flashcode secret.**
+`RadioCustStack10.dll` = the **US Software "USNET" embedded PPP stack** (Motorola wrapper, 2003-2005):
+plaintext `CLIENT`/`CLIENTSERVER` chat (`PPPHandshake@0x1000ef60`) then USNET async-HDLC PPP. USNET
+PPP and our Windows-RAS PPP deliver **identical RCMP** to the radio at `192.168.128.1:8002`, so the
+transport is interchangeable and device 13 does not need unframing to flash. Also re-RE'd
+`NextGen10.dll` end-to-end: LFSR unlock (`FUN_1000fd89`) + `UnlockSecurity` sequence (`FUN_1000cce7`:
+build `+0x60`→LFSR→send `+0x5c`→commit `+0xb0`) confirmed a 3rd time; RCMP wire = `BundleTCP` 2-byte
+BE length prefix + `SendRequest` `01 01` records, ≤`0x410` chunks; `LoadServer` (`FUN_1000b2ad`)
+`CoCreateInstance`s the RCMP-core COM servers → **the opcode bytes live in a separate COM DLL, which
+is where the static call graph ends**. Flashcode/serial/model are ordinary ISH-item `0x81` writes
+(`ReadWriteRadioSerialNumber@0x1000ace8`). Full map: [`docs/re/RE_0107_UNLOCKSECURITY.md`](re/RE_0107_UNLOCKSECURITY.md)
+§"Third re-confirmation" + `docs/SESSION_LOG_20261101.md` §4.
+
+**New top priority — capture ONE live CPS `0x81` write to confirm the UnlockSecurity wire.**
+Crypto solved (`unlock.py`); exchange shape solved; only the wire bytes are unconfirmed
+(`unlock_session.WIRE_PROFILE_CONFIRMED=False`: `0x0107` vs `0x2011` on the record header, request
+body, seed offset in reply). Verified 2026-11-01 that **no held capture has a decodable `0107`**:
+`cps_20261023_*` are read-only (OUT = `0106`/`0103`/`0100`, no `0107`); Depot caps are device-13
+USNET. To close it: capture a live CPS session that **writes `0x81`** (change radio model/serial, or
+a flashcode op) over **device 5** (CPS, decodable), run `tools/decode_usb_ppp.py`, read the `0107`
+request + 32-byte seed + response, drop constants into `unlock_session.py`, flip the flag. Do NOT
+transmit a guessed UnlockSecurity frame. (Plain RCMP `0x81` writes don't persist without this —
+why `flash_radio4_adp.py --no-unlock` reverted `0x81:1006`.)
+
+**Also VERIFIED 2026-11-01:** Depot's "unable to determine zone channel assignment" was a
+**duplicate `0x000D` zone name** (`ZE` twice, no `ZF`). Fixed → `backups/721CLZ0655_OptionA_ADP_zfix.cpg`,
+flashed `0x80`-only, Depot now reads Radio 4 clean. Commit `c4a1ade`.
+
+---
+
+## 🪟 2026-10-30 Windows winxp-rig session (Claude, Opus 4.8)
+
+Goal: capture how genuine Motorola CPS talks to the EEPROM (read/write framing +
+the `0x0107` unlock) so open-astro's flashing is validated against ground truth.
+Rig: Proxmox LXC 120 `cps-capture` runs a dockur WinXP VM with genuine **ASTRO 25
+Portable CPS R20.01.00**, its guest COM2 wired through socat to
+`tools/virtual_radio.py` (the clean-room fake radio that serves a `.cpg` and
+records the genuine CPS wire behaviour). Full detail:
+[`docs/SESSION_LOG_20261030.md`](SESSION_LOG_20261030.md) and the memory file
+`openastro-capture-rig.md`.
+
+**READ PROTOCOL — SOLVED + byte-validated (commits `e81a048`, `1c3ecd4`).** The
+full 228-object partition-`0x80` read now completes end-to-end, byte-identical to
+genuine hardware. Found by an OFFLINE diff harness that replays the genuine 407
+capture (`captures/cps_20261023_082619_decoded.json`) against
+`VirtualRadioServer.process_record`; now the regression test
+`tests/test_virtual_radio_fidelity.py`. Two protocol invariants fixed in
+`tools/virtual_radio.py`: (1) **read-ack MTU cap** — genuine radios cap every
+`0x8100` record at **248 bytes**; larger objects are truncated mid-payload while
+the length field still advertises full size, and CPS issues no offset/continuation
+read (all 228 genuine reads use offset 0). Sending the whole object overflowed
+CPS and aborted the read ("Read Radio Failed", ecec003x). Cap payload at
+248-14=234. (2) **absent-object NAK for instance 0** — a missing object/instance
+(e.g. `0x80/0x0FA3`) must get the 14-byte `0x81` not-found NAK, never a status-0
+empty success. Result vs genuine: 235/240 records exact, 227/227 codeplug objects
+byte-perfect (only diffs are `0x0047` timestamp + `0x000F`/`0x0011` identity,
+which legitimately differ between a saved `.cpg` and a live radio).
+
+**BLOCKER for the write/`0x0107` capture — CPS editor never loads (systematic).**
+Served 407, 721, and 205CFR2930; 407 and 205 read clean but CPS then aborts the
+parse with "Field (Prefix ID / Prefix Emergency) in block **ID Disp List Vector**
+is defined outside the block max entry size" → File menu shows only Open/Read
+Device, **no Write Device/Save = nothing loaded**. Identical on two very different
+radios, so it is OUR serving, not the codeplug. (721 fails earlier, mid-read at
+`0x0FFD` inst27, ecec0031.) BUT: our served bytes equal the genuine 10-23 capture
+for every object, and we serve the other partitions CPS reads correctly too
+(`0x81/0x1004-0x1006` present in every `.cpg`; `0x85/0x12be-0x12bf` return the
+empty NAK, matching genuine). AND `407CHT0214.cpg`'s internal `0x0047` save-stamp
+is **2026-10-25** — two days *after* the 10-23 capture — so genuine CPS DID
+read+save that radio, i.e. **real hardware loads fine**. Conclusion: there is a
+real, fixable serving gap the 10-23 capture simply doesn't exercise, and it
+**cannot be found offline** (our bytes match that capture exactly).
+
+**NEXT AI — do this:**
+1. **Unblock needs a hardware capture** (Mario is setting up the Fedora laptop):
+   the PPP/RCMP wire (`tcpdump` on `ppp0` / port 8002) of a genuine **Read Device
+   that successfully loads the CPS editor** (watch the tree appear) — 407 or 205
+   ideal (we hold those `.cpg`s to diff). Decode it and diff against
+   `VirtualRadioServer.process_record` output (extend `scratch/diff_genuine_407.py`)
+   to find what the live radio sends that we don't → fix the ID-Disp-List serving
+   gap → CPS loads → Write Device becomes reachable.
+2. Then capture a genuine **Write Device** back to the radio. This yields the
+   partition-`0x81` write framing **and the `0x0107` UnlockSecurity wire frame** —
+   which is exactly "THE ONE REMAINING UNKNOWN" of the 10-28 section below (the
+   `0x0107` crypto/LFSR is already solved in `src/open_astro/protocol/unlock.py`).
+   Fill the constants in `unlock_session.py`, set `WIRE_PROFILE_CONFIRMED = True`,
+   and add the captured seed/response pair to `tests/test_unlock.py`.
+3. Rig how-to: helper scripts in `C:\Users\v-mariorivas\wsl-setup\` (`deploy-mtu.sh`,
+   `deploy-205.sh`, `deploy-721.sh`; `diff_genuine_407.py` under gitignored
+   `scratch/`). Reach the LXC only via WSL `FedoraLinux-44` Tailscale (SSH alias
+   `cpslxc`). After restarting `virtual-radio`, restart `cps-winxp` ONLY after the
+   socat pty is back (`[ -e /tmp/radiotty ]`) or QEMU aborts (exit 134). Drive the
+   noVNC viewer `http://localhost:8006/` (SSH tunnel) with Claude-in-Chrome. Rig is
+   currently serving 205CFR2930; committed compose default is 721.
+
+---
+
+## 🔭 2026-10-28 Fedora session (Claude, Opus 4.8)
 
 Radio 4 (`721CLZ0655`, XTS 5000) on this Fedora laptop via `/dev/ttyACM0` (`0cad:1002`).
 Full detail in [`docs/SESSION_LOG_20261028.md`](SESSION_LOG_20261028.md).

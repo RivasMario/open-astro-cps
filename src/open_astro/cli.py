@@ -1054,6 +1054,135 @@ def cmd_make_nas(args):
         print("=======================================================\n")
 
 
+def cmd_write(args):
+    """Assemble and (with --confirm) write a full partition-0x80 codeplug via RCMP.
+
+    DRY-RUN by default: verifies CRC-16, enforces the partition 0x80 allowlist
+    (strictly refusing 0x81/0x82), checks the proven EEPROM-persist control framing,
+    and prints a summary without touching any hardware. Live transmission requires
+    --socket --expect-serial <SERIAL> --confirm.
+    """
+    import json
+    from collections import Counter
+    from open_astro.protocol import rcmp
+    from open_astro.protocol.write_session import (
+        CpgWriteAssembler, WriteObject, WriteSessionError, PART_CODEPLUG,
+    )
+    from open_astro.parsers.cpg_parser import CpgParser
+
+    if not os.path.isfile(args.cpg):
+        print(f"[-] Codeplug file not found: {args.cpg}", file=sys.stderr)
+        sys.exit(2)
+
+    try:
+        parser = CpgParser(args.cpg)
+        try:
+            raw_objs = parser.objects()
+        finally:
+            parser.close()
+
+        objs = []
+        bad_crc = []
+        for o in raw_objs:
+            part = o.get("partition")
+            if part is None:
+                part = PART_CODEPLUG
+            if part != PART_CODEPLUG:
+                continue
+            if not o["crc_ok"]:
+                bad_crc.append((o["tag"], o["instance"]))
+                continue
+            objs.append(WriteObject(PART_CODEPLUG, o["tag"], o["instance"], o["payload"]))
+
+        if bad_crc:
+            raise WriteSessionError(
+                f"{len(bad_crc)} partition-0x80 objects failed CRC; refusing: {bad_crc[:8]}"
+            )
+
+        asm = CpgWriteAssembler(objs)
+        records = asm.full_session_records()
+    except (WriteSessionError, Exception) as e:
+        print(f"[-] Assembly refused: {e}", file=sys.stderr)
+        sys.exit(2)
+
+    ops = [r[2:4].hex() for r in records]
+    writes = sum(1 for o in ops if o == "0101")
+    hist = dict(Counter(ops))
+
+    # Verify proven EEPROM-persist control framing and guarantee 0x82 is never targeted
+    ctrl = [records[i][2:].hex() for i in range(5)]
+    expect_ctrl = [
+        "010600", "010280004700000001", "010380000201f4",
+        "0103800e0b0fff", "01078000",
+    ]
+    control_ok = (ctrl == expect_ctrl and records[-1][2:].hex() == "010601")
+    has_tuning = any(r[2:4].hex() == "0101" and r[4] == 0x82 for r in records)
+    if not control_ok or has_tuning:
+        print("[-] Safety check failed: invalid control framing or forbidden 0x82 record.", file=sys.stderr)
+        sys.exit(2)
+
+    summary = {
+        "cpg": args.cpg,
+        "dry_run": not args.confirm,
+        "partition": "0x80",
+        "total_records": len(records),
+        "write_objects": writes,
+        "opcodes": hist,
+        "control_framing_ok": control_ok,
+        "tuning_0x82_blocked": True,
+    }
+
+    if not args.confirm:
+        if args.json:
+            print(json.dumps(summary, indent=2))
+        else:
+            print(f"[+] Assembled full 0x80 write session from {args.cpg}")
+            print(f"    {len(records)} records, {writes} write objects (0x0101), opcodes {hist}")
+            print("    Control framing verified (0102/0103x2/0107 8000 -> commit 0106 01); 0x82 firewall active")
+            print("[i] DRY RUN -- nothing transmitted. Re-run with --socket --expect-serial <SERIAL> --confirm to write.")
+        return
+
+    if not args.socket:
+        print("[-] Refusing live write: must use --socket (OS TCP over RAS/pppd).", file=sys.stderr)
+        sys.exit(2)
+    if not args.expect_serial:
+        print("[-] Refusing live write: --confirm requires --expect-serial to identity-gate.", file=sys.stderr)
+        sys.exit(2)
+
+    from open_astro.protocol.rcmp_write import RcmpWriteClient, RcmpWriteError
+
+    try:
+        w = RcmpWriteClient.connect(host=args.host, port=args.port,
+                                    timeout=args.timeout, allow_write=True)
+    except RcmpWriteError as e:
+        print(f"[-] Connect failed: {e}; is the RAS/PPP link up?", file=sys.stderr)
+        sys.exit(2)
+
+    try:
+        w.send_prebuilt(records[0])  # 0106 00 session open
+        idrec = w.send_prebuilt(rcmp.build_read(0x81, 0x1004, 0x40))
+        body = bytes.fromhex(str(idrec.get("body_hex", "")))
+        serial_txt = body[12:-2].decode("latin-1", "replace") if len(body) > 14 else ""
+        if args.expect_serial not in serial_txt:
+            print(f"[-] Serial mismatch: radio reports {serial_txt!r}, expected {args.expect_serial!r}; ABORTING.",
+                  file=sys.stderr)
+            w.close()
+            sys.exit(2)
+        print(f"[+] Identity OK: radio reports {args.expect_serial}")
+        print(f"[!] TRANSMITTING {writes} writes to {args.host}:{args.port} ...")
+        for i, rec in enumerate(records[1:], start=1):
+            w.send_prebuilt(rec)
+            if i % 50 == 0 or rec[2:4].hex() == "0106":
+                print(f"    [{i:3d}/{len(records)}] sent 0x{rec[2:4].hex()}")
+    except RcmpWriteError as e:
+        print(f"[-] Write failed mid-session: {e}", file=sys.stderr)
+        w.close()
+        sys.exit(3)
+    finally:
+        w.close()
+    print("[+] Write session completed + committed (0106 01 acked)")
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpenAstro: Open Source Motorola ASTRO 25 Codeplug Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1277,6 +1406,22 @@ def main():
     p_nas.add_argument("--emit-objects", metavar="JSON_PATH", help="Optional path to output raw RCMP write objects JSON")
     p_nas.add_argument("--json", action="store_true", help="Output JSON summary to stdout")
     p_nas.set_defaults(func=cmd_make_nas)
+
+    # rcmp-write (safe-by-default full 0x80 codeplug writer)
+    p_write = subparsers.add_parser("rcmp-write",
+        help="Assemble and (with --confirm) write a full partition-0x80 codeplug over RCMP (DRY-RUN by default)")
+    p_write.add_argument("cpg", help="Source codeplug .cpg file to write")
+    p_write.add_argument("--socket", action="store_true",
+                         help="Transmit over OS TCP (RAS/pppd link already up)")
+    p_write.add_argument("--host", default="192.168.128.1", help="Radio PPP IP (default: 192.168.128.1)")
+    p_write.add_argument("--port", type=lambda x: int(x, 0), default=8002, help="RCMP TCP port (default: 8002)")
+    p_write.add_argument("--expect-serial", default=None,
+                         help="Required with --confirm: abort unless radio 0x81:0x1004 serial matches")
+    p_write.add_argument("--confirm", action="store_true",
+                         help="Actually transmit to radio (irreversible); otherwise DRY RUN")
+    p_write.add_argument("--timeout", type=float, default=15.0, help="Socket timeout seconds (default: 15.0)")
+    p_write.add_argument("--json", action="store_true", help="Output dry-run summary as JSON")
+    p_write.set_defaults(func=cmd_write)
 
     args = parser.parse_args()
     args.func(args)
