@@ -501,6 +501,15 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
             const MOBILE_OPTS: &str = include_str!("../../../schema/mobile_flashcode_options.json");
             render_http_response("200 OK", "application/json", MOBILE_OPTS)
         }
+        _ if uri.starts_with("/api/check-family") => {
+            let query = uri.splitn(2, '?').nth(1).unwrap_or("");
+            let radio_model = query.split('&').find_map(|p| p.strip_prefix("radio_model=")).map(url_decode).unwrap_or_default();
+            let cp_model = query.split('&').find_map(|p| p.strip_prefix("codeplug_model=")).map(url_decode).unwrap_or_default();
+            match crate::flashcode::guard_family_match(&radio_model, &cp_model) {
+                Ok(fam) => render_http_response("200 OK", "application/json", &json!({"ok": true, "family": fam.to_string()}).to_string()),
+                Err(e) => render_http_response("409 Conflict", "application/json", &json!({"ok": false, "error": e.to_string()}).to_string()),
+            }
+        }
         "/api/health" => {
             let json_content = json!({
                 "status": "ok",

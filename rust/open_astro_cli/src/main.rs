@@ -101,6 +101,13 @@ enum Commands {
         #[arg(long, default_value_t = serial_ppp::DEFAULT_BAUD)]
         baud: u32,
     },
+    /// Detect radio family (Portable XTS/PRC vs Mobile XTL/PM) and verify cross-flash guard.
+    CheckFamily {
+        #[arg(long)]
+        radio_model: String,
+        #[arg(long)]
+        codeplug_model: Option<String>,
+    },
 }
 
 /// Simple representation of a captured RCMP packet for JSON output.
@@ -344,6 +351,13 @@ async fn main() -> Result<()> {
         Commands::PppProbe { serial, baud } => {
             let pkts = serial_ppp::probe_ppp_serial(&serial, baud)?;
             println!("PPP probe received {} frames on {} @ {}", pkts.len(), serial, baud);
+        }
+        Commands::CheckFamily { radio_model, codeplug_model } => {
+            let fam = match codeplug_model {
+                Some(ref cm) => flashcode::guard_family_match(&radio_model, cm)?,
+                None => flashcode::detect_family_from_model(&radio_model),
+            };
+            println!("OK: {}", fam);
         }
     }
     Ok(())
