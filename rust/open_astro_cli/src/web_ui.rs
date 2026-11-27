@@ -205,20 +205,20 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
   <div class="main">
     <aside>
       <div class="tree-grp">Radio Configuration</div>
-      <div class="tree-item active" onclick="showPane('info', this)">📁 Radio Info &amp; FLASHcode</div>
-      <div class="tree-item" onclick="showPane('zones', this)">📁 Zones &amp; Channels</div>
-      <div class="tree-item" onclick="showPane('pers', this)">📁 Conv &amp; Trunk Personalities</div>
-      <div class="tree-item" onclick="showPane('buttons', this)">📁 Buttons &amp; Scan Lists</div>
-      <div class="tree-item" onclick="showPane('adp', this)">📁 Secure / ADP Keys</div>
+      <div class="tree-item active" onclick="showPane('info', this)">[+] Radio Info &amp; FLASHcode</div>
+      <div class="tree-item" onclick="showPane('zones', this)">[+] Zones &amp; Channels</div>
+      <div class="tree-item" onclick="showPane('pers', this)">[+] Conv &amp; Trunk Personalities</div>
+      <div class="tree-item" onclick="showPane('buttons', this)">[+] Buttons &amp; Scan Lists</div>
+      <div class="tree-item" onclick="showPane('adp', this)">[+] Secure / ADP Keys</div>
       <div class="tree-grp">Hardware &amp; Custom Tools</div>
-      <div class="tree-item" onclick="showPane('stash', this)">🧱 Flash / EEPROM Map</div>
-      <div class="tree-item" onclick="showPane('mobile', this)">🚗 Mobile XTL / PM (G-Opts)</div>
-      <div class="tree-item" onclick="showPane('custom', this)">🚀 Custom (NAS / SDR / Relay)</div>
+      <div class="tree-item" onclick="showPane('stash', this)">[MEM] Flash / EEPROM Map</div>
+      <div class="tree-item" onclick="showPane('mobile', this)">[XTL] Mobile XTL / PM (G-Opts)</div>
+      <div class="tree-item" onclick="showPane('custom', this)">[EXT] Custom (NAS / SDR / Relay)</div>
     </aside>
     <section>
       <div id="famBanner" class="fam-bar fam-port">
-        <span id="famTitle">📻 DETECTED FAMILY: PORTABLE (XTS / PRC-153 · Q/H Options · USB 0cad:1001/1002)</span>
-        <span id="famGuard">🛡️ Cross-Flash Guard: PORTABLE ONLY (Mobile M*/XTL blocked)</span>
+        <span id="famTitle">[PORTABLE] XTS / PRC-153 · Q/H Options · USB 0cad:1001/1002</span>
+        <span id="famGuard">[GUARD] Cross-Flash Lock: PORTABLE ONLY (Mobile M*/XTL blocked)</span>
       </div>
       <div id="pane-info" class="pane">
         <div class="card">
@@ -331,16 +331,17 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
       if (!activeFile) return;
       const r = await fetch('/api/codeplug?file=' + encodeURIComponent(activeFile));
       const cp = await r.json();
-      const mdl = (cp.radio_model || cp.model || '').toUpperCase();
-      const isMob = mdl.includes('XTL') || mdl.includes('PM ') || mdl.startsWith('M');
+      const mdl = (cp.radio_model || cp.model || '').toUpperCase().trim();
+      const isPort = mdl.includes('XTS') || mdl.includes('PRC') || mdl.includes('MT 1500') || mdl.includes('PR 1500') || /^H\d{2}/.test(mdl);
+      const isMob = !isPort && (mdl.includes('XTL') || mdl.includes('PM 1500') || /^M\d{2}/.test(mdl));
       const banner = document.getElementById('famBanner');
       banner.className = 'fam-bar ' + (isMob ? 'fam-mob' : 'fam-port');
       document.getElementById('famTitle').textContent = isMob
-        ? `🚗 DETECTED FAMILY: MOBILE (${cp.radio_model || 'XTL / PM'} · G* Options · USB 0cad:1003/1010-1015)`
-        : `📻 DETECTED FAMILY: PORTABLE (${cp.radio_model || 'XTS / PRC-153'} · Q/H Options · USB 0cad:1001/1002)`;
+        ? `[MOBILE] ${cp.radio_model || cp.model || 'XTL / PM'} · G* Options · USB 0cad:1003/1010-1015`
+        : `[PORTABLE] ${cp.radio_model || cp.model || 'XTS / PRC-153'} · Q/H Options · USB 0cad:1001/1002`;
       document.getElementById('famGuard').textContent = isMob
-        ? '🛡️ Cross-Flash Guard: MOBILE ONLY (Portable H*/XTS writes blocked)'
-        : '🛡️ Cross-Flash Guard: PORTABLE ONLY (Mobile M*/XTL writes blocked)';
+        ? '[GUARD] Cross-Flash Lock: MOBILE ONLY (Portable H*/XTS writes blocked)'
+        : '[GUARD] Cross-Flash Lock: PORTABLE ONLY (Mobile M*/XTL writes blocked)';
       document.getElementById('radioMeta').textContent = JSON.stringify({
         file: activeFile,
         detected_family: isMob ? 'MOBILE (XTL/PM - G* Options)' : 'PORTABLE (XTS/PRC-153 - Q/H Options)',
