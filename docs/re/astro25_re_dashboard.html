@@ -387,20 +387,23 @@ flowchart TD
       </div>
     </div>
 
-    <h2>Homelab AI vs Cloud (504 Functions: ~268K In / ~157K Out Tokens)</h2>
+    <h2>Homelab AI vs Cloud (795 Functions: ~423K In / ~256K Out = ~679K Tokens Saved)</h2>
     <div class="stash-layout">
       <div class="card">
-        <div class="rig-title" style="margin-bottom:12px;">Cost Comparison (504 Functions)</div>
+        <div class="rig-title" style="margin-bottom:12px;">Token &amp; Cash Savings (795 Functions, Batches 1–9)</div>
         <table>
-          <thead><tr><th>Model / Provider</th><th>Est. Cost</th><th>Speed (504 funcs)</th><th>Quality Notes</th></tr></thead>
+          <thead><tr><th>Model / Provider</th><th>Est. Cost</th><th>Relative Cost Bar</th><th>Speed (795 funcs)</th></tr></thead>
           <tbody>
-            <tr><td><strong>Local <code>qwen2.5-coder:14b</code></strong> (RTX 3080)</td><td><span class="badge ok">$0.00</span></td><td>~2.4 hrs (1-at-a-time, ~17s/fn)</td><td>Strong on single-function C/API summary; occasionally over-speculates on CRT boilerplate.</td></tr>
-            <tr><td>Gemini Flash-Lite</td><td>~$0.09</td><td>~2–4 min (parallel)</td><td>Fast bulk pass; similar single-func accuracy.</td></tr>
-            <tr><td>Gemini Flash</td><td>~$0.47</td><td>~2–4 min (parallel)</td><td>Stronger cross-function reasoning.</td></tr>
-            <tr><td>Claude Sonnet</td><td>~$3.17</td><td>~3–5 min (parallel)</td><td>High architectural synthesis &amp; fewer boilerplate false positives.</td></tr>
-            <tr><td>Claude Opus</td><td>~$15.83</td><td>~5–8 min (parallel)</td><td>Highest reasoning, overkill for 500 single-function summaries.</td></tr>
+            <tr><td><strong>Local <code>qwen2.5-coder:14b</code></strong> (RTX 3080)</td><td><span class="badge ok">$0.00</span></td><td><div class="fill-bar" style="margin:0;"><div class="fill-inner" style="width:1%; background:#3fb950;"></div></div></td><td>~3.8 hrs (~17s/fn)</td></tr>
+            <tr><td>Gemini Flash-Lite</td><td>~$0.14</td><td><div class="fill-bar" style="margin:0;"><div class="fill-inner" style="width:1%; background:#58a6ff;"></div></div></td><td>~3–5 min</td></tr>
+            <tr><td>Gemini Flash</td><td>~$0.76</td><td><div class="fill-bar" style="margin:0;"><div class="fill-inner" style="width:3%; background:#58a6ff;"></div></div></td><td>~3–5 min</td></tr>
+            <tr><td>Claude Sonnet</td><td>~$5.11</td><td><div class="fill-bar" style="margin:0;"><div class="fill-inner" style="width:20%; background:#d29922;"></div></div></td><td>~4–6 min</td></tr>
+            <tr><td>Claude Opus</td><td>~$25.55</td><td><div class="fill-bar" style="margin:0;"><div class="fill-inner" style="width:100%; background:#f85149;"></div></div></td><td>~6–10 min</td></tr>
           </tbody>
         </table>
+        <div style="font-size:12px; color:var(--muted); margin-top:8px;">
+          <strong>Total saved vs. cloud APIs:</strong> ~<strong>679,229 tokens</strong> (422,940 input + 256,289 output) · <strong>$5.11</strong> saved vs. Sonnet / <strong>$25.55</strong> saved vs. Opus.
+        </div>
       </div>
       <div class="card">
         <div class="rig-title" style="margin-bottom:12px;">TrueNAS RTX 3080 Live &amp; Baseline Health</div>
