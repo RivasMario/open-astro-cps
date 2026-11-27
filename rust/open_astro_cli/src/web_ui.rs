@@ -146,41 +146,55 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenAstro CPS (Pure Rust)</title>
   <style>
-    :root { --bg:#0c0e12; --panel:#14171e; --tree:#101319; --border:#2a3140; --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --yellow:#d29922; --red:#f85149; }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:"Segoe UI",-apple-system,sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; }
-    header { padding:10px 18px; background:var(--panel); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:12px; }
-    .pill { padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; background:rgba(248,81,73,0.18); color:var(--red); }
-    .okpill { background:rgba(63,185,80,0.18); color:var(--green); }
+    :root { --bg:#181a1f; --panel:#20232a; --well:#121418; --tree:#17191e; --hi:#3d4452; --lo:#0a0b0e; --text:#e2e6ed; --muted:#9aa3b2; --sel:#0b4f8c; --green:#3fb950; --red:#f85149; }
+    * { box-sizing:border-box; border-radius:0 !important; }
+    body { margin:0; font-family:Tahoma,"MS Sans Serif","Segoe UI",sans-serif; font-size:12px; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; }
+    .titlebar { padding:4px 8px; background:linear-gradient(90deg,#0a246a,#1f4e8c); color:#fff; font-weight:700; font-size:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--lo); }
+    .menubar { padding:2px 6px; background:var(--panel); border-bottom:1px solid var(--lo); display:flex; gap:14px; font-size:11px; color:var(--text); }
+    .menubar span { padding:2px 5px; cursor:default; }
+    .menubar span:hover { background:var(--sel); color:#fff; }
+    header { padding:5px 8px; background:var(--panel); border-top:1px solid var(--hi); border-bottom:1px solid var(--lo); display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .pill { padding:2px 6px; font-size:11px; font-weight:700; background:#2b1416; color:var(--red); border:1px inset var(--lo); }
+    .okpill { background:#13291b; color:var(--green); }
     .main { display:flex; flex:1; overflow:hidden; }
-    aside { width:260px; background:var(--tree); border-right:1px solid var(--border); padding:12px; overflow-y:auto; }
-    .tree-grp { font-size:11px; text-transform:uppercase; color:var(--muted); margin:12px 0 6px; letter-spacing:0.6px; }
-    .tree-item { padding:7px 10px; border-radius:6px; cursor:pointer; font-size:13px; margin-bottom:2px; }
-    .tree-item:hover { background:#1b202b; }
-    .tree-item.active { background:#1f6feb; color:#fff; font-weight:600; }
-    section { flex:1; padding:20px; overflow-y:auto; }
-    .card { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; }
-    h2 { margin:0 0 12px; font-size:15px; color:var(--accent); text-transform:uppercase; }
-    table { width:100%; border-collapse:collapse; font-size:13px; }
-    th, td { text-align:left; padding:7px; border-bottom:1px solid #222733; }
-    th { color:var(--muted); }
-    input, select, button { background:#0b0d11; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:6px 9px; font-size:13px; }
-    button { background:#1f6feb; border-color:#388bfd; font-weight:600; cursor:pointer; }
-    pre { background:#090b0f; border:1px solid var(--border); border-radius:6px; padding:10px; font-size:12px; overflow:auto; }
-    .stash { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-    .slot { border-radius:6px; padding:10px; border:1px solid rgba(255,255,255,0.14); font-size:12px; }
+    aside { width:245px; background:var(--tree); border-right:2px groove var(--hi); padding:6px; overflow-y:auto; }
+    .tree-grp { font-size:11px; font-weight:700; color:var(--muted); margin:8px 0 3px; padding:2px 4px; border-bottom:1px solid #2a2e38; }
+    .tree-item { padding:4px 8px; cursor:pointer; font-size:12px; margin-bottom:1px; border:1px solid transparent; }
+    .tree-item:hover { background:#242934; border-color:#343b49; }
+    .tree-item.active { background:var(--sel); color:#fff; border:1px dotted #8ec3f6; }
+    section { flex:1; padding:10px; overflow-y:auto; background:var(--bg); }
+    .card { background:var(--panel); border-top:1px solid var(--hi); border-left:1px solid var(--hi); border-right:1px solid var(--lo); border-bottom:1px solid var(--lo); padding:10px; margin-bottom:10px; }
+    h2 { margin:0 0 8px; font-size:12px; color:#c8d6eb; background:#282d37; padding:4px 8px; border-left:3px solid #3a7bd5; text-transform:none; }
+    table { width:100%; border-collapse:collapse; font-size:12px; background:var(--well); }
+    th, td { text-align:left; padding:4px 6px; border:1px solid #2b303c; }
+    th { background:#252933; color:#cbd3e0; font-weight:700; }
+    input, select { background:var(--well); color:var(--text); border-top:1px solid var(--lo); border-left:1px solid var(--lo); border-right:1px solid var(--hi); border-bottom:1px solid var(--hi); padding:3px 6px; font-size:12px; font-family:Tahoma,sans-serif; }
+    button { background:#2b303b; color:var(--text); border-top:1px solid #4e5668; border-left:1px solid #4e5668; border-right:1px solid #0b0c0f; border-bottom:1px solid #0b0c0f; padding:3px 10px; font-size:12px; font-family:Tahoma,sans-serif; cursor:pointer; }
+    button:active { border-top:1px solid #0b0c0f; border-left:1px solid #0b0c0f; border-right:1px solid #4e5668; border-bottom:1px solid #4e5668; }
+    pre { background:var(--well); border:1px inset var(--lo); padding:8px; font-family:Consolas,monospace; font-size:12px; overflow:auto; margin:0; }
+    .stash { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+    .slot { padding:8px; border:1px solid var(--hi); font-size:12px; }
     .c80 { background:#162b44; border-color:#2f6aa8; }
     .c81 { background:#3a2b12; border-color:#9e7423; }
     .c82 { background:#3a1619; border-color:#9e3138; }
+    .statusbar { padding:3px 8px; background:var(--panel); border-top:1px solid var(--hi); display:flex; justify-content:space-between; font-size:11px; color:var(--muted); }
     .hidden { display:none; }
   </style>
 </head>
 <body>
+  <div class="titlebar">
+    <span>OpenAstro CPS R20 — ASTRO 25 Portable &amp; Mobile</span>
+    <span>[0x82 ReadOnly Guard]</span>
+  </div>
+  <div class="menubar">
+    <span>File</span><span>Edit</span><span>View</span><span>Device</span><span>Tools</span><span>Help</span>
+  </div>
   <header>
-    <div><strong>OpenAstro CPS</strong> <span class="pill okpill" id="healthBadge">Rust Engine</span></div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <select id="cpSelect" style="min-width:240px;"></select>
-      <button onclick="loadCodeplug()">Load Codeplug</button>
+    <div><span class="pill okpill" id="healthBadge">Rust Engine</span></div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span>Archive:</span>
+      <select id="cpSelect" style="min-width:260px;"></select>
+      <button onclick="loadCodeplug()">Open / Load</button>
       <span class="pill">Partition 0x82 Firewall: ACTIVE</span>
     </div>
   </header>
@@ -271,6 +285,10 @@ open_astro_cli.exe relay --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pr
         </div>
       </div>
     </section>
+  </div>
+  <div class="statusbar">
+    <span>Ready · ASTRO 25 Portable (XTS/PRC-153) &amp; Mobile (XTL/PM)</span>
+    <span>192.168.128.1:8002 · Partition 0x82 Blocked</span>
   </div>
   <script>
     let activeFile = '';
