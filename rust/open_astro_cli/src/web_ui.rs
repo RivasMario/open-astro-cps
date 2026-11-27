@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 pub fn render_http_response(status: &str, content_type: &str, body: &str) -> Vec<u8> {
     format!(
-        "HTTP/1.1 {}\r\nContent-Type: {}\r\nContent-Length: {}\r\n\r\n{}",
+        "HTTP/1.1 {}\r\nContent-Type: {}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
         status,
         content_type,
         body.len(),
@@ -422,16 +422,21 @@ pub async fn run_web_server(port: u16) -> anyhow::Result<()> {
 
     loop {
         let (mut socket, _) = listener.accept().await?;
-        let mut buffer = [0; 8192];
-
-        let n = socket.read(&mut buffer).await?;
-        if n == 0 {
-            continue;
-        }
-        let request = String::from_utf8_lossy(&buffer[..n]);
-        let response = handle_http_request(&request);
-
-        socket.write_all(&response).await?;
+        tokio::spawn(async move {
+            let mut buffer = [0; 8192];
+            if let Ok(Ok(n)) = tokio::time::timeout(
+                std::time::Duration::from_secs(5),
+                socket.read(&mut buffer),
+            )
+            .await
+            {
+                if n > 0 {
+                    let request = String::from_utf8_lossy(&buffer[..n]);
+                    let response = handle_http_request(&request);
+                    let _ = socket.write_all(&response).await;
+                }
+            }
+        });
     }
 }
 
