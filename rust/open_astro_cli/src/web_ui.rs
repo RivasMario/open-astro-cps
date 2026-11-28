@@ -24,6 +24,15 @@ fn find_backups_dir() -> Option<PathBuf> {
     None
 }
 
+fn ensure_backups_dir() -> std::io::Result<PathBuf> {
+    if let Some(d) = find_backups_dir() {
+        return Ok(d);
+    }
+    let p = PathBuf::from("backups");
+    std::fs::create_dir_all(&p)?;
+    Ok(p)
+}
+
 fn safe_backup_path(filename: &str) -> Option<PathBuf> {
     if filename.contains('/') || filename.contains('\\') || filename.contains("..") || !filename.ends_with(".json") {
         return None;
@@ -144,12 +153,55 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
             o.get_mut("encryption_keys")
         }).and_then(|k| k.as_array_mut());
         if let Some(arr) = keys {
-            arr.push(json!({"key_id": arr.len() + 1, "name": key_name, "algorithm": "ADP (40-bit RC4)", "key_hex": key_hex.to_uppercase()}));
+            arr.push(json!({"key_id": arr.len() + 1, "name": key_name, "algorithm": "ADP", "key_data": key_hex.to_uppercase()}));
         }
         if let Ok(pretty) = serde_json::to_string_pretty(&doc) {
             let _ = std::fs::write(&path, pretty);
         }
         return render_http_response("200 OK", "application/json", &json!({"status":"saved","key_name":key_name}).to_string());
+    }
+
+    if method == "POST" && uri == "/api/new-codeplug" {
+        let Ok(payload) = serde_json::from_str::<Value>(body.trim()) else {
+            return render_http_response("400 Bad Request", "application/json", r#"{"error":"Invalid JSON"}"#);
+        };
+        let is_mob = payload.get("family").and_then(|v| v.as_str()).unwrap_or("portable") == "mobile";
+        let serial = payload.get("serial").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).unwrap_or(if is_mob { "XTL0000001" } else { "XTS0000001" });
+        let fname = format!("{}_starter.json", serial.replace(|c: char| !c.is_ascii_alphanumeric(), "_"));
+        let Ok(dir) = ensure_backups_dir() else {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Cannot create backups dir"}"#);
+        };
+        let doc = json!({
+            "radio_model": if is_mob { "Motorola XTL 5000 O5" } else { "Motorola XTS 5000 Model III" },
+            "bandsplit": "700/800 MHz (764-870 MHz)",
+            "serial_number": serial,
+            "flashcode": if is_mob { "500008-002000-0" } else { "000008-002410-2" },
+            "zones": [{
+                "zone_number": 1,
+                "name": "ZONE 1",
+                "channels": [{
+                    "channel_number": 1,
+                    "name": "8CALL90",
+                    "rx_frequency": 851.0125,
+                    "tx_frequency": 806.0125,
+                    "voice_type": "Analog",
+                    "rx_pl_tone": 156.7,
+                    "tx_pl_tone": 156.7,
+                    "rx_only": false
+                }]
+            }],
+            "encryption_keys": [],
+            "talkgroups": [],
+            "sites": [],
+            "scan_lists": []
+        });
+        let Ok(pretty) = serde_json::to_string_pretty(&doc) else {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Serialize failed"}"#);
+        };
+        if std::fs::write(dir.join(&fname), pretty).is_err() {
+            return render_http_response("500 Internal Server Error", "application/json", r#"{"error":"Write failed"}"#);
+        }
+        return render_http_response("200 OK", "application/json", &json!({"status":"created","file":fname}).to_string());
     }
 
     if method == "POST" && uri == "/api/save-channel" {
@@ -275,8 +327,10 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
     <div><span class="pill okpill" id="healthBadge">Rust Engine</span></div>
     <div style="display:flex;align-items:center;gap:6px;">
       <span>Archive:</span>
-      <select id="cpSelect" style="min-width:260px;"></select>
+      <select id="cpSelect" style="min-width:240px;"></select>
       <button onclick="loadCodeplug()">Open / Load</button>
+      <button onclick="newCp('portable')" title="Create a blank XTS Portable codeplug">+ New XTS</button>
+      <button onclick="newCp('mobile')" title="Create a blank XTL Mobile codeplug">+ New XTL</button>
       <span class="pill" title="Factory RF tuning / soft-pots (Partition 0x82) are hard-locked Read-Only in code so flashing a codeplug can never wipe your radio's frequency or TX power calibration.">RF Tuning Write-Protect: 0x82 Read-Only</span>
     </div>
   </header>
@@ -403,7 +457,10 @@ pub fn handle_http_request(req: &str) -> Vec<u8> {
         </div>
         <div class="card">
           <h2>Custom OpenAstro CLI Tools (NAS / SDR / Relay)</h2>
-          <pre>open-astro make-nas --tgid 1188 --tg-name "SEATTLE DISP" -o seattle_nas.json
+          <div style="margin-bottom:8px;">
+            <button onclick="exportSdr()">Export Loaded Codeplug to SDR CSV</button>
+          </div>
+          <pre id="sdrOut">open-astro make-nas --tgid 1188 --tg-name "SEATTLE DISP" -o seattle_nas.json
 open-astro export-sdr backups/Radio4_RedmondPD_721CLZ0655_codeplug.json -o backups/sdr_exports
 open_astro_cli.exe relay --serial COM7 --listen 127.0.0.1:8002 --target 192.168.128.1:8002</pre>
         </div>
@@ -557,6 +614,22 @@ open_astro_cli.exe relay --serial COM7 --listen 127.0.0.1:8002 --target 192.168.
       document.getElementById('adpOut').textContent = await r.text();
       loadCodeplug();
     }
+    async function newCp(family) {
+      const r = await fetch('/api/new-codeplug', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ family }) });
+      const d = await r.json();
+      if (d.file) {
+        const sel = document.getElementById('cpSelect');
+        const opt = document.createElement('option');
+        opt.value = d.file; opt.textContent = d.file; opt.selected = true;
+        sel.appendChild(opt);
+        loadCodeplug();
+      }
+    }
+    async function exportSdr() {
+      if (!activeFile) return;
+      const r = await fetch('/api/export-sdr?file=' + encodeURIComponent(activeFile));
+      document.getElementById('sdrOut').textContent = await r.text();
+    }
     initBackups();
     fetch('/api/mobile-options').then(r=>r.text()).then(t=>{
       document.getElementById('mobOpts').textContent = t;
@@ -581,6 +654,37 @@ open_astro_cli.exe relay --serial COM7 --listen 127.0.0.1:8002 --target 192.168.
             }
             files.sort();
             render_http_response("200 OK", "application/json", &json!(files).to_string())
+        }
+        _ if uri.starts_with("/api/export-sdr") => {
+            let file = uri.splitn(2, '?').nth(1).and_then(|q| q.split('&').find_map(|p| p.strip_prefix("file="))).map(url_decode).unwrap_or_default();
+            let Some(raw) = safe_backup_path(&file).and_then(|p| std::fs::read_to_string(p).ok()) else {
+                return render_http_response("404 Not Found", "text/plain", "Codeplug not found");
+            };
+            let Ok(doc) = serde_json::from_str::<Value>(&raw) else {
+                return render_http_response("500 Internal Server Error", "text/plain", "Invalid JSON");
+            };
+            let mut csv = String::from("zone,channel,rx_mhz,tx_mhz,mode,nac,pl,rx_only\n");
+            if let Some(zones) = doc.get("zones").and_then(|z| z.as_array()) {
+                for z in zones {
+                    let zname = z.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                    if let Some(chans) = z.get("channels").and_then(|c| c.as_array()) {
+                        for c in chans {
+                            csv.push_str(&format!(
+                                "\"{}\",\"{}\",{},{},{},{},{},{}\n",
+                                zname,
+                                c.get("name").and_then(|v| v.as_str()).unwrap_or(""),
+                                c.get("rx_frequency").and_then(|v| v.as_f64()).unwrap_or(0.0),
+                                c.get("tx_frequency").and_then(|v| v.as_f64()).unwrap_or(0.0),
+                                c.get("voice_type").and_then(|v| v.as_str()).unwrap_or(""),
+                                c.get("rx_nac").and_then(|v| v.as_str()).unwrap_or(""),
+                                c.get("rx_pl_tone").and_then(|v| v.as_f64()).map(|p| p.to_string()).unwrap_or_default(),
+                                c.get("rx_only").and_then(|v| v.as_bool()).unwrap_or(false)
+                            ));
+                        }
+                    }
+                }
+            }
+            render_http_response("200 OK", "text/csv; charset=utf-8", &csv)
         }
         _ if uri.starts_with("/api/codeplug") => {
             let file = uri
