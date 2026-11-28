@@ -374,7 +374,9 @@ flowchart TD
         <div class="rig-title" style="margin-bottom:10px;">What Has Been Done vs. Still To Be Done</div>
         <div style="font-size:12px; margin-bottom:6px;"><strong>Static RE (Portable + Mobile + Drivers):</strong> 795 / 795 funcs (100%)</div>
         <div class="fill-bar"><div class="fill-inner" style="width:100%; background:#3fb950;"></div></div>
-        <div style="font-size:12px; margin-bottom:6px;"><strong>Cross-Platform Tests (Win + Fedora <code>vm100-lan</code>):</strong> 285 Python + 33 Rust (100%)</div>
+        <div style="font-size:12px; margin-bottom:6px;"><strong>Cross-Platform Tests (Win + Fedora <code>vm100-lan</code>):</strong> 285 Python + 35 Rust (100%)</div>
+        <div class="fill-bar"><div class="fill-inner" style="width:100%; background:#3fb950;"></div></div>
+        <div style="font-size:12px; margin-bottom:6px;"><strong>Standalone App &amp; Safety Guards (<code>open_astro_cli</code>):</strong> Dark-Mode Web UI, <code>0x82</code> Lock, Portable/Mobile Guard (100%)</div>
         <div class="fill-bar"><div class="fill-inner" style="width:100%; background:#3fb950;"></div></div>
         <div style="font-size:12px; margin-bottom:6px;"><strong>Live Fleet Flashing &amp; Hardware Verification:</strong> 3 / 3 Physical Radios Verified (100%)</div>
         <div class="fill-bar"><div class="fill-inner" style="width:100%; background:#3fb950;"></div></div>
@@ -391,6 +393,20 @@ flowchart TD
           2. Mobile <code>M5</code>/<code>O5</code> control-head &amp; <code>Siren</code>/<code>DEK</code> layouts in <code>schema/field_layouts.json</code>.
         </div>
       </div>
+    </div>
+
+    <h2>Plain-English Guide: What Each Partition &amp; Safety Lock Means</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>Item</th><th>Plain-English Meaning</th><th>Write Policy in OpenAstro</th></tr></thead>
+        <tbody>
+          <tr><td><code>0x80</code> Codeplug Flash</td><td>Your normal radio programming: channels, frequencies, zones, scan lists, side buttons, and ADP keys.</td><td><span class="badge ok">Read &amp; Write</span> Safe to edit and flash</td></tr>
+          <tr><td><code>0x81</code> Radio Identity / FLASHcode</td><td>Serial number and software feature entitlements (FLASHcode).</td><td><span class="badge warn">Locked by Default</span> Requires explicit <code>--unlock-81</code></td></tr>
+          <tr><td><code>0x82</code> RF Tuning / Soft-Pots</td><td>Factory RF alignment and power calibration values unique to your physical radio board.</td><td><span class="badge lock">Strictly Read-Only</span> Hard-blocked; never written</td></tr>
+          <tr><td><code>0x85</code> Hardware / Security Metadata</td><td>Low-level hardware revision and security metadata.</td><td><span class="badge lock">Read-Only</span> Never written</td></tr>
+          <tr><td>Cross-Flash &amp; Serial Guards</td><td><code>check-family</code> blocks writing Portable (XTS) files to Mobile (XTL) radios or vice versa; <code>--expect-serial</code> verifies the plugged-in radio matches.</td><td><span class="badge ok">Always Active</span> Enforced in CLI &amp; Web UI</td></tr>
+        </tbody>
+      </table>
     </div>
 
     <h2>Homelab AI vs Cloud (795 Functions: ~423K In / ~256K Out = ~679K Tokens Saved)</h2>

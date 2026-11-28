@@ -9,13 +9,19 @@
 > open work) and the **[docs index](docs/README.md)** (which docs are current,
 > reference, historical, or unverified).
 
-> ### Project status (2026-11-27)
-> **Verified against real radios (Motorola XTS 5000 & XTS 2500 fleet):**
-> * **Live Codeplug Flashing & Direct Write Verification:** Fully operational and verified on physical hardware over USB-PPP (`/dev/ttyACM0` &rarr; TCP `192.168.128.1:8002`). Partition `0x80` writes execute safely with zero-risk RF partition `0x82` firewalling and mandatory `--expect-serial` identity gating.
-> * **Autonomous Per-Channel Motorola ADP Encryption (Q667, 40-bit RC4):** Solved the persistent global lock icon bug via dual-personality architecture (`0x0FFB:0` clear strapping vs `0x0FFB:1` secure strapping). Only encrypted channels (e.g. Channel 2 `TEAM ENCRYPT`) display the `Ø` lock icon, while clear channels (e.g. Channel 1 `TEAM CLEAR`) remain clear with no icon. Software Key 1 (`A1B2C3D4E5`) is injected and confirmed active in DSP/EEPROM.
-> * **Physical Hardware Controls & Side Buttons:** Re-engineered the `0x0020:0` / `0x0022:0` controls table: Side 1 Purple (`0x60` = `0x18`) activates Backlight; Side 2 1-Dot (`0x03` = `0x1e`) activates the Zone Scan engine; Side 3 2-Dot (`0x62` = `0x2b`) opens Monitor squelch; concentric collar decoupled (`0x86` = `0x23`) to prevent floating pin overrides.
-> * **Interactive Field Reference & Hardware Visuals:** Complete interactive hardware chassis guide and downloadable tactical operator field card available at [**docs/radio_controls_guide.html**](docs/radio_controls_guide.html).
-> * **Offline `.cpg` Decode & Tooling:** 169 ISH codeplug block types mapped and verified across Windows and Linux. Safe roundtripping to human-readable JSON, YAML, and CSV spreadsheets.
+> ### Project status (2026-11-27) — Plain-English Overview
+> **What works today (tested on Windows 11, Fedora Linux, and real Motorola XTS 5000 / XTS 2500 radios):**
+> * **Standalone App & Dark-Mode UI (`open_astro_cli`):** Download a single standalone executable from [GitHub Releases](https://github.com/RivasMario/open-astro-cps/releases) (Windows or Linux, with `SHA256SUMS.txt`). Double-click it — or run `open_astro_cli web --port 8766` — to open the dark-mode CPS interface in your browser with zero Python or VM setup required.
+> * **Built-In Safety Locks (Plain English):**
+>   * **RF Tuning Protected (`0x82` Read-Only):** OpenAstro never writes to your radio's factory RF alignment/tuning memory, so it cannot wipe calibration.
+>   * **Portable vs. Mobile Guard:** Automatically blocks writing an XTS Portable file to an XTL Mobile radio (or vice versa).
+>   * **Serial Number Check (`--expect-serial`):** Refuses to flash if the plugged-in radio's serial number does not match what you expect.
+> * **Live Codeplug Flashing & Direct Write Verification:** Operational and verified on physical hardware over USB-PPP (`/dev/ttyACM0` &rarr; TCP `192.168.128.1:8002`).
+> * **Per-Channel Motorola ADP Encryption (Q667, 40-bit RC4):** Dual-personality routing (`0x0FFB:0` clear vs `0x0FFB:1` secure) keeps clear channels clear and shows the `Ø` lock icon only on encrypted channels.
+> * **Physical Buttons & Side Switches:** Decoded `0x0020:0` / `0x0022:0` controls (Side 1 Purple = Backlight, Side 2 1-Dot = Zone Scan, Side 3 2-Dot = Monitor, concentric collar decoupled).
+> * **Automated Test Suite:** `285 passed` Python tests + `35 passed` Rust tests verified on Windows 11 and Fedora Linux.
+> * **Interactive Field Guide:** Visual chassis guide & printable operator card at [**docs/radio_controls_guide.html**](docs/radio_controls_guide.html).
+> * **Offline `.cpg` Decode & Tooling:** 169 ISH codeplug block types mapped across Portable (`Q`/`H` options) and Mobile (`73` `G*` options), roundtripping to JSON, YAML, and CSV.
 
 **OpenAstro CPS** is an open-source codeplug engine, format converter, and serial programming toolkit for **Motorola ASTRO 25** radios:
 * **Motorola XTS 2500** (Model I, Model II, Model III)
@@ -178,8 +184,19 @@ open-astro probe
 ```
 This uses the radio's own AT command interface (see
 [**docs/AT_INTERFACE_DISCOVERY.md**](docs/AT_INTERFACE_DISCOVERY.md)) — a
-real, measured-safe, read-only query, not a guess. Codeplug read/write still
-isn't implemented for real; see the project status note above.
+safe, read-only query. For live RCMP read/write status and safety checks, see
+[**docs/HANDOFF_RCMP_LIVE.md**](docs/HANDOFF_RCMP_LIVE.md).
+
+### 5. Standalone Rust CLI & Dark-Mode Web UI
+```bash
+# Launch the dark-mode CPS Web UI (auto-opens browser on Windows when double-clicked)
+open_astro_cli web --port 8766
+
+# Decode a FLASHcode and verify radio family / partition safety
+open_astro_cli flashcode --start 000008002410
+open_astro_cli check-family --radio-model "Motorola XTS 5000 Model III"
+open_astro_cli check-partition --partition 0x80
+```
 
 ---
 
