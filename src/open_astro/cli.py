@@ -1142,8 +1142,8 @@ def cmd_write(args):
             print("[i] DRY RUN -- nothing transmitted. Re-run with --socket --expect-serial <SERIAL> --confirm to write.")
         return
 
-    if not args.socket:
-        print("[-] Refusing live write: must use --socket (OS TCP over RAS/pppd).", file=sys.stderr)
+    if not args.socket and not getattr(args, "serial", None):
+        print("[-] Refusing live write: must use --socket (OS TCP over RAS/pppd) or --serial.", file=sys.stderr)
         sys.exit(2)
     if not args.expect_serial:
         print("[-] Refusing live write: --confirm requires --expect-serial to identity-gate.", file=sys.stderr)
@@ -1152,10 +1152,16 @@ def cmd_write(args):
     from open_astro.protocol.rcmp_write import RcmpWriteClient, RcmpWriteError
 
     try:
-        w = RcmpWriteClient.connect(host=args.host, port=args.port,
-                                    timeout=args.timeout, allow_write=True)
-    except RcmpWriteError as e:
-        print(f"[-] Connect failed: {e}; is the RAS/PPP link up?", file=sys.stderr)
+        if getattr(args, "serial", None):
+            from open_astro.protocol.ppp_link import PppTcpConn
+            print(f"[*] Bringing up userspace PPP on {args.serial}...")
+            conn = PppTcpConn(args.serial, dport=args.port, timeout=args.timeout)
+            w = RcmpWriteClient(conn, allow_write=True, timeout=args.timeout)
+        else:
+            w = RcmpWriteClient.connect(host=args.host, port=args.port,
+                                        timeout=args.timeout, allow_write=True)
+    except Exception as e:
+        print(f"[-] Connect failed: {e}; is the radio connected and ready?", file=sys.stderr)
         sys.exit(2)
 
     try:
@@ -1413,6 +1419,8 @@ def main():
     p_write.add_argument("cpg", help="Source codeplug .cpg file to write")
     p_write.add_argument("--socket", action="store_true",
                          help="Transmit over OS TCP (RAS/pppd link already up)")
+    p_write.add_argument("--serial", default=None,
+                         help="Transmit over userspace serial PPP (e.g. /dev/ttyACM0)")
     p_write.add_argument("--host", default="192.168.128.1", help="Radio PPP IP (default: 192.168.128.1)")
     p_write.add_argument("--port", type=lambda x: int(x, 0), default=8002, help="RCMP TCP port (default: 8002)")
     p_write.add_argument("--expect-serial", default=None,

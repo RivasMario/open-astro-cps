@@ -32,7 +32,12 @@ class JsonParser:
             
         enc_keys = []
         for k_data in data.get("encryption_keys", []):
-            enc_keys.append(EncryptionKey(**k_data))
+            k = dict(k_data)
+            if "key_name" in k and "name" not in k:
+                k["name"] = k.pop("key_name")
+            if "key_value" in k and "key_data" not in k:
+                k["key_data"] = k.pop("key_value")
+            enc_keys.append(EncryptionKey(**k))
 
         talkgroups = [Talkgroup(**t) for t in data.get("talkgroups", [])]
         scan_lists = [ScanList(**s) for s in data.get("scan_lists", [])]

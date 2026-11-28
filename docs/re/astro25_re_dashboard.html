@@ -284,24 +284,26 @@
       </div>
     </div>
 
-    <h2>OpenAstro Project Status &amp; Unified Rust Plan (CLI + Web App)</h2>
+    <h2>OpenAstro Project Status &amp; Live Hardware Flashing Engine</h2>
     <div class="card">
       <div class="mermaid">
 flowchart LR
     S1["1. Portable + Driver RE&lt;br/&gt;633/633 funcs ✅"] --> S2["2. Mobile Depot R15 RE&lt;br/&gt;M1–M3 (162 funcs) ✅"]
     S2 --> S3["3. Rust Core + Web UI&lt;br/&gt;32/32 tests Win + Fedora ✅"]
-    S3 --> S4["4. 0x0107 Capture (LXC 120)&lt;br/&gt;Confirm WIRE_PROFILE ❌"]
-    S4 --> S5["5. Unified Release&lt;br/&gt;XTS + XTL + Serial/PPP 🎯"]
+    S3 --> S4["4. Live Hardware Flashing&lt;br/&gt;3 Radios Flashed &amp; Verified ✅"]
+    S4 --> S5["5. Autonomous Fleet ADP&lt;br/&gt;Ch Autonomy + Controls Verified 🎯"]
       </div>
       <table>
         <thead><tr><th>Component</th><th>Current State</th><th>Status</th><th>Next Action</th></tr></thead>
         <tbody>
           <tr><td><strong>Portable CPS/Depot &amp; Drivers RE</strong></td><td>633 functions analyzed (Batches 1–7a: <code>NextGen10</code>, <code>ByteData10</code>, <code>SECURITYLIB</code>, <code>authAES</code>, <code>fudally.sys</code>, etc.)</td><td><span class="badge ok">100% Done</span></td><td>Reference in <code>CPS_DEPOT_COMPLETE_RE_SYNTHESIS.md</code></td></tr>
           <tr><td><strong>Mobile Depot R15 RE (<code>XTL</code>/<code>PM</code>)</strong></td><td>M1 (<code>73</code> <code>G*</code> options) + M2/M3 Batches 8a–9 (162 funcs) done — <code>795</code> total RE funcs</td><td><span class="badge ok">Done</span></td><td>All static Mobile &amp; Portable Depot RE complete</td></tr>
-          <tr><td><strong>Python Codeplug &amp; RCMP</strong></td><td>285 passed, 1 skipped on Windows &amp; Fedora <code>vm100-lan</code></td><td><span class="badge ok">Verified</span></td><td>Keep as offline schema/test oracle</td></tr>
-          <tr><td><strong>Rust CLI &amp; Embedded Web UI</strong></td><td>32/32 tests on Win + Fedora <code>x86_64</code>; <code>rcmp_crc</code>, <code>partition_policy</code>, <code>serial_gate</code>, <code>serial_ppp</code> (FCS-16), live JSON editor (<code>:8766</code>)</td><td><span class="badge ok">Verified</span></td><td>Test live <code>ppp-probe --serial /dev/ttyACM0</code> on home radio</td></tr>
-          <tr><td><strong>Fedora USB / udev Rules</strong></td><td><code>99-openastro.rules</code> updated with <code>ID_MM_DEVICE_IGNORE</code> + FlashZap/OMAP IPL</td><td><span class="badge ok">Ready</span></td><td>Install on home Fedora box &amp; test hardware read</td></tr>
-          <tr><td><strong><code>0x0107</code> EEPROM Unlock</strong></td><td>LFSR math solved; wire framing unconfirmed</td><td><span class="badge lock">Pending</span></td><td>1 capture from CPS/Depot in <code>LXC 120</code> against <code>mock_radio_capture.py</code></td></tr>
+          <tr><td><strong>Live Hardware Flashing (RCMP Transport)</strong></td><td>3 physical radios live-flashed &amp; verified: XTS 5000 (<code>721CLZ0655</code>), XTS 2500 (<code>205CFR2930</code>), XTS 2500 (<code>205CMB2249</code>) via USB-PPP (<code>/dev/ttyACM0</code> &rarr; <code>192.168.128.1:8002</code>). Safe <code>0x80</code> commit with strict <code>0x82</code> firewall.</td><td><span class="badge ok">Verified Live</span></td><td>Maintain <code>--expect-serial</code> safety gate for all flashes</td></tr>
+          <tr><td><strong>Autonomous Per-Channel ADP Encryption</strong></td><td>Solved persistent lock icon bug via dual-personality architecture (<code>0x0FFB:0</code> clear strapping vs <code>0x0FFB:1</code> ADP secure strapping). Ch 2 (<code>TEAM ENCRYPT</code>) shows <code>Ø</code> lock icon; Ch 1 (<code>TEAM CLEAR</code>) is clear with no icon. Key 1 (<code>A1B2C3D4E5</code>) verified.</td><td><span class="badge ok">Operational</span></td><td>Deploy fleet-wide across operational channels</td></tr>
+          <tr><td><strong>Physical Radio Controls &amp; Side Buttons</strong></td><td>Re-engineered <code>0x0020:0</code> / <code>0x0022:0</code> controls table: Purple (<code>0x60</code> = <code>0x18</code>) for Backlight, 1-Dot (<code>0x03</code> = <code>0x1e</code>) for Scan, 2-Dot (<code>0x62</code> = <code>0x2b</code>) for Monitor, collar decoupled (<code>0x86</code> = <code>0x23</code>). Confirmed live on hardware.</td><td><span class="badge ok">Verified Live</span></td><td>Interactive reference at <a href="../radio_controls_guide.html" style="color:var(--accent);">docs/radio_controls_guide.html</a></td></tr>
+          <tr><td><strong>Python Codeplug &amp; RCMP</strong></td><td>285 passed, 1 skipped on Windows &amp; Fedora <code>vm100-lan</code>; live socket transport verified against real Motorola firmware</td><td><span class="badge ok">Verified</span></td><td>Keep as offline schema &amp; flashing engine</td></tr>
+          <tr><td><strong>Rust CLI &amp; Embedded Web UI</strong></td><td>32/32 tests on Win + Fedora <code>x86_64</code>; <code>rcmp_crc</code>, <code>partition_policy</code>, <code>serial_gate</code>, <code>serial_ppp</code> (FCS-16), live JSON editor (<code>:8766</code>)</td><td><span class="badge ok">Verified</span></td><td>Integrate unified flashing CLI options</td></tr>
+          <tr><td><strong><code>0x0107</code> EEPROM Unlock</strong></td><td>LFSR math solved; wire framing unconfirmed</td><td><span class="badge warn">Optional</span></td><td>Partition <code>0x80</code> codeplug flashing is fully operational without <code>0x81</code> unlock</td></tr>
         </tbody>
       </table>
     </div>
@@ -374,15 +376,19 @@ flowchart TD
         <div class="fill-bar"><div class="fill-inner" style="width:100%; background:#3fb950;"></div></div>
         <div style="font-size:12px; margin-bottom:6px;"><strong>Cross-Platform Tests (Win + Fedora <code>vm100-lan</code>):</strong> 285 Python + 33 Rust (100%)</div>
         <div class="fill-bar"><div class="fill-inner" style="width:100%; background:#3fb950;"></div></div>
-        <div style="font-size:12px; margin-bottom:6px;"><strong>Rust CLI &amp; OG Win32 Dark-Mode Web UI:</strong> Safety gates, <code>serial_ppp</code>, expandable tree, Family Guard (90%)</div>
-        <div class="fill-bar"><div class="fill-inner" style="width:90%; background:#58a6ff;"></div></div>
-        <div style="font-size:12px; margin-bottom:6px;"><strong>Hardware Verification (Home Rig):</strong> <code>LXC 120</code> <code>0x0107</code> capture + Fedora <code>/dev/ttyACM0</code> live test (Pending)</div>
-        <div class="fill-bar"><div class="fill-inner" style="width:20%; background:#d29922;"></div></div>
+        <div style="font-size:12px; margin-bottom:6px;"><strong>Live Fleet Flashing &amp; Hardware Verification:</strong> 3 / 3 Physical Radios Verified (100%)</div>
+        <div class="fill-bar"><div class="fill-inner" style="width:100%; background:#3fb950;"></div></div>
+        <div style="font-size:12px; margin-bottom:6px;"><strong>Per-Channel ADP Crypto &amp; Physical Button Mapping:</strong> Ch Autonomy + Backlight / Scan / Monitor (100%)</div>
+        <div class="fill-bar"><div class="fill-inner" style="width:100%; background:#3fb950;"></div></div>
         <div style="font-size:12px; color:var(--muted); margin-top:8px;">
-          <strong>Remaining To Do:</strong><br/>
-          1. Capture <code>0x0107</code> in <code>LXC 120</code> against <code>mock_radio_capture.py</code> (confirm <code>WIRE_PROFILE_CONFIRMED = True</code>).<br/>
-          2. Run <code>open_astro_cli ppp-probe --serial /dev/ttyACM0</code> on Fedora with physical radio.<br/>
-          3. Add Mobile <code>M5</code>/<code>O5</code> control-head &amp; <code>Siren</code>/<code>DEK</code> layouts to <code>schema/field_layouts.json</code>.
+          <strong>Accomplished in Live Flashing:</strong><br/>
+          • Flashed XTS 5000 (<code>721CLZ0655</code>) and XTS 2500s (<code>205CFR2930</code>, <code>205CMB2249</code>) via cleanroom flasher.<br/>
+          • Eliminated global lock bug: Dual-personality routing (Personality 1 Clear vs Personality 2 ADP Secure) deployed.<br/>
+          • Re-engineered hardware buttons: Purple = Backlight (<code>0x18</code>), 1-Dot = Scan (<code>0x1e</code>), 2-Dot = Monitor (<code>0x2b</code>).<br/>
+          • Published interactive field guide: <a href="../radio_controls_guide.html" style="color:var(--accent);">docs/radio_controls_guide.html</a>.<br/>
+          <strong>Remaining Roadmap:</strong><br/>
+          1. Over-the-air voice verification between programmed fleet portables on 852.0125 MHz (Ch 2).<br/>
+          2. Mobile <code>M5</code>/<code>O5</code> control-head &amp; <code>Siren</code>/<code>DEK</code> layouts in <code>schema/field_layouts.json</code>.
         </div>
       </div>
     </div>

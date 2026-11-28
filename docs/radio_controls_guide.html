@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motorola XTS 2500 / 5000 — Tactical Controls & Screen Icon Guide</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --border: #1f293d;
+      --accent-blue: #38bdf8;
+      --accent-green: #22c55e;
+      --accent-amber: #f59e0b;
+      --accent-purple: #c084fc;
+      --accent-red: #ef4444;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --lcd-bg: #1c2e26;
+      --lcd-text: #4ade80;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(to right, #38bdf8, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 28px;
+    }
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Radio Chassis Visual */
+    .radio-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .radio-body {
+      width: 240px;
+      background: linear-gradient(180deg, #1f242e 0%, #151820 100%);
+      border: 2px solid #333d4e;
+      border-radius: 20px 20px 16px 16px;
+      position: relative;
+      padding: 16px 14px 24px;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.05), 0 12px 30px rgba(0,0,0,0.6);
+      margin-top: 50px;
+    }
+
+    /* Antennas & Top Knobs */
+    .antenna {
+      position: absolute;
+      top: -65px;
+      left: 24px;
+      width: 14px;
+      height: 65px;
+      background: linear-gradient(90deg, #2a2e39, #1a1c22);
+      border-radius: 6px 6px 0 0;
+      border: 1px solid #3a4050;
+    }
+
+    .orange-button {
+      position: absolute;
+      top: -12px;
+      left: 55px;
+      width: 18px;
+      height: 12px;
+      background: #f97316;
+      border-radius: 4px 4px 0 0;
+      cursor: pointer;
+      border: 1px solid #c2410c;
+      transition: all 0.2s;
+    }
+    .orange-button:hover, .orange-button.active {
+      background: #fb923c;
+      transform: scaleY(1.15);
+      box-shadow: 0 0 10px rgba(249,115,22,0.8);
+    }
+
+    .toggle-switch {
+      position: absolute;
+      top: -18px;
+      left: 95px;
+      width: 10px;
+      height: 18px;
+      background: #94a3b8;
+      border-radius: 3px 3px 0 0;
+      cursor: pointer;
+      border: 1px solid #cbd5e1;
+    }
+    .toggle-switch:hover, .toggle-switch.active {
+      box-shadow: 0 0 10px rgba(148,163,184,0.8);
+    }
+
+    .channel-knob {
+      position: absolute;
+      top: -24px;
+      left: 125px;
+      width: 38px;
+      height: 24px;
+      background: linear-gradient(90deg, #333d4e, #1e2430);
+      border-radius: 6px 6px 0 0;
+      border: 1px solid #475569;
+      cursor: pointer;
+    }
+    .channel-knob:hover, .channel-knob.active {
+      box-shadow: 0 0 10px rgba(56,189,248,0.6);
+    }
+
+    .volume-knob {
+      position: absolute;
+      top: -20px;
+      right: 24px;
+      width: 30px;
+      height: 20px;
+      background: linear-gradient(90deg, #333d4e, #1e2430);
+      border-radius: 6px 6px 0 0;
+      border: 1px solid #475569;
+    }
+
+    /* Side Buttons */
+    .side-purple {
+      position: absolute;
+      left: -12px;
+      top: 50px;
+      width: 12px;
+      height: 26px;
+      background: #9333ea;
+      border-radius: 4px 0 0 4px;
+      cursor: pointer;
+      border: 1px solid #a855f7;
+      transition: all 0.2s;
+    }
+    .side-purple:hover, .side-purple.active {
+      background: #c084fc;
+      transform: scaleX(1.25);
+      box-shadow: 0 0 12px rgba(192,132,252,0.9);
+    }
+
+    .side-ptt {
+      position: absolute;
+      left: -16px;
+      top: 86px;
+      width: 16px;
+      height: 60px;
+      background: #11141a;
+      border-radius: 5px 0 0 5px;
+      border: 1px solid #374151;
+      cursor: pointer;
+    }
+    .side-ptt:hover, .side-ptt.active {
+      background: #1f2937;
+      box-shadow: 0 0 8px rgba(255,255,255,0.2);
+    }
+
+    .side-1dot {
+      position: absolute;
+      left: -12px;
+      top: 156px;
+      width: 12px;
+      height: 26px;
+      background: #374151;
+      border-radius: 4px 0 0 4px;
+      cursor: pointer;
+      border: 1px solid #4b5563;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .side-1dot::after {
+      content: "•";
+      color: #9ca3af;
+      font-size: 14px;
+    }
+    .side-1dot:hover, .side-1dot.active {
+      background: #38bdf8;
+      box-shadow: 0 0 12px rgba(56,189,248,0.9);
+    }
+    .side-1dot:hover::after, .side-1dot.active::after {
+      color: #fff;
+    }
+
+    .side-2dot {
+      position: absolute;
+      left: -12px;
+      top: 190px;
+      width: 12px;
+      height: 26px;
+      background: #374151;
+      border-radius: 4px 0 0 4px;
+      cursor: pointer;
+      border: 1px solid #4b5563;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .side-2dot::after {
+      content: "••";
+      color: #9ca3af;
+      font-size: 11px;
+      letter-spacing: -1px;
+    }
+    .side-2dot:hover, .side-2dot.active {
+      background: #22c55e;
+      box-shadow: 0 0 12px rgba(34,197,94,0.9);
+    }
+    .side-2dot:hover::after, .side-2dot.active::after {
+      color: #fff;
+    }
+
+    /* LCD Screen Display */
+    .lcd-screen {
+      background: var(--lcd-bg);
+      border: 2px solid #134e4a;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-family: "Courier New", Courier, monospace;
+      color: var(--lcd-text);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
+      margin-bottom: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lcd-screen:hover, .lcd-screen.active {
+      border-color: #2dd4bf;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), 0 0 14px rgba(45,212,191,0.5);
+    }
+
+    .lcd-status-bar {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: bold;
+      border-bottom: 1px dashed rgba(74,222,128,0.3);
+      padding-bottom: 3px;
+      margin-bottom: 4px;
+    }
+    .icon-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0 3px;
+      border-radius: 2px;
+    }
+    .icon-secure {
+      color: #fbbf24;
+      font-weight: 900;
+    }
+    .icon-scan {
+      color: #38bdf8;
+      font-weight: 900;
+    }
+
+    .lcd-main-line {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-align: center;
+      margin: 4px 0 2px;
+    }
+    .lcd-sub-line {
+      font-size: 11px;
+      opacity: 0.85;
+      text-align: center;
+    }
+
+    /* Speaker Grille */
+    .speaker-grille {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin: 12px 10px;
+    }
+    .grille-line {
+      height: 3px;
+      background: #0f1218;
+      border-radius: 2px;
+      box-shadow: inset 0 1px 1px rgba(0,0,0,0.9);
+    }
+
+    /* Keypad */
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .key-btn {
+      background: #252c38;
+      border: 1px solid #374151;
+      border-radius: 4px;
+      text-align: center;
+      padding: 4px 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    /* Explanation Panel */
+    .explanation-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .info-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+    .info-card.highlight {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 15px rgba(56,189,248,0.3);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .card-tag {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .tag-purple { background: rgba(192,132,252,0.2); color: #c084fc; border: 1px solid #9333ea; }
+    .tag-blue   { background: rgba(56,189,248,0.2); color: #38bdf8; border: 1px solid #0284c7; }
+    .tag-green  { background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid #16a34a; }
+    .tag-orange { background: rgba(249,115,22,0.2); color: #fb923c; border: 1px solid #ea580c; }
+    .tag-amber  { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid #d97706; }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f3f4f6;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .card-details {
+      background: rgba(0,0,0,0.25);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 13px;
+      border-left: 3px solid var(--accent-blue);
+    }
+    .card-details b { color: #f9fafb; }
+
+    /* Interactive hint */
+    .interactive-hint {
+      text-align: center;
+      font-size: 13px;
+      color: var(--accent-blue);
+      margin-top: 14px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Motorola ASTRO 25 Tactical Controls & Screen Reference</h1>
+      <p>Interactive Hardware Guide for XTS 5000 & XTS 2500 — Redmond PD / King County Fleet Configuration</p>
+    </header>
+
+    <div class="main-grid">
+      <!-- Left: Interactive Radio Chassis -->
+      <div class="radio-card">
+        <div class="radio-body">
+          <div class="antenna" title="700/800 MHz Wideband Antenna"></div>
+          <div class="orange-button" id="btn-orange" onclick="selectCard('card-orange')" title="Top Orange: Tx Low Power"></div>
+          <div class="toggle-switch" id="btn-toggle" onclick="selectCard('card-toggle')" title="Toggle Switch: Zone Select (A/B/C)"></div>
+          <div class="channel-knob" id="btn-knob" onclick="selectCard('card-knob')" title="Rotary Knob: Channel 1-16"></div>
+          <div class="volume-knob" title="Power / Volume Knob"></div>
+
+          <!-- Side controls -->
+          <div class="side-purple" id="btn-purple" onclick="selectCard('card-purple')" title="Side 1 (Purple): Light / Backlight"></div>
+          <div class="side-ptt" id="btn-ptt" onclick="selectCard('card-ptt')" title="PTT: Push To Talk"></div>
+          <div class="side-1dot" id="btn-1dot" onclick="selectCard('card-1dot')" title="Side 2 (1-Dot): Scan Engine Toggle"></div>
+          <div class="side-2dot" id="btn-2dot" onclick="selectCard('card-2dot')" title="Side 3 (2-Dot): Monitor / Open Squelch"></div>
+
+          <!-- LCD Display -->
+          <div class="lcd-screen" id="btn-lcd" onclick="selectCard('card-lcd')">
+            <div class="lcd-status-bar">
+              <span>|||| <span class="icon-secure" title="Secure ADP Encrypted Channel">Ø</span></span>
+              <span><span class="icon-scan" title="Zone Scan Active">Z</span> H</span>
+            </div>
+            <div class="lcd-main-line">TEAM ENCRYPT</div>
+            <div class="lcd-sub-line">ZONE A • CH 2 • 852.0125</div>
+          </div>
+
+          <!-- Speaker Grille -->
+          <div class="speaker-grille">
+            <div class="grille-line" style="width: 80%; margin: 0 auto;"></div>
+            <div class="grille-line" style="width: 90%; margin: 0 auto;"></div>
+            <div class="grille-line" style="width: 100%;"></div>
+            <div class="grille-line" style="width: 90%; margin: 0 auto;"></div>
+            <div class="grille-line" style="width: 80%; margin: 0 auto;"></div>
+          </div>
+
+          <!-- Keypad Navigation (Model II / III) -->
+          <div class="keypad-grid">
+            <div class="key-btn">&lt;</div>
+            <div class="key-btn">HOME</div>
+            <div class="key-btn">&gt;</div>
+          </div>
+        </div>
+
+        <p class="interactive-hint">👉 Click any button, knob, or LCD screen to view what it does</p>
+      </div>
+
+      <!-- Right: Functional Breakdown Cards -->
+      <div class="explanation-panel">
+        
+        <!-- Purple Button: Light -->
+        <div class="info-card highlight" id="card-purple">
+          <div class="card-header">
+            <span class="card-tag tag-purple">Side 1 (Purple)</span>
+            <span class="card-title">Backlight Illuminator</span>
+          </div>
+          <div class="card-desc">
+            Controls the high-intensity green/white LED backlight behind the LCD screen and keypad buttons.
+          </div>
+          <div class="card-details">
+            <b>How to use:</b> Press once in dark or night conditions. Illuminates for 5 seconds on a countdown timer so you can read channel names without killing battery. Pressing any other key resets the 5-second timer.
+          </div>
+        </div>
+
+        <!-- 1-Dot Button: Scan Engine -->
+        <div class="info-card" id="card-1dot">
+          <div class="card-header">
+            <span class="card-tag tag-blue">Side 2 (1-Dot)</span>
+            <span class="card-title">Zone Scan Toggle (Z Icon)</span>
+          </div>
+          <div class="card-desc">
+            Turns the automated channel scanning receiver on and off for the active zone.
+          </div>
+          <div class="card-details">
+            <b>Why you need it:</b> Team members do not always stay on one channel (some speak on <i>TEAM CLEAR</i>, others on <i>TEAM ENCRYPT</i>, others on repeaters). Pressing 1-Dot activates the <b>Z</b> icon. The radio listens to all zone channels automatically and locks onto any incoming transmission instantly.
+          </div>
+        </div>
+
+        <!-- 2-Dot Button: Monitor -->
+        <div class="info-card" id="card-2dot">
+          <div class="card-header">
+            <span class="card-tag tag-green">Side 3 (2-Dot)</span>
+            <span class="card-title">Monitor / Squelch Bypass</span>
+          </div>
+          <div class="card-desc">
+            Bypasses the digital/analog squelch filter to listen to open channel noise or faint/distant team units.
+          </div>
+          <div class="card-details">
+            <b>How to use:</b> Press and hold when you suspect someone is trying to transmit from fringe range or out of repeater coverage. Emits open receiver hiss and bypasses NAC/PL filters so you can hear faint carriers.
+          </div>
+        </div>
+
+        <!-- LCD Screen: Status Icons -->
+        <div class="info-card" id="card-lcd">
+          <div class="card-header">
+            <span class="card-tag tag-amber">LCD Display</span>
+            <span class="card-title">Screen Icon Decoder</span>
+          </div>
+          <div class="card-desc">
+            Decodes what the symbols on the top status line actually mean:
+          </div>
+          <div class="card-details">
+            • <b class="icon-secure">Ø (Circle with Slash):</b> <b>ADP Encryption Active.</b> Displayed on Channel 2 (<i>TEAM ENCRYPT</i>), 5, 10, 12, 14, 16. Confirms that Software Key 1 (<code>A1B2C3D4E5</code>) is active and your voice is scrambled against scanners and eavesdroppers.<br>
+            • <b class="icon-scan">Z:</b> <b>Scan Active.</b> The radio is actively sweeping channels in the zone.<br>
+            • <b>H / L:</b> <b>High Power (3W)</b> or <b>Low Power (1W)</b> transmitter mode.<br>
+            • <b>||||:</b> Received signal strength indicator (4 bars = maximum local repeater reception).
+          </div>
+        </div>
+
+        <!-- Top Orange Button -->
+        <div class="info-card" id="card-orange">
+          <div class="card-header">
+            <span class="card-tag tag-orange">Top Orange</span>
+            <span class="card-title">Tx Power Toggle (High / Low)</span>
+          </div>
+          <div class="card-desc">
+            Switches RF transmitter output power between High (3 Watts) and Low (1 Watt).
+          </div>
+          <div class="card-details">
+            <b>How to use:</b> Press to toggle. When working up close on simplex tactical channels, set to <b>L</b> (Low Power) to reduce battery drain and prevent signal overload. When operating over long range or through heavy buildings, set to <b>H</b> (High Power).
+          </div>
+        </div>
+
+        <!-- Top Toggle Switch: Zone Select -->
+        <div class="info-card" id="card-toggle">
+          <div class="card-header">
+            <span class="card-tag tag-blue">Toggle Switch (A/B/C)</span>
+            <span class="card-title">Rapid Zone Selector</span>
+          </div>
+          <div class="card-desc">
+            Direct physical 3-position lever for instant zone selection without using menus:
+          </div>
+          <div class="card-details">
+            • <b>Position A:</b> <b>Zone 1 (TEAM COMM)</b> &rarr; Primary team tactical & ADP channels.<br>
+            • <b>Position B:</b> <b>Zone 2 (800 INTEROP)</b> &rarr; Regional emergency mutual aid channels.<br>
+            • <b>Position C:</b> <b>Zone 3 (TAC OPS)</b> &rarr; Secondary operational channels.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tactical Operator Field Card Visual -->
+    <div style="margin-top: 36px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 style="font-size: 20px; font-weight: 700; color: #f3f4f6;">Tactical Operator Field Card (Annotated Schematic)</h2>
+          <p style="color: var(--text-muted); font-size: 14px;">Complete hardware control map and LCD icon reference for physical field use.</p>
+        </div>
+        <a href="xts_radio_controls_guide.jpg" target="_blank" download style="display: inline-flex; align-items: center; gap: 8px; background: #2563eb; color: #fff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s;">
+          📥 Download Full Resolution Diagram
+        </a>
+      </div>
+      <div style="text-align: center; background: #070a10; border-radius: 8px; overflow: hidden; border: 1px solid #1f293d; padding: 12px;">
+        <img src="xts_radio_controls_guide.jpg" alt="Motorola XTS Controls and Screen Icon Guide" style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.8);">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectCard(cardId) {
+      document.querySelectorAll('.info-card').forEach(c => c.classList.remove('highlight'));
+      document.querySelectorAll('.orange-button, .toggle-switch, .channel-knob, .side-purple, .side-ptt, .side-1dot, .side-2dot, .lcd-screen').forEach(el => el.classList.remove('active'));
+      
+      const card = document.getElementById(cardId);
+      if (card) {
+        card.classList.add('highlight');
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // Sync active button
+      if (cardId === 'card-purple') document.getElementById('btn-purple').classList.add('active');
+      if (cardId === 'card-1dot') document.getElementById('btn-1dot').classList.add('active');
+      if (cardId === 'card-2dot') document.getElementById('btn-2dot').classList.add('active');
+      if (cardId === 'card-orange') document.getElementById('btn-orange').classList.add('active');
+      if (cardId === 'card-toggle') document.getElementById('btn-toggle').classList.add('active');
+      if (cardId === 'card-lcd') document.getElementById('btn-lcd').classList.add('active');
+    }
+  </script>
+</body>
+</html>

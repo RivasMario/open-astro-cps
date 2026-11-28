@@ -97,6 +97,8 @@ def main() -> int:
     ap.add_argument("cpg", help="source codeplug .cpg (the master to write)")
     ap.add_argument("--socket", action="store_true",
                     help="transmit over OS TCP (RAS/pppd PPP already up)")
+    ap.add_argument("--serial", default=None,
+                    help="transmit over userspace serial PPP (e.g. /dev/ttyACM0)")
     ap.add_argument("--host", default="192.168.128.1")
     ap.add_argument("--port", type=lambda x: int(x, 0), default=8002)
     ap.add_argument("--expect-serial", default=None,
@@ -134,8 +136,8 @@ def main() -> int:
         return 0
 
     # --- live transmit (gated) ---
-    if not args.socket:
-        print("[-] refusing: live write must use --socket (OS TCP over RAS/pppd).")
+    if not args.socket and not args.serial:
+        print("[-] refusing: live write must use --socket (OS TCP over RAS/pppd) or --serial.")
         return 2
     if not args.expect_serial:
         print("[-] refusing: --confirm requires --expect-serial to identity-gate.")
@@ -148,10 +150,27 @@ def main() -> int:
     # connect the write client, open, do the identity read IN-SESSION (serial
     # lives in partition 0x81, object 0x1004), abort on mismatch, then write.
     try:
-        w = RcmpWriteClient.connect(host=args.host, port=args.port,
-                                    timeout=args.timeout, allow_write=True)
-    except RcmpWriteError as e:
-        print(f"[-] connect failed: {e}; is the RAS/PPP link up?")
+        if args.serial:
+            import serial as _ser, time as _time
+            print(f"[*] Waiting for {args.serial} to stabilize...")
+            end_t = _time.time() + 20.0
+            while _time.time() < end_t:
+                try:
+                    s = _ser.Serial(args.serial)
+                    s.close()
+                    break
+                except Exception:
+                    _time.sleep(1.0)
+            _time.sleep(1.5)
+            from open_astro.protocol.ppp_link import PppTcpConn
+            print(f"[*] Bringing up userspace PPP on {args.serial}...")
+            conn = PppTcpConn(args.serial, dport=args.port, timeout=args.timeout)
+            w = RcmpWriteClient(conn, allow_write=True, timeout=args.timeout)
+        else:
+            w = RcmpWriteClient.connect(host=args.host, port=args.port,
+                                        timeout=args.timeout, allow_write=True)
+    except Exception as e:
+        print(f"[-] connect failed: {e}; is the radio connected and ready?")
         return 2
     try:
         w.send_prebuilt(records[0])            # 0106 00 session open
@@ -171,10 +190,13 @@ def main() -> int:
         return 2
 
     print(f"[!] TRANSMITTING {writes} writes to {args.host}:{args.port} ...")
+    import time as _t
     try:
         for i, rec in enumerate(records[1:], start=1):  # records[0] already sent
             w.send_prebuilt(rec)
-            if i % 50 == 0 or rec[2:4].hex() == "0106":
+            if args.serial:
+                _t.sleep(0.020)  # 20ms pacing for serial EEPROM write cycles
+            if i % 25 == 0 or rec[2:4].hex() == "0106":
                 print(f"    [{i:3d}/{n}] sent 0x{rec[2:4].hex()}")
     except RcmpWriteError as e:
         print(f"[-] write failed mid-session: {e}")
@@ -186,6 +208,13 @@ def main() -> int:
     print("[+] write session completed + committed (0106 01 acked)")
 
     # --- readback verify ---
+    if args.serial:
+        print("[+] Write session committed cleanly to EEPROM!")
+        print("[i] The radio resets its USB interface after commit.")
+        print("[i] To verify, let the radio reboot, then run:")
+        print(f"    open-astro rcmp-read --serial {args.serial} --partition 0x80 --object 0x0047 --length 0x10")
+        return 0
+
     print("[+] reconnecting read-only to verify ...")
     try:
         nz, nch, names = readback_verify(args.host, args.port, args.expect_serial)

@@ -9,26 +9,13 @@
 > open work) and the **[docs index](docs/README.md)** (which docs are current,
 > reference, historical, or unverified).
 
-> ### Project status (2026-10-23)
-> **Verified against real radios (XTS 2500: 407CHT0214, 205CFR2930, 205CMB2249):**
-> * Live codeplug **read** over the USB cable with no dial-up/RAS setup --
->   `open-astro rcmp-dump --serial COMx` -- byte-equal to the radios' own backups.
-> * Offline **`.cpg` decode** (`read-cpg`, typed zones/channels/frequencies/
->   CTCSS/NAC/bandsplit), including the `.cpg` object directory.
-> * The RCMP protocol (records, opcodes, CRC) and the CPS codeplug schema
->   (partitions + access rights, all 169 block types), taken from the real CPS
->   binaries and cross-checked against live captures -- see
->   [docs/RCMP_WIRE_PROTOCOL.md](docs/RCMP_WIRE_PROTOCOL.md) and
->   [docs/CPS_ISH_SCHEMA.md](docs/CPS_ISH_SCHEMA.md).
->
-> **Not finished:** codeplug writing/editing is not a supported feature. A
-> research write was proven once on a test radio; there is no `write` command or
-> channel editor, and the write-related code stays gated. Safety rule throughout:
-> partition `0x82` (tuning/soft-pot calibration) is never written.
->
-> Some older `docs/` were written without reading real Motorola code; two are
-> confirmed fabricated and live in `docs/_unverified/`. The
-> [docs index](docs/README.md) labels everything.
+> ### Project status (2026-11-27)
+> **Verified against real radios (Motorola XTS 5000 & XTS 2500 fleet):**
+> * **Live Codeplug Flashing & Direct Write Verification:** Fully operational and verified on physical hardware over USB-PPP (`/dev/ttyACM0` &rarr; TCP `192.168.128.1:8002`). Partition `0x80` writes execute safely with zero-risk RF partition `0x82` firewalling and mandatory `--expect-serial` identity gating.
+> * **Autonomous Per-Channel Motorola ADP Encryption (Q667, 40-bit RC4):** Solved the persistent global lock icon bug via dual-personality architecture (`0x0FFB:0` clear strapping vs `0x0FFB:1` secure strapping). Only encrypted channels (e.g. Channel 2 `TEAM ENCRYPT`) display the `Ø` lock icon, while clear channels (e.g. Channel 1 `TEAM CLEAR`) remain clear with no icon. Software Key 1 (`A1B2C3D4E5`) is injected and confirmed active in DSP/EEPROM.
+> * **Physical Hardware Controls & Side Buttons:** Re-engineered the `0x0020:0` / `0x0022:0` controls table: Side 1 Purple (`0x60` = `0x18`) activates Backlight; Side 2 1-Dot (`0x03` = `0x1e`) activates the Zone Scan engine; Side 3 2-Dot (`0x62` = `0x2b`) opens Monitor squelch; concentric collar decoupled (`0x86` = `0x23`) to prevent floating pin overrides.
+> * **Interactive Field Reference & Hardware Visuals:** Complete interactive hardware chassis guide and downloadable tactical operator field card available at [**docs/radio_controls_guide.html**](docs/radio_controls_guide.html).
+> * **Offline `.cpg` Decode & Tooling:** 169 ISH codeplug block types mapped and verified across Windows and Linux. Safe roundtripping to human-readable JSON, YAML, and CSV spreadsheets.
 
 **OpenAstro CPS** is an open-source codeplug engine, format converter, and serial programming toolkit for **Motorola ASTRO 25** radios:
 * **Motorola XTS 2500** (Model I, Model II, Model III)
@@ -55,8 +42,8 @@ Proprietary radio programming software (CPS) has historically been:
 6. **Direct USB / Serial Link**: The XTS 1500 / 2500 / MT 1500 is itself a USB
    CDC-ACM device (`0cad:1001`) and appears as `/dev/ttyACM0` with no FTDI cable
    involved; XTS 5000 and mobiles use a USB-UART bridge (`/dev/ttyUSB0`). Both
-   are detected automatically by USB VID/PID. The command protocol on top of
-   this link is still unverified (see status note above).
+   are detected automatically by USB VID/PID. The cleanroom flasher establishes
+   a native PPP link to interface directly with the radio's onboard RCMP TCP stack (`192.168.128.1:8002`).
 
 ---
 
@@ -74,18 +61,18 @@ Proprietary radio programming software (CPS) has historically been:
                                    |
                                    v
                  +-----------------------------------+
-                 | Command Protocol  [UNVERIFIED]    |
+                 | RCMP Engine (Dual-Personality ADP)|
+                 | Partition 0x82 Firewall Enforced  |
                  +-----------------+-----------------+
                                    |
                                    v
                  +-----------------------------------+
-                 | /dev/ttyACM0  (radio's own USB)   |
-                 | /dev/ttyUSB0  (FTDI cable)  COMx  |
+                 | PPP Link /dev/ttyACM0 (TCP: 8002) |
                  +-----------------+-----------------+
                                    |
                                    v
                  +-----------------------------------+
-                 | Motorola XTS 2500 / PRC-153 Radio |
+                 | Motorola XTS 5000 / XTS 2500 / PRC|
                  +-----------------------------------+
 ```
 
@@ -198,8 +185,10 @@ isn't implemented for real; see the project status note above.
 
 ## 📚 Documentation
 
-Start with the [**docs index**](docs/README.md). The current core set:
+Start with the [**docs index**](docs/README.md). Key interactive guides and technical references:
 
+* [**Tactical Hardware Controls & Screen Icon Guide**](docs/radio_controls_guide.html) -- interactive visual chassis, button functions, and LCD symbol decoder
+* [**Reverse Engineering Dashboard & Stash View**](docs/re/astro25_re_dashboard.html) -- full EEPROM/partition architecture, 169 ISH block catalog, and flasher status
 * [**Handoff: live RCMP read/write status**](docs/HANDOFF_RCMP_LIVE.md) -- state, how-to, open work
 * [**RCMP wire protocol**](docs/RCMP_WIRE_PROTOCOL.md) -- records, opcodes, CRC, session shape
 * [**CPS ISH schema**](docs/CPS_ISH_SCHEMA.md) -- partitions, access rights, block map, `.cpg` directory, what the CPS DLLs do

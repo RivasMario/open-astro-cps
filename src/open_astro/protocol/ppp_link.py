@@ -52,8 +52,8 @@ FLAG = 0x7E
 # to stay well under the radio's receive buffer.
 DEFAULT_MSS = 512
 DEFAULT_WINDOW = 2048          # our max bytes in flight (before peer window)
-DEFAULT_RTO = 0.4              # retransmit timeout (seconds)
-DEFAULT_MAX_RETRIES = 6        # per segment, then give up with PppError
+DEFAULT_RTO = 2.5              # retransmit timeout (seconds) -- generous for EEPROM/flash sector writes
+DEFAULT_MAX_RETRIES = 12       # per segment, then give up with PppError
 
 
 # -- HDLC async framing (RFC 1662) ---------------------------------------
@@ -179,6 +179,12 @@ class PppTcpConn:
         else:
             import serial  # pyserial
             self._ser = serial.Serial(port, 115200, timeout=0.3)
+            try:
+                import fcntl, termios
+                fcntl.ioctl(self._ser.fileno(), termios.TIOCEXCL)
+                fcntl.flock(self._ser.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except Exception:
+                pass
         self._timeout = timeout
         self._sport = sport
         self._dport = dport
@@ -388,11 +394,14 @@ class PppTcpConn:
 
     def _tcp_connect(self) -> None:
         deadline = time.time() + self._timeout
-        self._send_seg(self._iss, SYN, b"")
-        self._snd_nxt = (self._iss + 1) & _U32   # SYN consumes one seq
-        self._snd_una = self._snd_nxt
+        t_last_syn = 0.0
         while time.time() < deadline:
-            if self._pump(deadline) and self._rcv:
+            if time.time() - t_last_syn >= 1.0:
+                self._send_seg(self._iss, SYN, b"")
+                self._snd_nxt = (self._iss + 1) & _U32   # SYN consumes one seq
+                self._snd_una = self._snd_nxt
+                t_last_syn = time.time()
+            if self._pump(min(deadline, t_last_syn + 1.0)) and self._rcv:
                 # SYN-ACK seen (rcv set, our SYN acked); send the final ACK.
                 self._bare_ack()
                 return
